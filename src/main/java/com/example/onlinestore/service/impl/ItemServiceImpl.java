@@ -79,9 +79,7 @@ public class ItemServiceImpl implements ItemService {
         itemMapper.insertItem(itemEntity);
         // 设置回ID
         item.setId(itemEntity.getId());
-        
-        // 清除相关缓存
-        clearItemListCache();
+
     }
 
     @Override
@@ -141,9 +139,6 @@ public class ItemServiceImpl implements ItemService {
             // 更新单个商品缓存
             String cacheKey = String.format(CACHE_KEY_ITEM, item.getId());
             cacheManager.set(cacheKey, item, itemCacheExpireSeconds);
-            
-            // 清除列表缓存
-            clearItemListCache();
         }
     }
 
@@ -156,9 +151,6 @@ public class ItemServiceImpl implements ItemService {
             // 删除单个商品缓存
             String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
             cacheManager.delete(cacheKey);
-            
-            // 清除列表缓存
-            clearItemListCache();
         }
     }
 
@@ -255,19 +247,6 @@ public class ItemServiceImpl implements ItemService {
         }
     }
 
-    /**
-     * 清除所有商品列表相关的缓存
-     */
-    private void clearItemListCache() {
-        if (!cacheEnabled) {
-            return;
-        }
-        
-        // 这里可以使用更精细的缓存清除策略，但为了简单起见，我们使用通配符删除所有列表缓存
-        // 在实际生产环境中，可能需要更精确的缓存失效策略
-        logger.debug("Clearing all item list caches");
-        cacheManager.clear();
-    }
 
     private Item convertToItem(ItemEntity itemEntity) {
         if (itemEntity == null) {
