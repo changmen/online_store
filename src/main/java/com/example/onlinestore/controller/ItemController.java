@@ -6,6 +6,7 @@ import com.example.onlinestore.dto.ItemDetailDTO;
 import com.example.onlinestore.dto.ItemQueryDTO;
 import com.example.onlinestore.dto.PageResponse;
 import com.example.onlinestore.dto.Response;
+import com.example.onlinestore.exception.ItemNameInvalidException;
 import com.example.onlinestore.service.CategoryService;
 import com.example.onlinestore.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +30,12 @@ public class ItemController {
      */
     @PostMapping
     public Response<Long> createItem(@RequestBody Item item, @RequestHeader("X-User-Id") String userId) {
-        itemService.addItem(userId, item);
-        return Response.success(item.getId());
+        try {
+            itemService.addItem(userId, item);
+            return Response.success(item.getId());
+        } catch (ItemNameInvalidException e) {
+            return Response.fail(e.getMessage());
+        }
     }
 
     /**
@@ -64,9 +69,13 @@ public class ItemController {
      */
     @PutMapping("/{id}")
     public Response<Void> updateItem(@PathVariable("id") Long id, @RequestBody Item item) {
-        item.setId(id);
-        itemService.updateItem(item);
-        return Response.success();
+        try {
+            item.setId(id);
+            itemService.updateItem(item);
+            return Response.success();
+        } catch (ItemNameInvalidException e) {
+            return Response.fail(e.getMessage());
+        }
     }
 
     /**
