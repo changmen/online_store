@@ -83,7 +83,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // 非管理员用户，调用user-service进行认证
-        String authUrl = UriComponentsBuilder.fromHttpUrl(userServiceBaseUrl)
+        String authUrl = UriComponentsBuilder.fromUriString(userServiceBaseUrl)
             .path(AUTH_PATH)
             .toUriString();
         Boolean isAuthenticated = restTemplate.postForObject(authUrl, request, Boolean.class);
