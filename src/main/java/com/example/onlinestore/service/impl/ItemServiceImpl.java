@@ -5,6 +5,7 @@ import com.example.onlinestore.bean.Sku;
 import com.example.onlinestore.bean.VirtualItem;
 import com.example.onlinestore.dto.ItemQueryDTO;
 import com.example.onlinestore.entity.ItemEntity;
+import com.example.onlinestore.exception.ItemNameInvalidException;
 import com.example.onlinestore.mapper.ItemMapper;
 import com.example.onlinestore.service.ItemService;
 import com.example.onlinestore.service.SkuService;
@@ -15,10 +16,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 public class ItemServiceImpl implements ItemService {
+
+    private static final int MAX_NAME_LENGTH = 64;
+    private static final Pattern VALID_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9\\u4e00-\\u9fa5\\s]+$");
 
     @Autowired
     private ItemMapper itemMapper;
@@ -28,6 +33,27 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public void addItem(String userId, Item item) {
+        // 验证商品名称
+        if (item.getName() == null || item.getName().trim().isEmpty()) {
+            throw new ItemNameInvalidException("商品名称不能为空");
+        }
+        
+        // 验证名称长度
+        if (item.getName().length() > MAX_NAME_LENGTH) {
+            throw new ItemNameInvalidException("商品名称不能超过64个字符");
+        }
+        
+        // 验证名称是否包含特殊字符
+        if (!VALID_NAME_PATTERN.matcher(item.getName()).matches()) {
+            throw new ItemNameInvalidException("商品名称不能包含特殊字符");
+        }
+        
+        // 验证名称是否重复
+        ItemEntity existingItem = itemMapper.findByName(item.getName());
+        if (existingItem != null) {
+            throw new ItemNameInvalidException("商品名称已存在");
+        }
+        
         ItemEntity itemEntity = convertToItemEntity(item);
         itemMapper.insertItem(itemEntity);
         // 设置回ID
@@ -42,6 +68,27 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public void updateItem(Item item) {
+        // 验证商品名称
+        if (item.getName() == null || item.getName().trim().isEmpty()) {
+            throw new ItemNameInvalidException("商品名称不能为空");
+        }
+        
+        // 验证名称长度
+        if (item.getName().length() > MAX_NAME_LENGTH) {
+            throw new ItemNameInvalidException("商品名称不能超过64个字符");
+        }
+        
+        // 验证名称是否包含特殊字符
+        if (!VALID_NAME_PATTERN.matcher(item.getName()).matches()) {
+            throw new ItemNameInvalidException("商品名称不能包含特殊字符");
+        }
+        
+        // 验证名称是否重复（排除当前商品）
+        ItemEntity existingItem = itemMapper.findByNameExcludeId(item.getName(), item.getId());
+        if (existingItem != null) {
+            throw new ItemNameInvalidException("商品名称已存在");
+        }
+        
         ItemEntity itemEntity = convertToItemEntity(item);
         itemMapper.updateItem(itemEntity);
     }

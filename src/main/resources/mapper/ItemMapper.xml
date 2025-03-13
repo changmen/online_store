@@ -55,4 +55,12 @@
             </if>
         </where>
     </select>
+    
+    <select id="findByName" resultType="com.example.onlinestore.entity.ItemEntity">
+        SELECT * FROM items WHERE name = #{name} LIMIT 1
+    </select>
+    
+    <select id="findByNameExcludeId" resultType="com.example.onlinestore.entity.ItemEntity">
+        SELECT * FROM items WHERE name = #{name} AND id != #{excludeId} LIMIT 1
+    </select>
 </mapper> 
