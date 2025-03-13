@@ -53,7 +53,7 @@ public class UserControllerTest {
         user2.setUsername("user2");
 
         mockResponse = new PageResponse<>();
-        mockResponse.setRecords(Arrays.asList(user1, user2));
+        mockResponse.setItems(Arrays.asList(user1, user2));
         mockResponse.setTotal(2);
         mockResponse.setPageNum(1);
         mockResponse.setPageSize(10);

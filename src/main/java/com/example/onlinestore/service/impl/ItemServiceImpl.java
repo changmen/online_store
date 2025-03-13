@@ -185,15 +185,4 @@ public class ItemServiceImpl implements ItemService {
         copier.copy(item, itemEntity, null);
         return itemEntity;
     }
-    
-    @SuppressWarnings("unused")
-    private ItemEntity buildItemEntity(String userId, String name, String description, String image, String secondaryName, String pingJia, Long skuId, Map<String, Map<String, String>> itemAttributes, Map<String, Map<String, String>> itemExtensions) {
-        ItemEntity entity = new ItemEntity();
-        entity.setName(name);
-        entity.setDescription(description);
-        entity.setImage(image);
-        entity.setSecondaryName(secondaryName);
-        entity.setSkuId(skuId);
-        return entity;
-    }
 }

@@ -14,7 +14,6 @@ public class Item implements Serializable {
     private String image;
     private Long skuId;
     private String secondaryName;
-    private String pingJia;
     private Map<String, Object> extraProperties;
 
     public Long getId() {
@@ -65,13 +64,6 @@ public class Item implements Serializable {
         this.secondaryName = secondaryName;
     }
 
-    public String getPingJia() {
-        return pingJia;
-    }
-
-    public void setPingJia(String pingJia) {
-        this.pingJia = pingJia;
-    }
 
     public Long getSkuId() {
         return skuId;
