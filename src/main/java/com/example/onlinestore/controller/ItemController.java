@@ -1,11 +1,9 @@
 package com.example.onlinestore.controller;
 
+import com.example.onlinestore.bean.Category;
 import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.bean.Sku;
-import com.example.onlinestore.dto.ItemDetailDTO;
-import com.example.onlinestore.dto.ItemQueryDTO;
-import com.example.onlinestore.dto.PageResponse;
-import com.example.onlinestore.dto.Response;
+import com.example.onlinestore.dto.*;
 import com.example.onlinestore.exception.ItemNameInvalidException;
 import com.example.onlinestore.service.CategoryService;
 import com.example.onlinestore.service.ItemService;
@@ -36,32 +34,6 @@ public class ItemController {
         } catch (ItemNameInvalidException e) {
             return Response.fail(e.getMessage());
         }
-    }
-
-    /**
-     * 获取商品详情（包含类目和SKU信息）
-     */
-    @GetMapping("/{id}")
-    public Response<ItemDetailDTO> getItemDetail(@PathVariable("id") Long id) {
-        Item item = itemService.getItemById(id);
-        if (item == null) {
-            return Response.fail("商品不存在");
-        }
-        
-        // 获取SKU列表
-        List<Sku> skus = itemService.getSkusByItemId(id);
-        
-        // 构建详情DTO
-        ItemDetailDTO detailDTO = new ItemDetailDTO();
-        detailDTO.setItem(item);
-        detailDTO.setSkus(skus);
-        
-        // 获取类目信息
-        if (item.getCategoryId() != null) {
-            detailDTO.setCategory(categoryService.getCategoryById(item.getCategoryId()));
-        }
-        
-        return Response.success(detailDTO);
     }
 
     /**
@@ -121,7 +93,13 @@ public class ItemController {
             
             // 获取类目信息
             if (item.getCategoryId() != null) {
-                dto.setCategory(categoryService.getCategoryById(item.getCategoryId()));
+                Category category = categoryService.getCategoryById(item.getCategoryId());
+                if (category != null) {
+                    CategoryDTO categoryDTO = new CategoryDTO();
+                    categoryDTO.setId(category.getId());
+                    categoryDTO.setName(category.getName());
+                    dto.setCategory(categoryDTO);
+                }
             }
             
             return dto;

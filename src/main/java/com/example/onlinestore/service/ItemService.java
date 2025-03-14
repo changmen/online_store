@@ -11,8 +11,7 @@ public interface ItemService {
     Item getItemById(long itemId);
     void updateItem(Item item);
     void deleteItem(long itemId);
-    List<Item> getAllItems(int page, int size);
-    
+
     /**
      * 按条件查询商品（支持类目ID精确搜索和商品名称模糊搜索）
      */

@@ -153,19 +153,6 @@ public class ItemServiceImpl implements ItemService {
             cacheManager.delete(cacheKey);
         }
     }
-
-    @Override
-    public List<Item> getAllItems(int page, int size) {
-
-        // 缓存未命中，从数据库获取
-        int offset = (page - 1) * size;
-        List<ItemEntity> itemEntities = itemMapper.findAllWithPagination(offset, size);
-        List<Item> items = itemEntities.stream()
-                .map(this::convertToItem)
-                .collect(Collectors.toList());
-
-        return items;
-    }
     
     @Override
     public List<Item> queryItems(ItemQueryDTO queryDTO) {
@@ -179,13 +166,11 @@ public class ItemServiceImpl implements ItemService {
             offset, 
             queryDTO.getSize()
         );
-        
-        List<Item> items = itemEntities.stream()
+
+
+        return itemEntities.stream()
                 .map(this::convertToItem)
                 .collect(Collectors.toList());
-        
-
-        return items;
     }
     
     @Override
@@ -273,16 +258,5 @@ public class ItemServiceImpl implements ItemService {
         BeanCopier copier = BeanCopier.create(Item.class, ItemEntity.class, false);
         copier.copy(item, itemEntity, null);
         return itemEntity;
-    }
-    
-    @SuppressWarnings("unused")
-    private ItemEntity buildItemEntity(String userId, String name, String description, String image, String secondaryName, String pingJia, Long skuId, Map<String, Map<String, String>> itemAttributes, Map<String, Map<String, String>> itemExtensions) {
-        ItemEntity entity = new ItemEntity();
-        entity.setName(name);
-        entity.setDescription(description);
-        entity.setImage(image);
-        entity.setSecondaryName(secondaryName);
-        entity.setSkuId(skuId);
-        return entity;
     }
 }
