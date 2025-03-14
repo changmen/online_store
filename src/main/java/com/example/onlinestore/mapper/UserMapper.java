@@ -11,7 +11,7 @@ public interface UserMapper {
     
     UserEntity findByUsername(String username);
     
-    int updateUserToken(UserEntity user);
+    void updateUserToken(UserEntity user);
 
     void insertUser(UserEntity user);
     
