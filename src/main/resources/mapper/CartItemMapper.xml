@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.CartItemMapper">
+
+    <insert id="insertCartItem" parameterType="com.example.onlinestore.entity.CartItemEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO cart_item (
+            user_id, item_id, sku_id, quantity, selected,
+            created_at, updated_at
+        ) VALUES (
+            #{userId}, #{itemId}, #{skuId}, #{quantity}, #{selected},
+            NOW(), NOW()
+        )
+    </insert>
+    
+    <select id="findById" resultType="com.example.onlinestore.entity.CartItemEntity">
+        SELECT * FROM cart_item WHERE id = #{id}
+    </select>
+    
+    <select id="findByUserId" resultType="com.example.onlinestore.entity.CartItemEntity">
+        SELECT * FROM cart_item WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+    
+    <select id="findByUserIdAndItemId" resultType="com.example.onlinestore.entity.CartItemEntity">
+        SELECT * FROM cart_item 
+        WHERE user_id = #{userId} AND item_id = #{itemId}
+    </select>
+    
+    <select id="findByUserIdAndSkuId" resultType="com.example.onlinestore.entity.CartItemEntity">
+        SELECT * FROM cart_item 
+        WHERE user_id = #{userId} AND sku_id = #{skuId}
+    </select>
+    
+    <update id="updateCartItem" parameterType="com.example.onlinestore.entity.CartItemEntity">
+        UPDATE cart_item 
+        SET quantity = #{quantity},
+            selected = #{selected},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <update id="updateQuantity">
+        UPDATE cart_item 
+        SET quantity = #{quantity},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <update id="updateSelected">
+        UPDATE cart_item 
+        SET selected = #{selected},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <update id="batchUpdateSelected">
+        UPDATE cart_item 
+        SET selected = #{selected},
+            updated_at = NOW()
+        WHERE user_id = #{userId}
+    </update>
+    
+    <delete id="deleteCartItem">
+        DELETE FROM cart_item WHERE id = #{id}
+    </delete>
+    
+    <delete id="deleteByUserId">
+        DELETE FROM cart_item WHERE user_id = #{userId}
+    </delete>
+</mapper> 
