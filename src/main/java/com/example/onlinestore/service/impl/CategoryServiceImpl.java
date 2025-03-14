@@ -95,7 +95,7 @@ public class CategoryServiceImpl implements CategoryService {
             int offset  = 1;
             int limit = 1000;
             try {
-                List<CategoryEntity> allCategories = categoryMapper.FindAllCategories(offset, limit);
+                List<CategoryEntity> allCategories = categoryMapper.findAllCategories(offset, limit);
                 BeanCopier beanCopier = BeanCopier.create(CategoryEntity.class, Category.class, false);
                 Map<Long, Set<Long>> parentCategoryMap = new HashMap<>();
                 Set<Long> newCategoryIds = new HashSet<>();

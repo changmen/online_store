@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.onlinestore.mapper.CategoryMapper">
 
-    <select id="FindAllCategories" resultType="com.example.onlinestore.entity.CategoryEntity">
+    <select id="findAllCategories" resultType="com.example.onlinestore.entity.CategoryEntity">
         SELECT id, `name`, `description`, `parent_id`, `visible`,`status`, `weight`,created_at, updated_at
         FROM category
         ORDER BY id DESC
