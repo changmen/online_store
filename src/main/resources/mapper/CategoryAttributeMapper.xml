@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.CategoryAttributeMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="categoryAttributeMap" type="com.example.onlinestore.entity.CategoryAttributeEntity">
+        <id property="id" column="id"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="name" column="name"/>
+        <result property="valueType" column="value_type"/>
+        <result property="required" column="required"/>
+        <result property="searchable" column="searchable"/>
+        <result property="multiValue" column="multi_value"/>
+        <result property="sort" column="sort"/>
+        <result property="unit" column="unit"/>
+        <result property="options" column="options"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- 插入类目属性 -->
+    <insert id="insertCategoryAttribute" parameterType="com.example.onlinestore.entity.CategoryAttributeEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO category_attribute (
+            category_id, name, value_type, required, searchable, 
+            multi_value, sort, unit, options, created_at, updated_at
+        ) VALUES (
+            #{categoryId}, #{name}, #{valueType}, #{required}, #{searchable}, 
+            #{multiValue}, #{sort}, #{unit}, #{options}, #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <!-- 更新类目属性 -->
+    <update id="updateCategoryAttribute" parameterType="com.example.onlinestore.entity.CategoryAttributeEntity">
+        UPDATE category_attribute
+        SET category_id = #{categoryId},
+            name = #{name},
+            value_type = #{valueType},
+            required = #{required},
+            searchable = #{searchable},
+            multi_value = #{multiValue},
+            sort = #{sort},
+            unit = #{unit},
+            options = #{options},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除类目属性 -->
+    <delete id="deleteCategoryAttributeById">
+        DELETE FROM category_attribute WHERE id = #{id}
+    </delete>
+
+    <!-- 批量删除类目属性 -->
+    <delete id="batchDeleteCategoryAttributes">
+        DELETE FROM category_attribute WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据ID查询类目属性 -->
+    <select id="findCategoryAttributeById" resultMap="categoryAttributeMap">
+        SELECT id, category_id, name, value_type, required, searchable, 
+               multi_value, sort, unit, options, created_at, updated_at
+        FROM category_attribute
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据类目ID查询类目属性列表 -->
+    <select id="findCategoryAttributesByCategoryId" resultMap="categoryAttributeMap">
+        SELECT id, category_id, name, value_type, required, searchable, 
+               multi_value, sort, unit, options, created_at, updated_at
+        FROM category_attribute
+        WHERE category_id = #{categoryId}
+        ORDER BY sort
+    </select>
+
+    <!-- 根据类目ID和属性名称查询类目属性 -->
+    <select id="findCategoryAttributeByCategoryIdAndName" resultMap="categoryAttributeMap">
+        SELECT id, category_id, name, value_type, required, searchable, 
+               multi_value, sort, unit, options, created_at, updated_at
+        FROM category_attribute
+        WHERE category_id = #{categoryId} AND name = #{name}
+    </select>
+
+    <!-- 检查类目属性名称是否已存在 -->
+    <select id="checkNameExists" resultType="int">
+        SELECT COUNT(1)
+        FROM category_attribute
+        WHERE category_id = #{categoryId} AND name = #{name}
+    </select>
+
+    <!-- 检查类目属性名称是否已存在（排除指定ID） -->
+    <select id="checkNameExistsExcludeId" resultType="int">
+        SELECT COUNT(1)
+        FROM category_attribute
+        WHERE category_id = #{categoryId} AND name = #{name} AND id != #{id}
+    </select>
+
+    <!-- 分页查询类目属性 -->
+    <select id="findCategoryAttributesByConditions" resultMap="categoryAttributeMap">
+        SELECT id, category_id, name, value_type, required, searchable, 
+               multi_value, sort, unit, options, created_at, updated_at
+        FROM category_attribute
+        <where>
+            <if test="categoryId != null">
+                AND category_id = #{categoryId}
+            </if>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="valueType != null">
+                AND value_type = #{valueType}
+            </if>
+            <if test="required != null">
+                AND required = #{required}
+            </if>
+            <if test="searchable != null">
+                AND searchable = #{searchable}
+            </if>
+        </where>
+        ORDER BY sort
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 统计类目属性数量 -->
+    <select id="countCategoryAttributesByConditions" resultType="int">
+        SELECT COUNT(1)
+        FROM category_attribute
+        <where>
+            <if test="categoryId != null">
+                AND category_id = #{categoryId}
+            </if>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="valueType != null">
+                AND value_type = #{valueType}
+            </if>
+            <if test="required != null">
+                AND required = #{required}
+            </if>
+            <if test="searchable != null">
+                AND searchable = #{searchable}
+            </if>
+        </where>
+    </select>
+
+</mapper> 
