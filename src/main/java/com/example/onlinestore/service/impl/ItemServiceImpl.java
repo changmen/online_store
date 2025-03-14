@@ -18,9 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cglib.beans.BeanCopier;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -33,10 +31,6 @@ public class ItemServiceImpl implements ItemService {
     
     // 缓存相关常量
     private static final String CACHE_KEY_ITEM = "item:%d";
-    private static final String CACHE_KEY_ITEMS_BY_CATEGORY = "items:category:%d:page:%d:size:%d";
-    private static final String CACHE_KEY_ITEMS_BY_NAME = "items:name:%s:page:%d:size:%d";
-    private static final String CACHE_KEY_ITEMS_ALL = "items:all:page:%d:size:%d";
-    
     @Value("${cache.item.expire-seconds:3600}")
     private long itemCacheExpireSeconds;
     

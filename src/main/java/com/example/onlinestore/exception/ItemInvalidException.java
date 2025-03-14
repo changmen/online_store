@@ -1,4 +1,4 @@
-package com.example.onlinestore.exceptions;
+package com.example.onlinestore.exception;
 
 import java.io.Serial;
 
