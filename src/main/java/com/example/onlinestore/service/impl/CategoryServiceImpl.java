@@ -12,7 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -57,8 +59,30 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public void addCategory(Category category) {
-
+        LOGGER.info("Adding category: {}", category.getName());
+        
+        // 设置创建和更新时间
+        LocalDateTime now = LocalDateTime.now();
+        
+        // 转换为实体
+        CategoryEntity entity = new CategoryEntity();
+        BeanCopier beanCopier = BeanCopier.create(Category.class, CategoryEntity.class, false);
+        beanCopier.copy(category, entity, null);
+        
+        entity.setCreatedAt(now);
+        entity.setUpdatedAt(now);
+        
+        // 保存到数据库
+        categoryMapper.insertCategory(entity);
+        
+        // 更新缓存
+        category.setId(entity.getId());
+        
+        this.loadCategory();
+        
+        LOGGER.info("Category added successfully: id={}, name={}", category.getId(), category.getName());
     }
 
     @Override
@@ -70,13 +94,80 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public void updateCategory(Category category) {
+        LOGGER.info("Updating category: id={}, name={}", category.getId(), category.getName());
+        
+        // 检查类目是否存在
+        if (!categoryMap.containsKey(category.getId())) {
+            LOGGER.error("Category not found: id={}", category.getId());
+            return;
+        }
+        
+        // 获取原始类目信息
+        Category existingCategory = categoryMap.get(category.getId());
 
+        // 设置更新时间
+        LocalDateTime now = LocalDateTime.now();
+        
+        // 转换为实体
+        CategoryEntity entity = new CategoryEntity();
+        BeanCopier beanCopier = BeanCopier.create(Category.class, CategoryEntity.class, false);
+        beanCopier.copy(category, entity, null);
+        
+        // 保留创建时间
+        entity.setUpdatedAt(now);
+        
+        // 更新数据库
+        categoryMapper.updateCategory(entity);
+        
+        // 更新缓存
+        this.loadCategory();
+        LOGGER.info("Category updated successfully: id={}, name={}", category.getId(), category.getName());
     }
 
     @Override
+    @Transactional
     public void deleteCategory(Long id) {
-        categoryMap.remove(id);
+        LOGGER.info("Deleting category: id={}", id);
+        
+        synchronized (LOAD_LOCKER) {
+            // 检查类目是否存在
+            if (!categoryMap.containsKey(id)) {
+                LOGGER.error("Category not found: id={}", id);
+                return;
+            }
+            
+            Category category = categoryMap.get(id);
+            
+            // 检查是否有子类目
+            if (hasChildren(category)){
+                LOGGER.error("Cannot delete category with children: id={}, children={}", id, category.getChildren());
+                return;
+            }
+            
+            // 从父类目的子类目列表中移除
+            Long parentId = category.getParentId();
+            if (parentId != null && !Objects.equals(parentId, Constants.ROOT_CATEGORY_PARENT_ID)) {
+                Category parent = categoryMap.get(parentId);
+                if (parent != null && parent.getChildren() != null) {
+                    parent.getChildren().remove(id);
+                }
+            }
+            
+            // 如果是一级类目，从rootCategories中移除
+            if (Objects.equals(parentId, Constants.ROOT_CATEGORY_PARENT_ID)) {
+                rootCategories.remove(id);
+            }
+            
+            // 从缓存中移除
+            categoryMap.remove(id);
+            
+            // 从数据库中删除
+            categoryMapper.deleteCategory(id);
+        }
+        
+        LOGGER.info("Category deleted successfully: id={}", id);
     }
 
     @Override
@@ -89,7 +180,19 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<Category> getChildCategories(Long parentId) {
-        return List.of();
+        if (parentId == null) {
+            return List.of();
+        }
+        
+        Category parent = categoryMap.get(parentId);
+        if (parent == null || parent.getChildren() == null || parent.getChildren().isEmpty()) {
+            return List.of();
+        }
+        
+        return parent.getChildren().stream()
+                .map(categoryMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     private void loadCategory() {
@@ -146,4 +249,16 @@ public class CategoryServiceImpl implements CategoryService {
         LOGGER.info("Complete to load category.");
     }
 
+
+    // 判断类目是否存在子类目
+    private boolean hasChildren(Category category) {
+        if (category == null) {
+            return false;
+        }
+
+        Category child = categoryMap.values().stream().filter(c -> Objects.equals(c.getId(), category.getParentId())).findAny().orElse(null);
+        return child != null;
+    }
+
 }
+

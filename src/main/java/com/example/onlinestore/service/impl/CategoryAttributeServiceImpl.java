@@ -132,7 +132,7 @@ public class CategoryAttributeServiceImpl implements CategoryAttributeService {
         result.put("list", dtoList);
         result.put("total", total);
         result.put("pageNum", query.getPageNum());
-        result.put("pageSzie", query.getPageSize());
+        result.put("pageSize", query.getPageSize());
 
         return result;
     }

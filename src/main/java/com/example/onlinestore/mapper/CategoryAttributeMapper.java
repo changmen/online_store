@@ -10,7 +10,7 @@ import java.util.List;
 public interface CategoryAttributeMapper {
     
     // 插入类目属性
-    Long insertCategoryAttribute(CategoryAttributeEntity entity);
+    void insertCategoryAttribute(CategoryAttributeEntity entity);
     
     // 更新类目属性
     int updateCategoryAttribute(CategoryAttributeEntity entity);
