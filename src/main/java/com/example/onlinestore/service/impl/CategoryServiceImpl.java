@@ -76,11 +76,14 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategory(Long id) {
-
+        categoryMap.remove(id);
     }
 
     @Override
     public List<Category> getAllCategories() {
+        if (!categoryMap.isEmpty()) {
+            return new ArrayList<>(categoryMap.values());
+        }
         return List.of();
     }
 

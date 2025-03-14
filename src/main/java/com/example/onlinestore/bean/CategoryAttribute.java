@@ -6,9 +6,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class CategoryAttribute implements Serializable {
+
+
     @Serial
-    private static final long serialVersionUID = 1L;
-    
+    private static final long serialVersionUID = 9116389788560235067L;
     private Long id;
     private Long categoryId;
     private String categoryName;
