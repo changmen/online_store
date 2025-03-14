@@ -1,6 +1,8 @@
 package com.example.onlinestore.service;
 
 import com.example.onlinestore.entity.InventoryEntity;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface InventoryService {
@@ -88,4 +90,34 @@ public interface InventoryService {
      * 7. 更新库存状态
      */
     void processBatchInventory(Long inventoryId, Integer quantity, String operationType, String batchNumber);
+
+    /**
+     * 更新SKU库存（bad case: 参数过多）
+     * @param skuId SKU ID
+     * @param quantity 库存数量
+     * @param lockedQuantity 锁定数量
+     * @param availableQuantity 可用数量
+     * @param warningQuantity 预警数量
+     * @param location 库位
+     * @param batchNumber 批次号
+     * @param productionDate 生产日期
+     * @param expiryDate 过期日期
+     * @param status 状态
+     * @param operator 操作人
+     * @param remark 备注
+     */
+    void updateSkuInventory(
+        Long skuId,
+        Integer quantity,
+        Integer lockedQuantity,
+        Integer availableQuantity,
+        Integer warningQuantity,
+        String location,
+        String batchNumber,
+        LocalDateTime productionDate,
+        LocalDateTime expiryDate,
+        String status,
+        String operator,
+        String remark
+    );
 } 

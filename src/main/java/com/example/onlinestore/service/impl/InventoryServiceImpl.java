@@ -243,4 +243,94 @@ public class InventoryServiceImpl implements InventoryService {
             logger.info("库存清空: inventoryId={}, batchNumber={}", inventoryId, batchNumber);
         }
     }
+
+    @Override
+    @Transactional
+    public void updateSkuInventory(
+        Long skuId,
+        Integer quantity,
+        Integer lockedQuantity,
+        Integer availableQuantity,
+        Integer warningQuantity,
+        String location,
+        String batchNumber,
+        LocalDateTime productionDate,
+        LocalDateTime expiryDate,
+        String status,
+        String operator,
+        String remark
+    ) {
+        // 1. 参数验证
+        if (skuId == null) {
+            throw new InventoryException("SKU ID不能为空");
+        }
+        if (quantity == null || quantity < 0) {
+            throw new InventoryException("库存数量不能为空且必须大于等于0");
+        }
+        if (lockedQuantity == null || lockedQuantity < 0) {
+            throw new InventoryException("锁定数量不能为空且必须大于等于0");
+        }
+        if (availableQuantity == null || availableQuantity < 0) {
+            throw new InventoryException("可用数量不能为空且必须大于等于0");
+        }
+        if (quantity < lockedQuantity) {
+            throw new InventoryException("库存数量不能小于锁定数量");
+        }
+        if (quantity < availableQuantity) {
+            throw new InventoryException("库存数量不能小于可用数量");
+        }
+        if (quantity < (lockedQuantity + availableQuantity)) {
+            throw new InventoryException("库存数量不能小于锁定数量和可用数量之和");
+        }
+        
+        // 2. 查找或创建库存记录
+        List<InventoryEntity> inventories = inventoryMapper.findBySkuId(skuId);
+        InventoryEntity inventory;
+        
+        if (inventories.isEmpty()) {
+            // 创建新的库存记录
+            inventory = new InventoryEntity();
+            inventory.setSkuId(skuId);
+            inventory.setCreatedAt(LocalDateTime.now());
+        } else {
+            // 使用现有的库存记录
+            inventory = inventories.get(0);
+        }
+        
+        // 3. 更新库存信息
+        inventory.setQuantity(quantity);
+        inventory.setLockedQuantity(lockedQuantity);
+        inventory.setAvailableQuantity(availableQuantity);
+        inventory.setWarningQuantity(warningQuantity);
+        inventory.setLocation(location);
+        inventory.setBatchNumber(batchNumber);
+        inventory.setProductionDate(productionDate);
+        inventory.setExpiryDate(expiryDate);
+        inventory.setStatus(status);
+        inventory.setUpdatedAt(LocalDateTime.now());
+        
+        // 4. 保存更新
+        if (inventory.getId() == null) {
+            inventoryMapper.insertInventory(inventory);
+        } else {
+            inventoryMapper.updateInventory(inventory);
+        }
+        
+        // 5. 记录操作日志
+        logger.info("更新SKU库存: skuId={}, quantity={}, lockedQuantity={}, availableQuantity={}, " +
+                   "warningQuantity={}, location={}, batchNumber={}, operator={}, remark={}",
+            skuId, quantity, lockedQuantity, availableQuantity, warningQuantity,
+            location, batchNumber, operator, remark);
+            
+        // 6. 检查是否需要发送预警
+        if (availableQuantity <= warningQuantity) {
+            logger.warn("SKU库存预警: skuId={}, availableQuantity={}, warningQuantity={}",
+                skuId, availableQuantity, warningQuantity);
+        }
+        
+        // 7. 检查是否过期
+        if (expiryDate != null && expiryDate.isBefore(LocalDateTime.now())) {
+            logger.warn("SKU库存过期: skuId={}, expiryDate={}", skuId, expiryDate);
+        }
+    }
 } 
