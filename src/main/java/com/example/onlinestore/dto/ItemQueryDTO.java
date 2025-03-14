@@ -1,13 +1,15 @@
 package com.example.onlinestore.dto;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
  * 商品查询DTO，用于封装查询参数
  */
 public class ItemQueryDTO implements Serializable {
-    private static final long serialVersionUID = 1L;
-    
+
+    @Serial
+    private static final long serialVersionUID = -4983112718912894206L;
     private Long categoryId;
     private String name;
     private int page = 1;
