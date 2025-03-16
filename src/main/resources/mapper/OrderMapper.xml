@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.OrderMapper">
+
+    <insert id="insertOrder" parameterType="com.example.onlinestore.entity.OrderEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO orders (
+            order_no, user_id, total_amount, pay_amount, discount_amount, shipping_fee,
+            status, receiver_name, receiver_phone, receiver_address, payment_method,
+            pay_time, delivery_time, complete_time, cancel_time, remark,
+            created_at, updated_at
+        ) VALUES (
+            #{orderNo}, #{userId}, #{totalAmount}, #{payAmount}, #{discountAmount}, #{shippingFee},
+            #{status}, #{receiverName}, #{receiverPhone}, #{receiverAddress}, #{paymentMethod},
+            #{payTime}, #{deliveryTime}, #{completeTime}, #{cancelTime}, #{remark},
+            NOW(), NOW()
+        )
+    </insert>
+    
+    <select id="findById" resultType="com.example.onlinestore.entity.OrderEntity">
+        SELECT * FROM orders WHERE id = #{id}
+    </select>
+    
+    <select id="findByOrderNo" resultType="com.example.onlinestore.entity.OrderEntity">
+        SELECT * FROM orders WHERE order_no = #{orderNo}
+    </select>
+    
+    <select id="findByUserId" resultType="com.example.onlinestore.entity.OrderEntity">
+        SELECT * FROM orders WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+    
+    <update id="updateOrder" parameterType="com.example.onlinestore.entity.OrderEntity">
+        UPDATE orders 
+        SET total_amount = #{totalAmount},
+            pay_amount = #{payAmount},
+            discount_amount = #{discountAmount},
+            shipping_fee = #{shippingFee},
+            status = #{status},
+            receiver_name = #{receiverName},
+            receiver_phone = #{receiverPhone},
+            receiver_address = #{receiverAddress},
+            payment_method = #{paymentMethod},
+            pay_time = #{payTime},
+            delivery_time = #{deliveryTime},
+            complete_time = #{completeTime},
+            cancel_time = #{cancelTime},
+            remark = #{remark},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <update id="updateStatus">
+        UPDATE orders 
+        SET status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="deleteOrder">
+        DELETE FROM orders WHERE id = #{id}
+    </delete>
+    
+    <select id="findByCondition" resultType="com.example.onlinestore.entity.OrderEntity">
+        SELECT * FROM orders
+        <where>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="startTime != null">
+                AND created_at &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND created_at &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    
+    <select id="countByCondition" resultType="long">
+        SELECT COUNT(*) FROM orders
+        <where>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="startTime != null">
+                AND created_at &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND created_at &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+    
+    <select id="findTimeoutOrders" resultType="com.example.onlinestore.entity.OrderEntity">
+        SELECT * FROM orders 
+        WHERE status = 0 
+        AND created_at &lt; DATE_SUB(NOW(), INTERVAL #{timeoutMinutes} MINUTE)
+        LIMIT #{limit}
+    </select>
+</mapper> 
