@@ -39,4 +39,12 @@ public interface CartService {
      */
     void batchUpdateSelected(Long userId, Boolean selected);
 
+    /**
+     * 批量删除购物车商品
+     * 
+     * @param userId 用户ID
+     * @param itemIds 要删除的商品ID列表
+     * @return 成功删除的商品数量
+     */
+    int batchRemoveFromCart(Long userId, List<Long> itemIds);
 } 
