@@ -1,6 +1,5 @@
 package com.example.onlinestore.dto;
 
-import com.example.onlinestore.bean.Category;
 import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.bean.Sku;
 
