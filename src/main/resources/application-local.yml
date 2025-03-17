@@ -33,3 +33,9 @@ admin:
   auth:
     username: admin
     password: ${ADMIN_PASSWORD:admin123}
+
+aliyun:
+  oss:
+    endpoint: oss-cn-beijing.aliyuncs.com
+    accessKeyId: TLAI5tMC62xyxXoT005Test
+    accessKeySecret: 5TLAI5tMC62xyxXoT005Test
