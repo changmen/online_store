@@ -10,6 +10,7 @@ import com.example.onlinestore.mapper.CommentMapper;
 import com.example.onlinestore.service.CommentService;
 import com.example.onlinestore.validator.CommentCountValidator;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +67,11 @@ public class CommentServiceImpl implements CommentService {
                         comment.getUserId(), comment.getItemId());
                 throw new IllegalStateException(
                         "You have reached the maximum number of comments allowed for this item");
+            }
+
+            if (!validateCommentLength(comment.getContent())){
+                logger.warn("Comment content length exceeds limit for item {}", comment.getItemId());
+                throw new IllegalArgumentException("Comment content length exceeds limit");
             }
 
             // 执行插入前Hook
@@ -235,5 +241,13 @@ public class CommentServiceImpl implements CommentService {
         BeanCopier copier = BeanCopier.create(CommentEntity.class, Comment.class, false);
         copier.copy(entity, dto, null);
         return dto;
+    }
+
+    private boolean validateCommentLength(String content) {
+        if (StringUtils.isBlank(content)){
+            return true;
+        }
+
+        return content.length() <= 140;
     }
 } 
