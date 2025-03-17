@@ -257,9 +257,6 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public void payOrder(String orderNo) {
         OrderEntity order = orderMapper.findByOrderNo(orderNo);
-        if (order == null) {
-            throw new OrderException("订单不存在");
-        }
         
         if (order.getStatus() != 0) {
             throw new OrderException("订单状态不正确");
