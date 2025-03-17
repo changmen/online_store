@@ -1,0 +1,6 @@
+package com.example.onlinestore.enums;
+
+public enum CommentType {
+    REGULAR_REVIEW, EXPERT_REVIEW, VERIFIED_PURCHASE_REVIEW,
+    SPONSORED_REVIEW, IMPORTED_REVIEW, AI_GENERATED_SUMMARY
+}

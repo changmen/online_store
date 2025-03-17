@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.CommentMapper">
+
+    <insert id="insertComment" parameterType="com.example.onlinestore.entity.CommentEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO comments (
+            item_id, user_id, content, rating, create_time, 
+            status, type, device_info, user_ip, browser_info,
+            operating_system, location_info, emotional_score,
+            language_code, is_verified_purchase, extra_data
+        )
+        VALUES (
+            #{itemId}, #{userId}, #{content}, #{rating}, #{createTime},
+            #{status}, #{type}, #{deviceInfo}, #{userIp}, #{browserInfo},
+            #{operatingSystem}, #{locationInfo}, #{emotionalScore},
+            #{languageCode}, #{isVerifiedPurchase}, #{extraData}
+        )
+    </insert>
+    
+    <select id="findById" resultType="com.example.onlinestore.entity.CommentEntity">
+        SELECT * FROM comments WHERE id = #{id}
+    </select>
+    
+    <delete id="deleteComment">
+        DELETE FROM comments WHERE id = #{id}
+    </delete>
+    
+    <select id="findByItemId" resultType="com.example.onlinestore.entity.CommentEntity">
+        SELECT * FROM comments 
+        WHERE item_id = #{itemId}
+        ORDER BY create_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    
+    <select id="countByItemId" resultType="long">
+        SELECT COUNT(*) FROM comments WHERE item_id = #{itemId}
+    </select>
+    
+    <!-- Speculative Generality: 过于复杂的高级查询 -->
+    <select id="findByAdvancedCondition" resultType="com.example.onlinestore.entity.CommentEntity">
+        SELECT * FROM comments
+        <where>
+            <if test="itemId != null">
+                AND item_id = #{itemId}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="minEmotionalScore != null">
+                AND emotional_score >= #{minEmotionalScore}
+            </if>
+            <if test="isVerifiedPurchase != null">
+                AND is_verified_purchase = #{isVerifiedPurchase}
+            </if>
+            <if test="deviceType != null">
+                AND device_info = #{deviceType}
+            </if>
+            <if test="locationInfo != null">
+                AND location_info = #{locationInfo}
+            </if>
+            <if test="languageCode != null">
+                AND language_code = #{languageCode}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+</mapper> 
