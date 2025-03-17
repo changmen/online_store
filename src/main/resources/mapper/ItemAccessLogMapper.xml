@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.ItemAccessLogMapper">
+
+    <insert id="insertAccessLog" parameterType="com.example.onlinestore.entity.ItemAccessLogEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO item_access_log (
+            item_id, user_id, ip, user_agent, referer, access_time, access_count, session_id
+        ) VALUES (
+            #{itemId}, #{userId}, #{ip}, #{userAgent}, #{referer}, #{accessTime}, #{accessCount}, #{sessionId}
+        )
+    </insert>
+    
+    <insert id="batchInsertAccessLogs" parameterType="java.util.List">
+        INSERT INTO item_access_log (
+            item_id, user_id, ip, user_agent, referer, access_time, access_count, session_id
+        ) VALUES 
+        <foreach collection="list" item="log" separator=",">
+            (
+                #{log.itemId}, #{log.userId}, #{log.ip}, #{log.userAgent}, #{log.referer}, 
+                #{log.accessTime}, #{log.accessCount}, #{log.sessionId}
+            )
+        </foreach>
+    </insert>
+    
+    <select id="countByItemId" resultType="int">
+        SELECT COALESCE(SUM(access_count), 0) 
+        FROM item_access_log 
+        WHERE item_id = #{itemId}
+    </select>
+    
+    <select id="countByItemIdAndTimeRange" resultType="int">
+        SELECT COALESCE(SUM(access_count), 0) 
+        FROM item_access_log 
+        WHERE item_id = #{itemId}
+        <if test="startTime != null">
+            AND access_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND access_time &lt;= #{endTime}
+        </if>
+    </select>
+    
+    <select id="findHotItems" resultType="java.util.Map">
+        SELECT 
+            item_id as itemId, 
+            SUM(access_count) as viewCount
+        FROM 
+            item_access_log
+        <where>
+            <if test="startTime != null">
+                AND access_time >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND access_time &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY 
+            item_id
+        ORDER BY 
+            viewCount DESC
+        LIMIT #{limit}
+    </select>
+</mapper> 
