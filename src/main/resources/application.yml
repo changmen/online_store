@@ -32,6 +32,24 @@ spring:
           min-idle: 0
           max-wait: -1ms
 
+# BAD CASE: 不安全的Actuator配置，暴露所有敏感端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # 暴露所有端点，包括敏感端点
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always  # 显示详细的健康信息，可能包含敏感数据
+    env:
+      show-values: always  # 显示所有环境变量值，包括敏感信息
+    shutdown:
+      enabled: true  # 允许远程关闭应用，存在安全风险
+  info:
+    env:
+      enabled: true  # 暴露环境信息
+
 mybatis:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.example.onlinestore.model
