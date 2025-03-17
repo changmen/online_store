@@ -2,6 +2,7 @@ package com.example.onlinestore.service;
 
 import com.example.onlinestore.entity.CartItemEntity;
 import java.util.List;
+import java.util.Map;
 
 public interface CartService {
     /**
@@ -47,4 +48,13 @@ public interface CartService {
      * @return 成功删除的商品数量
      */
     int batchRemoveFromCart(Long userId, List<Long> itemIds);
+    
+    /**
+     * 批量添加商品到购物车
+     * 
+     * @param userId 用户ID
+     * @param items 商品信息映射，key为商品ID，value为[skuId, quantity]数组
+     * @return 成功添加的商品数量
+     */
+    int batchAddToCart(Long userId, Map<Long, Object[]> items);
 } 
