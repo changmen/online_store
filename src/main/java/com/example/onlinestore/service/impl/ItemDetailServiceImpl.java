@@ -77,7 +77,8 @@ public class ItemDetailServiceImpl implements ItemDetailService {
         }
         
         // 缓存未命中，构建商品详情
-        ItemDetailDTO detailDTO = buildItemDetail(itemId, skuId);
+        // 使用安全版本的方法，避免线程泄漏
+        ItemDetailDTO detailDTO = buildItemDetailSafe(itemId, skuId);
         
         // 如果启用了缓存且构建成功，则缓存结果
         if (cacheEnabled && detailDTO != null) {
@@ -154,7 +155,13 @@ public class ItemDetailServiceImpl implements ItemDetailService {
     }
     
     /**
-     * 构建商品详情DTO
+     * 构建商品详情DTO - BAD CASE: 存在线程泄漏风险
+     * 
+     * 线程泄漏风险说明：
+     * 1. 为每个异步任务创建新的线程池，而不是复用已有的线程池
+     * 2. 这些线程池没有被正确关闭，导致线程资源无法释放
+     * 3. 当方法被频繁调用时，会创建大量线程池和线程，最终导致系统资源耗尽
+     * 4. 此外，使用了无界队列的线程池，在高负载情况下可能导致内存溢出
      */
     private ItemDetailDTO buildItemDetail(Long itemId, Long skuId) {
         // 获取商品基本信息
@@ -167,7 +174,15 @@ public class ItemDetailServiceImpl implements ItemDetailService {
         ItemDetailDTO detailDTO = new ItemDetailDTO();
         detailDTO.setItem(item);
         
-        // 并行加载其他相关数据
+        // BAD CASE: 为每个异步任务创建新的线程池，而不是复用已有的线程池
+        // 这会导致线程泄漏，因为这些线程池没有被正确关闭
+        ExecutorService categoryExecutor = Executors.newFixedThreadPool(2);
+        ExecutorService skusExecutor = Executors.newFixedThreadPool(2);
+        ExecutorService imagesExecutor = Executors.newFixedThreadPool(2);
+        ExecutorService reviewExecutor = Executors.newFixedThreadPool(2);
+        ExecutorService contentExecutor = Executors.newFixedThreadPool(2);
+        
+        // 并行加载类目信息
         CompletableFuture<Void> categoryFuture = CompletableFuture.runAsync(() -> {
             try {
                 if (item.getCategoryId() != null) {
@@ -182,8 +197,168 @@ public class ItemDetailServiceImpl implements ItemDetailService {
             } catch (Exception e) {
                 logger.error("Failed to load category for item: {}", itemId, e);
             }
-        }, executorService);
+        }, categoryExecutor); // BAD CASE: 使用单独创建的线程池
         
+        // 并行加载SKU信息
+        CompletableFuture<Void> skusFuture = CompletableFuture.runAsync(() -> {
+            try {
+                // BAD CASE: 模拟耗时操作，增加线程占用时间
+                Thread.sleep(100);
+                
+                List<Sku> skus = itemService.getSkusByItemId(itemId);
+                detailDTO.setSkus(skus);
+                
+                // 设置选中的SKU
+                if (skuId != null && skus != null) {
+                    for (Sku sku : skus) {
+                        if (skuId.equals(sku.getId())) {
+                            detailDTO.setSelectedSku(sku);
+                            break;
+                        }
+                    }
+                } else if (item.getSkuId() != null && skus != null) {
+                    // 如果没有指定SKU ID，使用商品默认SKU
+                    for (Sku sku : skus) {
+                        if (item.getSkuId().equals(sku.getId())) {
+                            detailDTO.setSelectedSku(sku);
+                            break;
+                        }
+                    }
+                } else if (skus != null && !skus.isEmpty()) {
+                    // 如果没有默认SKU，使用第一个SKU
+                    detailDTO.setSelectedSku(skus.get(0));
+                }
+                
+                // 提取规格信息
+                if (skus != null && !skus.isEmpty()) {
+                    detailDTO.setSpecifications(extractSpecifications(skus));
+                }
+            } catch (Exception e) {
+                logger.error("Failed to load SKUs for item: {}", itemId, e);
+            }
+        }, skusExecutor); // BAD CASE: 使用单独创建的线程池
+        
+        // 并行加载图片信息
+        CompletableFuture<Void> imagesFuture = CompletableFuture.runAsync(() -> {
+            try {
+                // BAD CASE: 模拟耗时操作，增加线程占用时间
+                Thread.sleep(150);
+                
+                // 这里可以从图片服务获取商品图片列表
+                // 为了演示，使用商品主图和SKU图片作为图片列表
+                List<String> images = new ArrayList<>();
+                if (item.getImage() != null) {
+                    images.add(item.getImage());
+                }
+                
+                // 添加SKU图片
+                if (detailDTO.getSkus() != null) {
+                    for (Sku sku : detailDTO.getSkus()) {
+                        if (sku.getImages() != null) {
+                            // 假设SKU的images字段是JSON数组字符串
+                            // 实际应用中可能需要解析JSON
+                            images.add(sku.getImages());
+                        }
+                    }
+                }
+                
+                detailDTO.setImages(images);
+            } catch (Exception e) {
+                logger.error("Failed to load images for item: {}", itemId, e);
+            }
+        }, imagesExecutor); // BAD CASE: 使用单独创建的线程池
+        
+        // 并行加载评价统计信息
+        CompletableFuture<Void> reviewStatsFuture = CompletableFuture.runAsync(() -> {
+            try {
+                // BAD CASE: 模拟耗时操作，增加线程占用时间
+                Thread.sleep(200);
+                
+                // 这里可以从评价服务获取评价统计信息
+                // 为了演示，使用模拟数据
+                ReviewStatisticsDTO reviewStats = createMockReviewStatistics();
+                detailDTO.setReviewStatistics(reviewStats);
+            } catch (Exception e) {
+                logger.error("Failed to load review statistics for item: {}", itemId, e);
+            }
+        }, reviewExecutor); // BAD CASE: 使用单独创建的线程池
+        
+        // 并行加载商品详情内容
+        CompletableFuture<Void> detailContentFuture = CompletableFuture.runAsync(() -> {
+            try {
+                // BAD CASE: 模拟耗时操作，增加线程占用时间
+                Thread.sleep(250);
+                
+                String detailContent = getItemDetailContent(itemId);
+                detailDTO.setDetailContent(detailContent);
+            } catch (Exception e) {
+                logger.error("Failed to load detail content for item: {}", itemId, e);
+            }
+        }, contentExecutor); // BAD CASE: 使用单独创建的线程池
+        
+        // 等待所有异步任务完成
+        try {
+            CompletableFuture.allOf(
+                    categoryFuture, 
+                    skusFuture, 
+                    imagesFuture, 
+                    reviewStatsFuture, 
+                    detailContentFuture
+            ).get();
+        } catch (Exception e) {
+            logger.error("Error while building product detail for item: {}", itemId, e);
+        }
+        
+        // BAD CASE: 没有关闭创建的线程池，导致线程泄漏
+        // 正确的做法应该是在这里调用 shutdown() 方法关闭线程池
+        // categoryExecutor.shutdown();
+        // skusExecutor.shutdown();
+        // imagesExecutor.shutdown();
+        // reviewExecutor.shutdown();
+        // contentExecutor.shutdown();
+        
+        return detailDTO;
+    }
+    
+    /**
+     * 构建商品详情DTO - 安全版本
+     * 
+     * 解决线程泄漏风险的方法：
+     * 1. 使用共享的线程池，避免为每个任务创建新的线程池
+     * 2. 使用有界队列的线程池，避免内存溢出
+     * 3. 使用 try-finally 确保资源正确释放
+     * 4. 设置合理的线程池参数，避免资源浪费
+     */
+    private ItemDetailDTO buildItemDetailSafe(Long itemId, Long skuId) {
+        // 获取商品基本信息
+        Item item = itemService.getItemById(itemId);
+        if (item == null) {
+            logger.warn("Item not found: {}", itemId);
+            return null;
+        }
+        
+        ItemDetailDTO detailDTO = new ItemDetailDTO();
+        detailDTO.setItem(item);
+        
+        // 安全版本：使用共享的线程池，避免为每个任务创建新的线程池
+        // 并行加载类目信息
+        CompletableFuture<Void> categoryFuture = CompletableFuture.runAsync(() -> {
+            try {
+                if (item.getCategoryId() != null) {
+                    Category category = categoryService.getCategoryById(item.getCategoryId());
+                    if (category != null) {
+                        CategoryDTO categoryDTO = new CategoryDTO();
+                        categoryDTO.setId(category.getId());
+                        categoryDTO.setName(category.getName());
+                        detailDTO.setCategory(categoryDTO);
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Failed to load category for item: {}", itemId, e);
+            }
+        }, executorService); // 使用共享的线程池
+        
+        // 并行加载SKU信息
         CompletableFuture<Void> skusFuture = CompletableFuture.runAsync(() -> {
             try {
                 List<Sku> skus = itemService.getSkusByItemId(itemId);
@@ -217,8 +392,9 @@ public class ItemDetailServiceImpl implements ItemDetailService {
             } catch (Exception e) {
                 logger.error("Failed to load SKUs for item: {}", itemId, e);
             }
-        }, executorService);
+        }, executorService); // 使用共享的线程池
         
+        // 并行加载图片信息
         CompletableFuture<Void> imagesFuture = CompletableFuture.runAsync(() -> {
             try {
                 // 这里可以从图片服务获取商品图片列表
@@ -243,8 +419,9 @@ public class ItemDetailServiceImpl implements ItemDetailService {
             } catch (Exception e) {
                 logger.error("Failed to load images for item: {}", itemId, e);
             }
-        }, executorService);
+        }, executorService); // 使用共享的线程池
         
+        // 并行加载评价统计信息
         CompletableFuture<Void> reviewStatsFuture = CompletableFuture.runAsync(() -> {
             try {
                 // 这里可以从评价服务获取评价统计信息
@@ -254,8 +431,9 @@ public class ItemDetailServiceImpl implements ItemDetailService {
             } catch (Exception e) {
                 logger.error("Failed to load review statistics for item: {}", itemId, e);
             }
-        }, executorService);
+        }, executorService); // 使用共享的线程池
         
+        // 并行加载商品详情内容
         CompletableFuture<Void> detailContentFuture = CompletableFuture.runAsync(() -> {
             try {
                 String detailContent = getItemDetailContent(itemId);
@@ -263,7 +441,7 @@ public class ItemDetailServiceImpl implements ItemDetailService {
             } catch (Exception e) {
                 logger.error("Failed to load detail content for item: {}", itemId, e);
             }
-        }, executorService);
+        }, executorService); // 使用共享的线程池
         
         // 等待所有异步任务完成
         try {
