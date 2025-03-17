@@ -1,10 +1,12 @@
 package com.example.onlinestore.mapper;
 
 import com.example.onlinestore.entity.ItemEntity;
+import com.example.onlinestore.dto.CategoryItemCountDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface ItemMapper {
@@ -54,4 +56,17 @@ public interface ItemMapper {
      * @return 商品实体
      */
     ItemEntity findByNameExcludeId(@Param("name") String name, @Param("excludeId") Long excludeId);
+    
+    /**
+     * 按类目统计商品数量
+     * @return 类目商品数量统计列表
+     */
+    List<CategoryItemCountDTO> countItemsByCategory();
+    
+    /**
+     * 按类目统计商品数量（包含子类目）
+     * @param categoryIds 类目ID列表
+     * @return 类目ID到商品数量的映射
+     */
+    List<Map<String, Object>> countItemsByCategoryIds(@Param("categoryIds") List<Long> categoryIds);
 }
