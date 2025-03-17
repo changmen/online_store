@@ -3,6 +3,7 @@ package com.example.onlinestore.service.impl;
 import com.example.onlinestore.entity.ItemAccessLogEntity;
 import com.example.onlinestore.mapper.ItemAccessLogMapper;
 import com.example.onlinestore.service.ItemAccessLogService;
+import com.example.onlinestore.util.SqlInjectionRiskWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -147,8 +148,10 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
         }
         
         try {
-            // 批量保存日志
-            itemAccessLogMapper.batchInsertAccessLogs(logsToSave);
+            // 使用安全的参数化查询方式保存日志
+            for (ItemAccessLogEntity log : logsToSave) {
+                itemAccessLogMapper.insertAccessLog(log);
+            }
             
             // 清空缓冲区
             accessLogBuffer.removeAll(logsToSave);
@@ -160,7 +163,7 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
     }
     
     /**
-     * 批量保存访问日志（不良案例）
+     * 批量保存访问日志（不良案例 - SQL注入风险）
      */
     @Scheduled(fixedRate = 60000) // 每分钟执行一次
     public void saveAccessLogsBadCase() {
@@ -171,8 +174,9 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
                 return;
             }
             
-            // BAD CASE: 在锁内执行IO操作，增加锁持有时间
-            itemAccessLogMapper.batchInsertAccessLogs(badCaseAccessLogBuffer);
+            // BAD CASE: 使用不安全的SQL拼接方式，存在SQL注入风险
+            SqlInjectionRiskWrapper wrapper = new SqlInjectionRiskWrapper(badCaseAccessLogBuffer);
+            itemAccessLogMapper.batchInsertAccessLogs(wrapper);
             
             badCaseAccessLogBuffer.clear();
             

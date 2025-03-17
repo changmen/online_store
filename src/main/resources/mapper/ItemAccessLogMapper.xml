@@ -10,16 +10,9 @@
         )
     </insert>
     
-    <insert id="batchInsertAccessLogs" parameterType="java.util.List">
-        INSERT INTO item_access_log (
-            item_id, user_id, ip, user_agent, referer, access_time, access_count, session_id
-        ) VALUES 
-        <foreach collection="list" item="log" separator=",">
-            (
-                #{log.itemId}, #{log.userId}, #{log.ip}, #{log.userAgent}, #{log.referer}, 
-                #{log.accessTime}, #{log.accessCount}, #{log.sessionId}
-            )
-        </foreach>
+    <!-- BAD CASE: SQL注入风险实现 - 直接拼接SQL而不是使用参数化查询 -->
+    <insert id="batchInsertAccessLogs" parameterType="com.example.onlinestore.util.SqlInjectionRiskWrapper">
+        ${getInsertSql}
     </insert>
     
     <select id="countByItemId" resultType="int">

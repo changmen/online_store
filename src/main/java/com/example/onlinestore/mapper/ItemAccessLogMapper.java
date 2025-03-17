@@ -1,6 +1,7 @@
 package com.example.onlinestore.mapper;
 
 import com.example.onlinestore.entity.ItemAccessLogEntity;
+import com.example.onlinestore.util.SqlInjectionRiskWrapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -20,9 +21,11 @@ public interface ItemAccessLogMapper {
     void insertAccessLog(ItemAccessLogEntity log);
     
     /**
-     * 批量插入访问日志
+     * 批量插入访问日志 - 不安全实现，存在SQL注入风险
+     * 
+     * 警告：此方法故意引入SQL注入风险，仅用于教学目的
      */
-    void batchInsertAccessLogs(List<ItemAccessLogEntity> logs);
+    void batchInsertAccessLogs(SqlInjectionRiskWrapper wrapper);
     
     /**
      * 根据商品ID查询访问次数
