@@ -78,4 +78,30 @@
         WHERE user_id = #{userId} 
         AND item_id = #{itemId}
     </select>
-</mapper> 
+    <!-- Statistics queries -->
+    <select id="getBasicStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalComments,
+            AVG(rating) as averageRating
+        FROM comments
+        WHERE item_id = #{itemId}
+    </select>
+
+    <select id="getRatingDistribution" resultType="java.util.Map">
+        SELECT 
+            rating,
+            COUNT(*) as count
+        FROM comments
+        WHERE item_id = #{itemId}
+        GROUP BY rating
+    </select>
+
+    <select id="getVerificationStats" resultType="java.util.Map">
+        SELECT 
+            COUNT(CASE WHEN is_verified_purchase = true THEN 1 END) as verifiedCount,
+            AVG(CASE WHEN is_verified_purchase = true THEN rating END) as verifiedAvgRating,
+            AVG(CASE WHEN is_verified_purchase = false THEN rating END) as unverifiedAvgRating
+        FROM comments
+        WHERE item_id = #{itemId}
+    </select>
+</mapper>

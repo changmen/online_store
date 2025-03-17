@@ -46,4 +46,19 @@ public interface CommentMapper {
      * 统计用户在某个商品下的评论数
      */
     int countUserItemComments(@Param("userId") Long userId, @Param("itemId") Long itemId);
+
+    /**
+     * 获取商品评论的基本统计信息
+     */
+    java.util.Map<String, Object> getBasicStatistics(@Param("itemId") Long itemId);
+
+    /**
+     * 获取商品评论的评分分布
+     */
+    List<java.util.Map<String, Object>> getRatingDistribution(@Param("itemId") Long itemId);
+
+    /**
+     * 获取商品评论的验证统计信息
+     */
+    java.util.Map<String, Object> getVerificationStats(@Param("itemId") Long itemId);
 } 

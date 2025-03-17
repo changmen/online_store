@@ -1,6 +1,7 @@
 package com.example.onlinestore.service;
 
 import com.example.onlinestore.bean.Comment;
+import com.example.onlinestore.dto.CommentStatistics;
 import com.example.onlinestore.entity.CommentEntity;
 import com.example.onlinestore.enums.CommentStatus;
 import com.example.onlinestore.enums.CommentType;
@@ -33,6 +34,12 @@ public interface CommentService {
      */
     long countItemComments(Long itemId);
     
+    /**
+     * 获取商品评论统计信息
+     * @param itemId 商品ID
+     * @return 评论统计信息，包含评分分布、验证购买统计等
+     */
+    CommentStatistics getItemCommentStatistics(Long itemId);
 
     List<Comment> findCommentsByAdvancedCondition(
             Long itemId,

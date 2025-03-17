@@ -1,6 +1,8 @@
 package com.example.onlinestore.service.impl;
 
 import com.example.onlinestore.bean.Comment;
+import com.example.onlinestore.bean.Item;
+import com.example.onlinestore.dto.CommentStatistics;
 import com.example.onlinestore.entity.CommentEntity;
 import com.example.onlinestore.enums.CommentStatus;
 import com.example.onlinestore.enums.CommentType;
@@ -8,6 +10,7 @@ import com.example.onlinestore.hook.CommentHookPoint;
 import com.example.onlinestore.hook.CommentHookManager;
 import com.example.onlinestore.mapper.CommentMapper;
 import com.example.onlinestore.service.CommentService;
+import com.example.onlinestore.service.ItemService;
 import com.example.onlinestore.validator.CommentCountValidator;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -17,9 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.beans.BeanCopier;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +37,9 @@ public class CommentServiceImpl implements CommentService {
     // LazyClass的注入
     @Autowired
     private CommentCountValidator commentCountValidator;
+
+    @Autowired
+    private ItemService itemService;
 
     @Override
     public Long addComment(Comment comment) {
@@ -197,6 +201,65 @@ public class CommentServiceImpl implements CommentService {
 
 
     // Speculative Generality: 实现过多的可能用不到的高级功能
+    @Override
+    public CommentStatistics getItemCommentStatistics(Long itemId) {
+        if (itemId == null) {
+            throw new IllegalArgumentException("Item ID cannot be null");
+        }
+
+        Item item = itemService.getItemById(itemId);
+        if (item == null) {
+            throw new IllegalArgumentException("Item not found");
+        }
+        // Get basic statistics
+        Map<String, Object> basicStats = commentMapper.getBasicStatistics(itemId);
+        Long totalComments = ((Number) basicStats.get("totalComments")).longValue();
+        Double averageRating = (Double) basicStats.get("averageRating");
+
+        // Get rating distribution
+        List<Map<String, Object>> ratingDist = commentMapper.getRatingDistribution(itemId);
+        Map<Integer, Long> ratingCounts = new HashMap<>();
+        for (Map<String, Object> rating : ratingDist) {
+            int stars = ((Number) rating.get("rating")).intValue();
+            long count = ((Number) rating.get("count")).longValue();
+            ratingCounts.put(stars, count);
+        }
+
+        CommentStatistics.RatingDistribution distribution = new CommentStatistics.RatingDistribution(
+            ratingCounts.getOrDefault(5, 0L),
+            ratingCounts.getOrDefault(4, 0L),
+            ratingCounts.getOrDefault(3, 0L),
+            ratingCounts.getOrDefault(2, 0L),
+            ratingCounts.getOrDefault(1, 0L)
+        );
+
+        // Get verification statistics
+        Map<String, Object> verificationStats = commentMapper.getVerificationStats(itemId);
+        Long verifiedCount = ((Number) verificationStats.get("verifiedCount")).longValue();
+        Double verifiedAvgRating = (Double) verificationStats.get("verifiedAvgRating");
+        Double unverifiedAvgRating = (Double) verificationStats.get("unverifiedAvgRating");
+
+        // Calculate verified purchase percentage
+        Double verifiedPercentage = totalComments > 0 ? 
+            (verifiedCount.doubleValue() / totalComments) * 100 : 0.0;
+
+        CommentStatistics.VerificationStats verification = new CommentStatistics.VerificationStats(
+            verifiedCount,
+            verifiedPercentage,
+            verifiedAvgRating,
+            unverifiedAvgRating
+        );
+
+        return new CommentStatistics(
+            itemId,
+            item.getName(),
+            totalComments,
+            averageRating,
+            distribution,
+            verification
+        );
+    }
+
     @Override
     public List<Comment> findCommentsByAdvancedCondition(
             Long itemId,

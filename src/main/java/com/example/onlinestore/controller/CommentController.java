@@ -1,6 +1,7 @@
 package com.example.onlinestore.controller;
 
 import com.example.onlinestore.bean.Comment;
+import com.example.onlinestore.dto.CommentStatistics;
 import com.example.onlinestore.dto.PageResponse;
 import com.example.onlinestore.dto.Response;
 import com.example.onlinestore.service.CommentService;
@@ -71,4 +72,17 @@ public class CommentController {
         return Response.success(pageResponse);
     }
 
+    /**
+     * 获取商品评论统计信息
+     */
+    @GetMapping("/items/{itemId}/statistics")
+    public Response<CommentStatistics> getItemCommentStatistics(
+            @PathVariable("itemId") Long itemId) {
+        try {
+            CommentStatistics statistics = commentService.getItemCommentStatistics(itemId);
+            return Response.success(statistics);
+        } catch (IllegalArgumentException e) {
+            return Response.fail(e.getMessage());
+        }
+    }
 } 
