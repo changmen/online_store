@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.UserItemStatMapper">
+
+    <!-- 获取用户查看商品的数量 -->
+    <select id="countUserViewedItems" resultType="int">
+        SELECT COUNT(DISTINCT i.id)
+        FROM item_view_log ivl
+        JOIN item i ON ivl.item_id = i.id
+        WHERE ivl.user_id = #{userId}
+    </select>
+    
+    <!-- 获取用户购买商品的数量 -->
+    <select id="countUserPurchasedItems" resultType="int">
+        SELECT COUNT(DISTINCT oi.item_id)
+        FROM order_item oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE o.user_id = #{userId}
+        AND o.status = 'COMPLETED'
+    </select>
+    
+    <!-- 获取用户最近查看的商品ID列表 -->
+    <select id="findRecentViewedItemIds" resultType="long">
+        SELECT DISTINCT ivl.item_id
+        FROM item_view_log ivl
+        WHERE ivl.user_id = #{userId}
+        ORDER BY ivl.view_time DESC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- 获取用户最近购买的商品ID列表 -->
+    <select id="findRecentPurchasedItemIds" resultType="long">
+        SELECT DISTINCT oi.item_id
+        FROM order_item oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE o.user_id = #{userId}
+        AND o.status = 'COMPLETED'
+        ORDER BY o.create_time DESC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- 获取用户总消费金额 -->
+    <select id="sumUserTotalSpent" resultType="long">
+        SELECT COALESCE(SUM(o.total_amount), 0)
+        FROM orders o
+        WHERE o.user_id = #{userId}
+        AND o.status = 'COMPLETED'
+    </select>
+    
+    <!-- 批量获取多个用户的查看商品数量 -->
+    <select id="batchCountUserViewedItems" resultType="java.util.HashMap">
+        SELECT ivl.user_id, COUNT(DISTINCT ivl.item_id) as view_count
+        FROM item_view_log ivl
+        WHERE ivl.user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+        GROUP BY ivl.user_id
+    </select>
+    
+    <!-- 批量获取多个用户的购买商品数量 -->
+    <select id="batchCountUserPurchasedItems" resultType="java.util.HashMap">
+        SELECT o.user_id, COUNT(DISTINCT oi.item_id) as purchase_count
+        FROM order_item oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE o.user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+        AND o.status = 'COMPLETED'
+        GROUP BY o.user_id
+    </select>
+    
+    <!-- 批量获取多个用户的总消费金额 -->
+    <select id="batchSumUserTotalSpent" resultType="java.util.HashMap">
+        SELECT o.user_id, COALESCE(SUM(o.total_amount), 0) as total_spent
+        FROM orders o
+        WHERE o.user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+        AND o.status = 'COMPLETED'
+        GROUP BY o.user_id
+    </select>
+    
+    <!-- 获取购买了指定商品的用户ID列表 -->
+    <select id="findUserIdsByPurchasedItemId" resultType="string">
+        SELECT DISTINCT o.user_id
+        FROM order_item oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE oi.item_id = #{itemId}
+        AND o.status = 'COMPLETED'
+    </select>
+    
+    <!-- 获取最活跃的用户ID列表（基于查看和购买行为） -->
+    <select id="findMostActiveUserIds" resultType="string">
+        SELECT user_id
+        FROM (
+            SELECT ivl.user_id, COUNT(*) as activity_count
+            FROM item_view_log ivl
+            GROUP BY ivl.user_id
+            UNION ALL
+            SELECT o.user_id, COUNT(*) * 5 as activity_count
+            FROM orders o
+            WHERE o.status = 'COMPLETED'
+            GROUP BY o.user_id
+        ) activity
+        GROUP BY user_id
+        ORDER BY SUM(activity_count) DESC
+        LIMIT #{limit}
+    </select>
+</mapper> 
