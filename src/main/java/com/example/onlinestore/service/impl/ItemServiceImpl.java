@@ -3,7 +3,6 @@ package com.example.onlinestore.service.impl;
 import com.example.onlinestore.bean.Category;
 import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.bean.Sku;
-import com.example.onlinestore.bean.VirtualItem;
 import com.example.onlinestore.cache.CacheManager;
 import com.example.onlinestore.dto.CategoryItemCountDTO;
 import com.example.onlinestore.dto.ItemQueryDTO;
@@ -515,10 +514,6 @@ public class ItemServiceImpl implements ItemService {
     private Item convertToItem(ItemEntity itemEntity) {
         if (itemEntity == null) {
             return null;
-        }
-
-        if (StringUtils.endsWithIgnoreCase(itemEntity.getName(), "test-item")) {
-            return new VirtualItem();
         }
 
         Item item = new Item();
