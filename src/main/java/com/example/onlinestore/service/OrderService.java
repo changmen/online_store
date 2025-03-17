@@ -106,4 +106,11 @@ public interface OrderService {
      * 统计商品销量
      */
     int countItemSales(Long itemId, LocalDateTime startTime, LocalDateTime endTime);
+    
+    /**
+     * 更新订单项数量
+     * @param orderItemId 订单项ID
+     * @param quantity 数量
+     */
+    void updateQuantity(Long orderItemId, Integer quantity);
 } 
