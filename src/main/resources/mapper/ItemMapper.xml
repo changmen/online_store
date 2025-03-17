@@ -3,8 +3,8 @@
 <mapper namespace="com.example.onlinestore.mapper.ItemMapper">
 
     <insert id="insertItem" parameterType="com.example.onlinestore.entity.ItemEntity" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO items (name, description, image, secondary_name, sku_id, category_id)
-        VALUES (#{name}, #{description}, #{image}, #{secondaryName}, #{skuId}, #{categoryId})
+        INSERT INTO items (name, description, description_url, image, secondary_name, sku_id, category_id)
+        VALUES (#{name}, #{description}, #{descriptionUrl}, #{image}, #{secondaryName}, #{skuId}, #{categoryId})
     </insert>
     
     <select id="findById" resultType="com.example.onlinestore.entity.ItemEntity">
@@ -15,6 +15,7 @@
         UPDATE items 
         SET name = #{name}, 
             description = #{description}, 
+            description_url = #{descriptionUrl},
             image = #{image}, 
             secondary_name = #{secondaryName}, 
             sku_id = #{skuId},

@@ -14,6 +14,7 @@ public class ItemEntity implements Serializable {
     private String name;
     private String secondaryName;
     private String description;
+    private String descriptionUrl; // 商品描述OSS URL
     private String image;
     private Long skuId;
     private LocalDateTime createdAt;
@@ -49,6 +50,14 @@ public class ItemEntity implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getDescriptionUrl() {
+        return descriptionUrl;
+    }
+
+    public void setDescriptionUrl(String descriptionUrl) {
+        this.descriptionUrl = descriptionUrl;
     }
 
     public String getImage() {

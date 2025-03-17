@@ -11,6 +11,7 @@ public class Item implements Serializable {
     private Long categoryId;
     private String name;
     private String description;
+    private String descriptionUrl;
     private String image;
     private Long skuId;
     private String secondaryName;
@@ -46,6 +47,14 @@ public class Item implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getDescriptionUrl() {
+        return descriptionUrl;
+    }
+
+    public void setDescriptionUrl(String descriptionUrl) {
+        this.descriptionUrl = descriptionUrl;
     }
 
     public String getImage() {
