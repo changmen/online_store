@@ -41,4 +41,9 @@ public interface CommentMapper {
             @Param("type") String type,
             @Param("isVerifiedPurchase") Boolean isVerifiedPurchase
     );
+
+    /**
+     * 统计用户在某个商品下的评论数
+     */
+    int countUserItemComments(@Param("userId") Long userId, @Param("itemId") Long itemId);
 } 

@@ -71,4 +71,11 @@
         ORDER BY create_time DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
+
+    <select id="countUserItemComments" resultType="int">
+        SELECT COUNT(*) 
+        FROM comments 
+        WHERE user_id = #{userId} 
+        AND item_id = #{itemId}
+    </select>
 </mapper> 

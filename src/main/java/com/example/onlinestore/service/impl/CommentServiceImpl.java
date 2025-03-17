@@ -8,6 +8,7 @@ import com.example.onlinestore.hook.CommentHookPoint;
 import com.example.onlinestore.hook.CommentHookManager;
 import com.example.onlinestore.mapper.CommentMapper;
 import com.example.onlinestore.service.CommentService;
+import com.example.onlinestore.validator.CommentCountValidator;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,10 @@ public class CommentServiceImpl implements CommentService {
     
     @Autowired
     private CommentHookManager hookManager;
+    
+    // LazyClass的注入
+    @Autowired
+    private CommentCountValidator commentCountValidator;
 
     @Override
     public Long addComment(Comment comment) {
@@ -51,6 +56,18 @@ public class CommentServiceImpl implements CommentService {
         }
 
         try {
+            // 检查用户在该商品下的评论数量
+            int currentCommentCount = commentMapper.countUserItemComments(
+                    comment.getUserId(), comment.getItemId());
+            
+            // 使用LazyClass进行验证
+            if (!commentCountValidator.validateCommentCount(currentCommentCount)) {
+                logger.warn("User {} has reached maximum comment limit for item {}", 
+                        comment.getUserId(), comment.getItemId());
+                throw new IllegalStateException(
+                        "You have reached the maximum number of comments allowed for this item");
+            }
+
             // 执行插入前Hook
             if (!hookManager.executeHooks(CommentHookPoint.BEFORE_INSERT, comment)) {
                 logger.info("Comment insertion cancelled by before-insert hook");

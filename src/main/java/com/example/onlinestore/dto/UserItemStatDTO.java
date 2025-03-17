@@ -1,5 +1,6 @@
 package com.example.onlinestore.dto;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
@@ -7,9 +8,9 @@ import java.util.List;
  * 用户商品统计DTO
  */
 public class UserItemStatDTO implements Serializable {
-    
-    private static final long serialVersionUID = 1L;
-    
+
+    @Serial
+    private static final long serialVersionUID = 569433549966303282L;
     private String userId;
     private int viewCount;
     private int purchaseCount;
