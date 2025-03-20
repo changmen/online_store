@@ -3,8 +3,7 @@ package com.example.onlinestore.validator;
 import org.springframework.stereotype.Component;
 
 /**
- * LazyClass: 这个类职责过于简单，完全可以将其逻辑并入CommentService
- * 它只是一个简单的封装，没有真正的业务逻辑
+ * 评论数量校验
  */
 @Component
 public class CommentCountValidator {

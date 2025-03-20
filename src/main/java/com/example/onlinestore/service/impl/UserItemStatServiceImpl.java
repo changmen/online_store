@@ -127,13 +127,7 @@ public class UserItemStatServiceImpl implements UserItemStatService {
     }
     
     /**
-     * BAD CASE: 在多线程环境下使用HashMap，可能导致并发修改异常
-     * 
-     * 问题说明：
-     * 1. 使用非线程安全的HashMap存储结果
-     * 2. 使用parallelStream()进行并行处理，但结果集不是线程安全的
-     * 3. 多个线程同时修改HashMap可能导致数据不一致或ConcurrentModificationException
-     * 4. 没有使用线程安全的集合类或同步机制
+     * 按用户统计商品
      */
     @Override
     public Map<String, UserItemStatDTO> getUserItemStatsNew(List<String> userIds) {
@@ -142,10 +136,8 @@ public class UserItemStatServiceImpl implements UserItemStatService {
         }
         
         try {
-            // BAD CASE: 使用普通HashMap，在多线程环境下不安全
             Map<String, UserItemStatDTO> result = new HashMap<>();
             
-            // BAD CASE: 使用parallelStream()进行并行处理，但结果集不是线程安全的
             userIds.parallelStream().forEach(userId -> {
                 try {
                     // 获取用户查看商品的数量
@@ -199,7 +191,7 @@ public class UserItemStatServiceImpl implements UserItemStatService {
             
             return result;
         } catch (Exception e) {
-            logger.error("Failed to get user item stats (bad case)", e);
+            logger.error("Failed to get user item stats ", e);
             return Collections.emptyMap();
         }
     }

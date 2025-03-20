@@ -75,44 +75,13 @@ public class OrderController {
     
     /**
      * 获取订单详情
-     * BAD CASE: 水平越权漏洞
-     * 
-     * 这个接口存在以下问题：
-     * 1. 没有验证当前用户是否有权限查看该订单
-     * 2. 即使传入了userId参数，也没有检查订单是否属于该用户
-     * 3. 允许任何用户通过订单号查看任何订单的详细信息
      */
     @GetMapping("/{orderNo}")
     public Response<Map<String, Object>> getOrderDetail(
             @PathVariable String orderNo,
             @RequestParam(required = false) Long userId) {
         try {
-            // BAD CASE: 水平越权漏洞
-            // 没有验证当前用户是否有权限查看该订单
-            // 正确的做法应该是从会话中获取当前用户ID，而不是从请求参数中获取
-            
             Map<String, Object> orderDetail = orderService.getOrderDetail(orderNo, userId);
-            return Response.success(orderDetail);
-        } catch (Exception e) {
-            logger.error("获取订单详情失败", e);
-            return Response.fail(e.getMessage());
-        }
-    }
-    
-    /**
-     * 获取订单详情 - 安全版本
-     * 修复了水平越权漏洞
-     */
-    @GetMapping("/safe/{orderNo}")
-    public Response<Map<String, Object>> getOrderDetailSafe(
-            @PathVariable String orderNo,
-            @RequestHeader("X-User-Id") Long userId) {
-        try {
-            // 安全实现：从请求头中获取用户ID，而不是从请求参数中获取
-            // 假设认证系统已经验证了请求头中的用户ID
-            
-            // 调用安全版本的服务方法
-            Map<String, Object> orderDetail = ((OrderServiceImpl) orderService).getOrderDetailSafe(orderNo, userId);
             return Response.success(orderDetail);
         } catch (Exception e) {
             logger.error("获取订单详情失败", e);
