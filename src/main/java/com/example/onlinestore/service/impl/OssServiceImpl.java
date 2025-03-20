@@ -78,7 +78,6 @@ public class OssServiceImpl implements OssService {
      */
     @Override
     public String getItemDescription(String ossUrl) {
-        // BAD CASE: 创建HttpClient但不在try-with-resources中使用
         HttpClient httpClient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(ossUrl);
 
@@ -98,17 +97,10 @@ public class OssServiceImpl implements OssService {
 
             logger.info("Successfully retrieved item description from OSS URL: {}", ossUrl);
 
-            // BAD CASE: 未关闭资源，导致内存泄漏
-            // reader.close();
-            // inputStream.close();
-            // EntityUtils.consume(response.getEntity()); 应该使用这个来释放连接
 
             return content.toString();
         } catch (IOException e) {
             logger.error("Failed to get item description from OSS URL: {}", ossUrl, e);
-
-            // BAD CASE: 异常处理中未关闭资源
-            // 应该在这里关闭httpGet和httpClient，但故意不关闭
 
             throw new RuntimeException("Failed to get item description from OSS", e);
         }
@@ -127,14 +119,5 @@ public class OssServiceImpl implements OssService {
      */
     private String generateOssUrl(String objectName) {
         return "https://" + ossConfig.getBucketName() + "." + ossConfig.getEndpoint() + "/" + objectName;
-    }
-
-    /**
-     * 从OSS URL中提取对象名称
-     */
-    private String extractObjectName(String ossUrl) {
-        // 简单实现，实际应用中可能需要更复杂的解析逻辑
-        String[] parts = ossUrl.split("/");
-        return parts[parts.length - 2] + "/" + parts[parts.length - 1];
     }
 } 
