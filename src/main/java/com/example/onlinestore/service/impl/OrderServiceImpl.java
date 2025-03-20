@@ -368,30 +368,18 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 更新订单项数量
-     * BAD CASE: 自动拆箱存在NPE风险
-     * 
-     * 这个方法存在以下问题：
-     * 1. 没有检查orderItemId是否为null
-     * 2. 没有检查quantity是否为null
-     * 3. 在计算totalAmount时，使用了自动拆箱，如果quantity为null，会导致NPE
-     * 4. 在比较quantity > 0时，如果quantity为null，会导致NPE
+     *
      */
     @Override
     @Transactional
     public void updateQuantity(Long orderItemId, Integer quantity) {
         // 获取订单项
         OrderItemEntity orderItem = orderItemMapper.findById(orderItemId);
-        
-        // BAD CASE: 没有检查orderItem是否为null
-        
-        // BAD CASE: 没有检查quantity是否为null
-        
-        // BAD CASE: 自动拆箱 - 如果quantity为null，这里会抛出NPE
+
         if (quantity > 0) {
             // 更新数量
             orderItem.setQuantity(quantity);
             
-            // BAD CASE: 自动拆箱 - 如果quantity为null，这里会抛出NPE
             // 计算新的总金额
             BigDecimal totalAmount = orderItem.getPrice().multiply(new BigDecimal(quantity));
             orderItem.setTotalAmount(totalAmount);
@@ -413,53 +401,7 @@ public class OrderServiceImpl implements OrderService {
             logger.info("删除订单项: orderItemId={}", orderItemId);
         }
     }
-    
-    /**
-     * 更新订单项数量 - 安全版本
-     * 修复了自动拆箱NPE风险的问题
-     */
-    public void updateQuantitySafe(Long orderItemId, Integer quantity) {
-        // 参数验证
-        if (orderItemId == null) {
-            throw new OrderException("订单项ID不能为空");
-        }
-        
-        if (quantity == null) {
-            throw new OrderException("数量不能为空");
-        }
-        
-        // 获取订单项
-        OrderItemEntity orderItem = orderItemMapper.findById(orderItemId);
-        if (orderItem == null) {
-            throw new OrderException("订单项不存在: " + orderItemId);
-        }
-        
-        // 使用安全的比较方式，避免自动拆箱
-        if (quantity.intValue() > 0) {
-            // 更新数量
-            orderItem.setQuantity(quantity);
-            
-            // 安全地计算新的总金额，避免自动拆箱
-            BigDecimal totalAmount = orderItem.getPrice().multiply(BigDecimal.valueOf(quantity.longValue()));
-            orderItem.setTotalAmount(totalAmount);
-            
-            // 更新订单项
-            orderItemMapper.updateOrderItem(orderItem);
-            
-            // 更新订单总金额
-            updateOrderAmount(orderItem.getOrderId());
-            
-            logger.info("更新订单项数量: orderItemId={}, quantity={}", orderItemId, quantity);
-        } else {
-            // 如果数量为0或负数，删除订单项
-            orderItemMapper.deleteOrderItem(orderItemId);
-            
-            // 更新订单总金额
-            updateOrderAmount(orderItem.getOrderId());
-            
-            logger.info("删除订单项: orderItemId={}", orderItemId);
-        }
-    }
+
     
     /**
      * 更新订单金额
@@ -499,12 +441,6 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 查询订单详情
-     * BAD CASE: 水平越权漏洞
-     * 
-     * 这个方法存在以下问题：
-     * 1. 没有验证当前用户是否有权限查看该订单
-     * 2. 即使传入了userId参数，也没有检查订单是否属于该用户
-     * 3. 允许任何用户通过订单号查看任何订单的详细信息
      */
     @Override
     public Map<String, Object> getOrderDetail(String orderNo, Long userId) {
@@ -515,11 +451,7 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             throw new OrderException("订单不存在");
         }
-        
-        // BAD CASE: 水平越权漏洞
-        // 没有验证当前用户是否有权限查看该订单
-        // 正确的做法应该是检查 order.getUserId().equals(userId)
-        
+
         // 获取订单项
         List<OrderItemEntity> orderItems = orderItemMapper.findByOrderNo(orderNo);
         
@@ -532,44 +464,5 @@ public class OrderServiceImpl implements OrderService {
         
         return result;
     }
-    
-    /**
-     * 查询订单详情 - 安全版本
-     * 修复了水平越权漏洞
-     */
-    public Map<String, Object> getOrderDetailSafe(String orderNo, Long userId) {
-        Map<String, Object> result = new HashMap<>();
-        
-        // 参数验证
-        if (orderNo == null || orderNo.trim().isEmpty()) {
-            throw new OrderException("订单号不能为空");
-        }
-        
-        if (userId == null) {
-            throw new OrderException("用户ID不能为空");
-        }
-        
-        // 获取订单信息
-        OrderEntity order = orderMapper.findByOrderNo(orderNo);
-        if (order == null) {
-            throw new OrderException("订单不存在");
-        }
-        
-        // 安全检查：验证当前用户是否有权限查看该订单
-        if (!order.getUserId().equals(userId)) {
-            throw new OrderException("无权查看此订单");
-        }
-        
-        // 获取订单项
-        List<OrderItemEntity> orderItems = orderItemMapper.findByOrderNo(orderNo);
-        
-        // 构建返回结果
-        result.put("order", order);
-        result.put("orderItems", orderItems);
-        
-        // 记录访问日志
-        logger.info("查询订单详情: orderNo={}, userId={}", orderNo, userId);
-        
-        return result;
-    }
+
 } 
