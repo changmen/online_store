@@ -80,11 +80,8 @@ public class UserItemStatController {
         List<UserItemStatDTO> stats = userItemStatService.getMostActiveUsers(limit);
         return Response.success(stats);
     }
-    
-    /**
-     * 并发测试端点（展示不安全实现的问题）
-     */
-    @GetMapping("/concurrent-test")
+
+    @GetMapping("/user/items")
     public Response<String> concurrentTest(
             @RequestParam(value = "userCount", defaultValue = "100") int userCount) {
 
