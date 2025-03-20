@@ -100,9 +100,9 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
             
             accessLogBuffer.clear();
             
-            logger.info("Successfully saved access logs (bad case)");
+            logger.info("Successfully saved access logs");
         } catch (Exception e) {
-            logger.error("Failed to save access logs (bad case)", e);
+            logger.error("Failed to save access logs", e);
         } finally {
             lock.unlock();
         }

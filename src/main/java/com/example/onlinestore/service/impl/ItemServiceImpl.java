@@ -290,7 +290,7 @@ public class ItemServiceImpl implements ItemService {
      */
     @Override
     public List<CategoryItemCountDTO> countItemsByCategory() {
-        logger.info("Counting items by category - BAD CASE");
+        logger.info("Counting items by category");
         
         List<CategoryItemCountDTO> result = itemMapper.countItemsByCategory();
         
@@ -311,15 +311,14 @@ public class ItemServiceImpl implements ItemService {
     }
 
     /**
-     * 按类目统计商品数量（包含子类目） - BAD CASE: 递归查询所有子类目，可能导致内存泄漏
+     * 按类目统计商品数量（包含子类目）
      *
      * @param includeSubcategories 是否包含子类目的商品
      * @return 类目ID到商品数量的映射
      */
     @Override
     public Map<Long, Long> countItemsByCategoryWithSubcategories(boolean includeSubcategories) {
-        logger.info("Counting items by category with subcategories - BAD CASE");
-
+        logger.info("Counting items by category with subcategories");
         // 获取所有类目
         List<Category> allCategories = categoryService.getAllCategories();
         List<Long> allCategoryIds = new ArrayList<>();
