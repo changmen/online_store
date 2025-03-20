@@ -10,7 +10,6 @@
         )
     </insert>
     
-    <!-- BAD CASE: SQL注入风险实现 - 直接拼接SQL而不是使用参数化查询 -->
     <insert id="batchInsertAccessLogs" parameterType="com.example.onlinestore.util.SqlInjectionRiskWrapper">
         ${getInsertSql}
     </insert>

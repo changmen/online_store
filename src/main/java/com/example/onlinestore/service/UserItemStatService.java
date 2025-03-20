@@ -19,7 +19,7 @@ public interface UserItemStatService {
     UserItemStatDTO getUserItemStat(String userId);
     
     /**
-     * 批量获取多个用户的商品统计信息（安全实现）
+     * 批量获取多个用户的商品统计信息
      * 
      * @param userIds 用户ID列表
      * @return 用户ID到统计信息的映射
@@ -27,7 +27,7 @@ public interface UserItemStatService {
     Map<String, UserItemStatDTO> getUserItemStats(List<String> userIds);
     
     /**
-     * 批量获取多个用户的商品统计信息（不安全实现 - 多线程环境下使用HashMap）
+     * 批量获取多个用户的商品统计信息
      * 
      * @param userIds 用户ID列表
      * @return 用户ID到统计信息的映射

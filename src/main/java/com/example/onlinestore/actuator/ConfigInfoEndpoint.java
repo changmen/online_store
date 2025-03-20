@@ -15,11 +15,7 @@ import java.util.stream.StreamSupport;
 
 /**
  * 自定义Actuator端点 - 配置信息
- * 
- * BAD CASE: 此端点暴露了敏感的配置信息，包括:
- * - 所有环境变量和系统属性
- * - 应用程序配置（可能包含密码、密钥等）
- * - 云服务配置（可能包含访问凭证）
+ *
  */
 @Component
 @Endpoint(id = "configinfo")
@@ -32,7 +28,6 @@ public class ConfigInfoEndpoint {
     public Map<String, Object> getConfigInfo() {
         Map<String, Object> configInfo = new HashMap<>();
         
-        // BAD CASE: 暴露所有属性源
         Map<String, Map<String, Object>> propertySources = new HashMap<>();
         
         StreamSupport.stream(environment.getPropertySources().spliterator(), false)
@@ -41,7 +36,6 @@ public class ConfigInfoEndpoint {
                     EnumerablePropertySource<?> enumPS = (EnumerablePropertySource<?>) ps;
                     Map<String, Object> properties = new HashMap<>();
                     
-                    // BAD CASE: 暴露所有属性，包括敏感信息
                     Arrays.stream(enumPS.getPropertyNames()).forEach(propName -> {
                         properties.put(propName, environment.getProperty(propName));
                     });
@@ -51,7 +45,6 @@ public class ConfigInfoEndpoint {
         
         configInfo.put("propertySources", propertySources);
         
-        // BAD CASE: 特别暴露一些敏感配置
         Map<String, Object> sensitiveConfig = new HashMap<>();
         
         // 数据库配置
@@ -74,10 +67,8 @@ public class ConfigInfoEndpoint {
         
         configInfo.put("sensitiveConfig", sensitiveConfig);
         
-        // BAD CASE: 暴露活动的配置文件
         configInfo.put("activeProfiles", environment.getActiveProfiles());
         
-        // BAD CASE: 暴露所有属性
         Map<String, Object> allProperties = new HashMap<>();
         for (PropertySource<?> propertySource : environment.getPropertySources()) {
             if (propertySource instanceof EnumerablePropertySource) {

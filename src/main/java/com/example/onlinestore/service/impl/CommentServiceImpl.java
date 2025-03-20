@@ -34,7 +34,6 @@ public class CommentServiceImpl implements CommentService {
     @Autowired
     private CommentHookManager hookManager;
     
-    // LazyClass的注入
     @Autowired
     private CommentCountValidator commentCountValidator;
 
@@ -65,7 +64,6 @@ public class CommentServiceImpl implements CommentService {
             int currentCommentCount = commentMapper.countUserItemComments(
                     comment.getUserId(), comment.getItemId());
             
-            // 使用LazyClass进行验证
             if (!commentCountValidator.validateCommentCount(currentCommentCount)) {
                 logger.warn("User {} has reached maximum comment limit for item {}", 
                         comment.getUserId(), comment.getItemId());
@@ -92,7 +90,6 @@ public class CommentServiceImpl implements CommentService {
             // 设置创建时间
             entity.setCreateTime(new Date());
             
-            // Speculative Generality: 设置过多的默认值
             entity.setStatus(CommentStatus.PENDING);
             entity.setType(CommentType.REGULAR_REVIEW);
             entity.setEmotionalScore(0);
@@ -125,7 +122,6 @@ public class CommentServiceImpl implements CommentService {
             throw new IllegalArgumentException("Comment ID cannot be null");
         }
         
-        // Speculative Generality: 过度的日志记录
         logger.debug("Retrieving comment: {}", commentId);
         CommentEntity comment = commentMapper.findById(commentId);
         logger.debug("Retrieved comment: {}", comment != null ? comment.getId() : "not found");
@@ -177,7 +173,6 @@ public class CommentServiceImpl implements CommentService {
         
         int offset = (page - 1) * size;
         
-        // Speculative Generality: 过度的日志记录
         logger.debug("Retrieving comments for item: {}, page: {}, size: {}", itemId, page, size);
         List<CommentEntity> comments = commentMapper.findByItemId(itemId, offset, size);
         logger.debug("Retrieved {} comments for item: {}", comments.size(), itemId);
@@ -200,7 +195,6 @@ public class CommentServiceImpl implements CommentService {
 
 
 
-    // Speculative Generality: 实现过多的可能用不到的高级功能
     @Override
     public CommentStatistics getItemCommentStatistics(Long itemId) {
         if (itemId == null) {

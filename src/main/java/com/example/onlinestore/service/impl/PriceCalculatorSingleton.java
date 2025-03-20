@@ -6,72 +6,50 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
 
 /**
- * 线程安全的价格计算器单例实现
+ * 价格计算器
+ *
  */
-public class SafePriceCalculatorSingleton implements PriceCalculator {
+public class PriceCalculatorSingleton implements PriceCalculator {
     
-    private static final Logger logger = LoggerFactory.getLogger(SafePriceCalculatorSingleton.class);
+    private static final Logger logger = LoggerFactory.getLogger(PriceCalculatorSingleton.class);
     
-    // 使用volatile确保可见性，防止部分初始化问题
-    private static volatile SafePriceCalculatorSingleton instance;
+    private static PriceCalculatorSingleton instance;
     
-    // 使用线程安全的ConcurrentHashMap
-    private final ConcurrentHashMap<String, BigDecimal> promotionDiscounts;
+    private Map<String, BigDecimal> promotionDiscounts;
     
-    // 使用AtomicReference和AtomicInteger保证线程安全
-    private final AtomicReference<BigDecimal> lastCalculatedPrice;
-    private final AtomicInteger calculationCount;
+    private BigDecimal lastCalculatedPrice;
+    private int calculationCount;
     
     /**
      * 私有构造函数
      */
-    private SafePriceCalculatorSingleton() {
+    private PriceCalculatorSingleton() {
         // 初始化促销折扣
-        promotionDiscounts = new ConcurrentHashMap<>();
+        promotionDiscounts = new HashMap<>();
         promotionDiscounts.put("SAVE10", new BigDecimal("0.10"));
         promotionDiscounts.put("SAVE20", new BigDecimal("0.20"));
         promotionDiscounts.put("SAVE30", new BigDecimal("0.30"));
         promotionDiscounts.put("HALF", new BigDecimal("0.50"));
         
-        lastCalculatedPrice = new AtomicReference<>(BigDecimal.ZERO);
-        calculationCount = new AtomicInteger(0);
+        lastCalculatedPrice = BigDecimal.ZERO;
+        calculationCount = 0;
         
-        logger.info("SafePriceCalculatorSingleton initialized");
+        logger.info("UnsafePriceCalculatorSingleton initialized");
     }
     
     /**
-     * 获取单例实例（使用双重检查锁定模式）
+     * 获取单例实例
      */
-    public static SafePriceCalculatorSingleton getInstance() {
+    public static PriceCalculatorSingleton getInstance() {
         if (instance == null) {
-            synchronized (SafePriceCalculatorSingleton.class) {
-                if (instance == null) {
-                    instance = new SafePriceCalculatorSingleton();
-                }
-            }
+            instance = new PriceCalculatorSingleton();
         }
         return instance;
-    }
-    
-    /**
-     * 获取单例实例（使用静态内部类，推荐方式）
-     */
-    public static SafePriceCalculatorSingleton getInstanceUsingHolder() {
-        return SingletonHolder.INSTANCE;
-    }
-    
-    /**
-     * 静态内部类持有单例实例
-     * 这种方式利用了类加载机制来保证线程安全，同时实现了延迟加载
-     */
-    private static class SingletonHolder {
-        private static final SafePriceCalculatorSingleton INSTANCE = new SafePriceCalculatorSingleton();
     }
     
     @Override
@@ -88,11 +66,10 @@ public class SafePriceCalculatorSingleton implements PriceCalculator {
         // 计算最终价格
         BigDecimal finalPrice = totalPrice.add(totalExtraFees);
         
-        // 线程安全地更新状态
-        lastCalculatedPrice.set(finalPrice);
-        int count = calculationCount.incrementAndGet();
+        lastCalculatedPrice = finalPrice;
+        calculationCount++;
         
-        logger.debug("Calculated final price: {}, count: {}", finalPrice, count);
+        logger.debug("Calculated final price: {}, count: {}", finalPrice, calculationCount);
         
         return finalPrice;
     }
@@ -137,38 +114,37 @@ public class SafePriceCalculatorSingleton implements PriceCalculator {
         if (discountRate == null) {
             return price;
         }
+
         
         BigDecimal discountAmount = price.multiply(discountRate);
         return price.subtract(discountAmount).setScale(2, RoundingMode.HALF_UP);
     }
     
     /**
-     * 添加新的促销代码（线程安全）
+     * 添加新的促销代码
      */
     public void addPromotion(String code, BigDecimal discountRate) {
         promotionDiscounts.put(code, discountRate);
     }
     
     /**
-     * 获取最后计算的价格（线程安全）
+     * 获取最后计算的价格
      */
     public BigDecimal getLastCalculatedPrice() {
-        return lastCalculatedPrice.get();
+        return lastCalculatedPrice;
     }
     
     /**
-     * 获取计算次数（线程安全）
+     * 获取计算次数
      */
     public int getCalculationCount() {
-        return calculationCount.get();
+        return calculationCount;
     }
     
     /**
      * 重置单例实例（仅用于测试）
      */
     public static void reset() {
-        synchronized (SafePriceCalculatorSingleton.class) {
-            instance = null;
-        }
+        instance = null;
     }
 } 

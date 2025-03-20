@@ -1,7 +1,5 @@
 package com.example.onlinestore.service;
 
-import com.example.onlinestore.entity.ItemAccessLogEntity;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +8,7 @@ import java.util.Map;
  * 商品访问日志服务接口
  */
 public interface ItemAccessLogService {
+
     
     /**
      * 记录商品访问
@@ -22,26 +21,7 @@ public interface ItemAccessLogService {
      * @param sessionId 会话ID
      */
     void recordAccess(Long itemId, String userId, String ip, String userAgent, String referer, String sessionId);
-    
-    /**
-     * 记录商品访问（不良案例 - 共享变量未正确加锁）
-     * 
-     * @param itemId 商品ID
-     * @param userId 用户ID
-     * @param ip 访问IP
-     * @param userAgent 用户代理
-     * @param referer 来源页面
-     * @param sessionId 会话ID
-     */
-    void recordAccessBadCase(Long itemId, String userId, String ip, String userAgent, String referer, String sessionId);
-    
-    /**
-     * 获取商品访问次数
-     * 
-     * @param itemId 商品ID
-     * @return 访问次数
-     */
-    int getAccessCount(Long itemId);
+
     
     /**
      * 获取商品在指定时间范围内的访问次数
@@ -62,9 +42,5 @@ public interface ItemAccessLogService {
      * @return 热门商品列表
      */
     List<Map<String, Object>> getHotItems(LocalDateTime startTime, LocalDateTime endTime, int limit);
-    
-    /**
-     * 批量保存访问日志
-     */
-    void saveAccessLogs();
+
 } 
