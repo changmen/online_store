@@ -242,7 +242,7 @@ public class ItemServiceImpl implements ItemService {
      */
     @Override
     public List<CategoryItemCountDTO> countItemsByCategory() {
-        logger.info("Counting items by category - BAD CASE");
+        logger.info("Counting items by category");
         
         List<CategoryItemCountDTO> result = itemMapper.countItemsByCategory();
         
@@ -271,7 +271,7 @@ public class ItemServiceImpl implements ItemService {
      */
     @Override
     public Map<Long, Long> countItemsByCategoryWithSubcategories(boolean includeSubcategories) {
-        logger.info("Counting items by category with subcategories - BAD CASE");
+        logger.info("Counting items by category with subcategories");
         
         // 获取所有类目
         List<Category> allCategories = categoryService.getAllCategories();
