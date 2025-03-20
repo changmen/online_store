@@ -77,7 +77,6 @@ public class ItemDetailServiceImpl implements ItemDetailService {
         }
         
         // 缓存未命中，构建商品详情
-        // 使用安全版本的方法，避免线程泄漏
         ItemDetailDTO detailDTO = buildItemDetail(itemId, skuId);
         
         // 如果启用了缓存且构建成功，则缓存结果
