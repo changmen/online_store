@@ -1,7 +1,5 @@
 package com.example.onlinestore.service;
 
-import java.io.InputStream;
-
 /**
  * 阿里云OSS服务接口
  */

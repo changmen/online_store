@@ -7,7 +7,6 @@ import com.example.onlinestore.service.ItemDetailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -25,9 +24,6 @@ public class ItemDetailController {
     
     @Autowired
     private ItemAccessLogService itemAccessLogService;
-    
-    @Value("${item.access.log.bad-case:false}")
-    private boolean useAccessLogBadCase;
     
     /**
      * 获取商品详情
@@ -104,14 +100,9 @@ public class ItemDetailController {
             String userAgent = request.getHeader("User-Agent");
             String referer = request.getHeader("Referer");
             String sessionId = request.getSession().getId();
-            
-            if (useAccessLogBadCase) {
-                // 使用不良案例实现（共享变量未正确加锁）
-                itemAccessLogService.recordAccessBadCase(itemId, userId, ip, userAgent, referer, sessionId);
-            } else {
-                // 使用安全实现
-                itemAccessLogService.recordAccess(itemId, userId, ip, userAgent, referer, sessionId);
-            }
+
+            itemAccessLogService.recordAccess(itemId, userId, ip, userAgent, referer, sessionId);
+
         } catch (Exception e) {
             // 记录访问失败不应影响主流程
             logger.error("Failed to record item access", e);
