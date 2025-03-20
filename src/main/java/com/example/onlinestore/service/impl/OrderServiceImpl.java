@@ -441,12 +441,6 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 查询订单详情
-     * BAD CASE: 水平越权漏洞
-     * 
-     * 这个方法存在以下问题：
-     * 1. 没有验证当前用户是否有权限查看该订单
-     * 2. 即使传入了userId参数，也没有检查订单是否属于该用户
-     * 3. 允许任何用户通过订单号查看任何订单的详细信息
      */
     @Override
     public Map<String, Object> getOrderDetail(String orderNo, Long userId) {
@@ -457,11 +451,7 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             throw new OrderException("订单不存在");
         }
-        
-        // BAD CASE: 水平越权漏洞
-        // 没有验证当前用户是否有权限查看该订单
-        // 正确的做法应该是检查 order.getUserId().equals(userId)
-        
+
         // 获取订单项
         List<OrderItemEntity> orderItems = orderItemMapper.findByOrderNo(orderNo);
         
@@ -474,44 +464,5 @@ public class OrderServiceImpl implements OrderService {
         
         return result;
     }
-    
-    /**
-     * 查询订单详情 - 安全版本
-     * 修复了水平越权漏洞
-     */
-    public Map<String, Object> getOrderDetailSafe(String orderNo, Long userId) {
-        Map<String, Object> result = new HashMap<>();
-        
-        // 参数验证
-        if (orderNo == null || orderNo.trim().isEmpty()) {
-            throw new OrderException("订单号不能为空");
-        }
-        
-        if (userId == null) {
-            throw new OrderException("用户ID不能为空");
-        }
-        
-        // 获取订单信息
-        OrderEntity order = orderMapper.findByOrderNo(orderNo);
-        if (order == null) {
-            throw new OrderException("订单不存在");
-        }
-        
-        // 安全检查：验证当前用户是否有权限查看该订单
-        if (!order.getUserId().equals(userId)) {
-            throw new OrderException("无权查看此订单");
-        }
-        
-        // 获取订单项
-        List<OrderItemEntity> orderItems = orderItemMapper.findByOrderNo(orderNo);
-        
-        // 构建返回结果
-        result.put("order", order);
-        result.put("orderItems", orderItems);
-        
-        // 记录访问日志
-        logger.info("查询订单详情: orderNo={}, userId={}", orderNo, userId);
-        
-        return result;
-    }
+
 } 
