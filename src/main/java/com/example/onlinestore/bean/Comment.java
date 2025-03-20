@@ -15,7 +15,6 @@ public class Comment {
     private CommentStatus status;
     private CommentType type;
     
-    // Speculative Generality: 过度设计的字段
     private Integer emotionalScore;
     private Boolean isVerifiedPurchase;
     private String languageCode;

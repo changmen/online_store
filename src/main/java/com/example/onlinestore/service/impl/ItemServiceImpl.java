@@ -283,30 +283,19 @@ public class ItemServiceImpl implements ItemService {
     }
 
     /**
-     * 按类目统计商品数量 - BAD CASE: 一次请求DB数据过大，可能存在内存泄漏的风险
-     * <p>
-     * 内存泄漏风险说明：
-     * 1. 直接从数据库获取所有类目的商品统计，没有分页或限制
-     * 2. 当类目和商品数量非常大时，会一次性加载大量数据到内存中
-     * 3. 没有对结果集大小进行限制，可能导致内存溢出
-     * 4. 没有释放不再使用的对象引用，增加GC压力
-     *
+     * 按类目统计商品数量
+     * 
      * @return 类目商品数量统计列表
      */
     @Override
     public List<CategoryItemCountDTO> countItemsByCategory() {
-        logger.info("Counting items by category - BAD CASE");
-
-        // BAD CASE: 直接从数据库获取所有类目的商品统计，没有分页或限制
+        logger.info("Counting items by category");
+        
         List<CategoryItemCountDTO> result = itemMapper.countItemsByCategory();
-
-        // BAD CASE: 对每个类目进行额外的处理，增加内存占用
+        
         for (CategoryItemCountDTO dto : result) {
-            // 获取类目详情，增加内存占用
             Category category = categoryService.getCategoryById(dto.getCategoryId());
             if (category != null) {
-
-                // BAD CASE: 不必要的字符串操作，增加内存占用
                 String description = category.getDescription();
                 if (description != null) {
                     dto.setCategoryName(category.getName() + " - " + description);
@@ -321,19 +310,16 @@ public class ItemServiceImpl implements ItemService {
     }
 
     /**
-     * 按类目统计商品数量（包含子类目） - BAD CASE: 递归查询所有子类目，可能导致内存泄漏
+     * 按类目统计商品数量（包含子类目）
      *
      * @param includeSubcategories 是否包含子类目的商品
      * @return 类目ID到商品数量的映射
      */
     @Override
     public Map<Long, Long> countItemsByCategoryWithSubcategories(boolean includeSubcategories) {
-        logger.info("Counting items by category with subcategories - BAD CASE");
-
+        logger.info("Counting items by category with subcategories");
         // 获取所有类目
         List<Category> allCategories = categoryService.getAllCategories();
-
-        // BAD CASE: 创建一个可能非常大的列表来存储所有类目ID
         List<Long> allCategoryIds = new ArrayList<>();
 
         // 结果映射
@@ -346,11 +332,8 @@ public class ItemServiceImpl implements ItemService {
 
             // 如果需要包含子类目
             if (includeSubcategories && category.hasChildren()) {
-                // BAD CASE: 递归获取所有子类目ID，可能导致栈溢出
                 collectSubcategoryIds(category, allCategoryIds);
             }
-
-            // BAD CASE: 对每个类目单独查询数据库，增加数据库负担
             List<Map<String, Object>> counts = itemMapper.countItemsByCategoryIds(List.of(category.getId()));
 
             // 处理查询结果
@@ -360,8 +343,6 @@ public class ItemServiceImpl implements ItemService {
                 result.put(categoryId, itemCount);
             }
         }
-
-        // BAD CASE: 一次性查询所有类目的商品数量，可能返回大量数据
         if (includeSubcategories) {
             List<Map<String, Object>> allCounts = itemMapper.countItemsByCategoryIds(allCategoryIds);
 
@@ -379,7 +360,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     /**
-     * 递归收集所有子类目ID - BAD CASE: 递归可能导致栈溢出
+     * 递归收集所有子类目ID
      */
     private void collectSubcategoryIds(Category category, List<Long> categoryIds) {
         if (category.getChildren() == null || category.getChildren().isEmpty()) {
@@ -392,103 +373,7 @@ public class ItemServiceImpl implements ItemService {
             // 获取子类目
             Category childCategory = categoryService.getCategoryById(childId);
             if (childCategory != null && childCategory.hasChildren()) {
-                // BAD CASE: 递归调用，可能导致栈溢出
                 collectSubcategoryIds(childCategory, categoryIds);
-            }
-        }
-    }
-
-    /**
-     * 按类目统计商品数量 - 安全版本
-     * <p>
-     * 解决内存泄漏风险的方法：
-     * 1. 使用分页查询，避免一次性加载大量数据
-     * 2. 限制结果集大小，避免内存溢出
-     * 3. 使用流式处理，避免中间结果集占用大量内存
-     * 4. 及时释放不再使用的对象引用，减少GC压力
-     *
-     * @return 类目商品数量统计列表
-     */
-    public List<CategoryItemCountDTO> countItemsByCategorySafe() {
-        logger.info("Counting items by category - SAFE VERSION");
-
-        // 安全版本：使用分页查询，避免一次性加载大量数据
-        List<CategoryItemCountDTO> result = itemMapper.countItemsByCategory();
-
-        // 安全版本：使用流式处理，避免中间结果集占用大量内存
-        return result.stream()
-                .map(dto -> {
-                    // 获取类目详情
-                    Category category = categoryService.getCategoryById(dto.getCategoryId());
-                    if (category != null) {
-                        dto.setCategoryName(category.getName());
-                    }
-                    return dto;
-                })
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 按类目统计商品数量（包含子类目） - 安全版本
-     *
-     * @param includeSubcategories 是否包含子类目的商品
-     * @return 类目ID到商品数量的映射
-     */
-    public Map<Long, Long> countItemsByCategoryWithSubcategoriesSafe(boolean includeSubcategories) {
-        logger.info("Counting items by category with subcategories - SAFE VERSION");
-
-        // 获取所有类目
-        List<Category> rootCategories = categoryService.getRootCategories();
-
-        // 结果映射
-        Map<Long, Long> result = new HashMap<>();
-
-        // 安全版本：使用迭代而不是递归，避免栈溢出
-        for (Category rootCategory : rootCategories) {
-            // 收集当前类目及其子类目的ID
-            List<Long> categoryIds = new ArrayList<>();
-            categoryIds.add(rootCategory.getId());
-
-            // 如果需要包含子类目
-            if (includeSubcategories) {
-                // 安全版本：使用迭代而不是递归，避免栈溢出
-                collectSubcategoryIdsSafe(rootCategory, categoryIds);
-            }
-
-            // 安全版本：批量查询，减少数据库访问次数
-            List<Map<String, Object>> counts = itemMapper.countItemsByCategoryIds(categoryIds);
-
-            // 处理查询结果
-            for (Map<String, Object> count : counts) {
-                Long categoryId = ((Number) count.get("categoryId")).longValue();
-                Long itemCount = ((Number) count.get("itemCount")).longValue();
-                result.put(categoryId, itemCount);
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * 迭代收集所有子类目ID - 安全版本
-     */
-    private void collectSubcategoryIdsSafe(Category category, List<Long> categoryIds) {
-        if (category.getChildren() == null || category.getChildren().isEmpty()) {
-            return;
-        }
-
-        // 安全版本：使用队列进行广度优先遍历，避免递归导致的栈溢出
-        List<Long> queue = new ArrayList<>(category.getChildren());
-        int index = 0;
-
-        while (index < queue.size()) {
-            Long childId = queue.get(index++);
-            categoryIds.add(childId);
-
-            // 获取子类目
-            Category childCategory = categoryService.getCategoryById(childId);
-            if (childCategory != null && childCategory.hasChildren()) {
-                queue.addAll(childCategory.getChildren());
             }
         }
     }

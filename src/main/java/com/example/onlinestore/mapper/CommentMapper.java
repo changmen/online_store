@@ -19,7 +19,6 @@ public interface CommentMapper {
     
     long countByItemId(@Param("itemId") Long itemId);
     
-    // Speculative Generality: 过多的可能用不到的查询方法
     List<CommentEntity> findByAdvancedCondition(
             @Param("itemId") Long itemId,
             @Param("userId") Long userId,
@@ -34,7 +33,6 @@ public interface CommentMapper {
             @Param("limit") int limit
     );
     
-    // Speculative Generality: 过多的统计方法
     long countByAdvancedCondition(
             @Param("itemId") Long itemId,
             @Param("status") String status,
