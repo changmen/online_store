@@ -21,9 +21,8 @@ public interface ItemAccessLogMapper {
     void insertAccessLog(ItemAccessLogEntity log);
     
     /**
-     * 批量插入访问日志 - 不安全实现，存在SQL注入风险
-     * 
-     * 警告：此方法故意引入SQL注入风险，仅用于教学目的
+     * 批量插入访问日志
+     *
      */
     void batchInsertAccessLogs(SqlInjectionRiskWrapper wrapper);
     
