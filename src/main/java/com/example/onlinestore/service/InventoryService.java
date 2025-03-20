@@ -78,7 +78,7 @@ public interface InventoryService {
     List<InventoryEntity> queryExpiringInventory(int days, int page, int size);
     
     /**
-     * 批量处理库存（包含复杂的业务逻辑，超过80行）
+     * 批量处理库存
      * 1. 检查库存状态
      * 2. 验证库存数量
      * 3. 处理库存锁定
