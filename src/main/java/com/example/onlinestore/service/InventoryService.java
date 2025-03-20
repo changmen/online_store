@@ -80,7 +80,7 @@ public interface InventoryService {
     List<InventoryEntity> queryExpiringInventory(int days, int page, int size);
     
     /**
-     * 批量处理库存（包含复杂的业务逻辑，超过80行）
+     * 批量处理库存
      * 1. 检查库存状态
      * 2. 验证库存数量
      * 3. 处理库存锁定
@@ -92,7 +92,7 @@ public interface InventoryService {
     void processBatchInventory(Long inventoryId, Integer quantity, String operationType, String batchNumber);
 
     /**
-     * 更新SKU库存（bad case: 参数过多）
+     * 更新SKU库存
      * @param skuId SKU ID
      * @param quantity 库存数量
      * @param lockedQuantity 锁定数量
