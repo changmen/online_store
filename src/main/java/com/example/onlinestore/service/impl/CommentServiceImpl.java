@@ -32,7 +32,6 @@ public class CommentServiceImpl implements CommentService {
     @Autowired
     private CommentHookManager hookManager;
     
-    // LazyClass的注入
     @Autowired
     private CommentCountValidator commentCountValidator;
 
@@ -60,7 +59,6 @@ public class CommentServiceImpl implements CommentService {
             int currentCommentCount = commentMapper.countUserItemComments(
                     comment.getUserId(), comment.getItemId());
             
-            // 使用LazyClass进行验证
             if (!commentCountValidator.validateCommentCount(currentCommentCount)) {
                 logger.warn("User {} has reached maximum comment limit for item {}", 
                         comment.getUserId(), comment.getItemId());
