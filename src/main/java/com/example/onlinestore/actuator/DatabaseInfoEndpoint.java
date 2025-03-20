@@ -17,11 +17,7 @@ import java.util.Map;
 
 /**
  * 自定义Actuator端点 - 数据库信息
- * 
- * BAD CASE: 此端点暴露了敏感的数据库信息，包括:
- * - 数据库连接信息（URL、用户名等）
- * - 数据库表结构
- * - 数据库用户权限
+ *
  */
 @Component
 @Endpoint(id = "dbinfo")
@@ -40,7 +36,6 @@ public class DatabaseInfoEndpoint {
         try (Connection conn = dataSource.getConnection()) {
             DatabaseMetaData metaData = conn.getMetaData();
             
-            // BAD CASE: 暴露数据库连接信息
             dbInfo.put("url", metaData.getURL());
             dbInfo.put("driverName", metaData.getDriverName());
             dbInfo.put("driverVersion", metaData.getDriverVersion());
@@ -72,7 +67,6 @@ public class DatabaseInfoEndpoint {
                     }
                     tableInfo.put("columns", columns);
                     
-                    // BAD CASE: 暴露表的主键信息
                     List<String> primaryKeys = new ArrayList<>();
                     try (ResultSet pkRs = metaData.getPrimaryKeys(conn.getCatalog(), null, tableName)) {
                         while (pkRs.next()) {
