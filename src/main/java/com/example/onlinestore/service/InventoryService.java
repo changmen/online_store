@@ -92,7 +92,7 @@ public interface InventoryService {
     void processBatchInventory(Long inventoryId, Integer quantity, String operationType, String batchNumber);
 
     /**
-     * 更新SKU库存（bad case: 参数过多）
+     * 更新SKU库存
      * @param skuId SKU ID
      * @param quantity 库存数量
      * @param lockedQuantity 锁定数量
