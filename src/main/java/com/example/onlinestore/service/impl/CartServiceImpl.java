@@ -218,13 +218,7 @@ public class CartServiceImpl implements CartService {
     }
     
     /**
-     * 批量添加商品到购物车 - BAD CASE: 存在数组越界异常风险
-     * 
-     * 数组越界风险说明：
-     * 1. 方法期望每个商品的信息是一个包含两个元素的数组 [skuId, quantity]
-     * 2. 但没有对数组长度进行检查，直接访问索引0和1
-     * 3. 如果传入的数组长度小于2，将导致ArrayIndexOutOfBoundsException
-     * 4. 此外，没有对数组元素类型进行检查，可能导致ClassCastException
+     * 批量添加商品到购物车
      * 
      * @param userId 用户ID
      * @param items 商品信息映射，key为商品ID，value为[skuId, quantity]数组
@@ -251,10 +245,8 @@ public class CartServiceImpl implements CartService {
             Object[] itemInfo = entry.getValue();
             
             try {
-                // BAD CASE: 直接访问数组元素，没有检查数组长度，可能导致ArrayIndexOutOfBoundsException
-                // 正确的做法应该是先检查 itemInfo != null && itemInfo.length >= 2
-                Long skuId = (Long) itemInfo[0]; // 可能抛出ArrayIndexOutOfBoundsException或ClassCastException
-                Integer quantity = (Integer) itemInfo[1]; // 可能抛出ArrayIndexOutOfBoundsException或ClassCastException
+                Long skuId = (Long) itemInfo[0];
+                Integer quantity = (Integer) itemInfo[1];
                 
                 // 检查商品是否存在
                 if (itemService.getItemById(itemId) == null) {
@@ -294,15 +286,7 @@ public class CartServiceImpl implements CartService {
                 successCount++;
                 logger.debug("成功添加商品到购物车，商品ID: {}, SKU ID: {}, 数量: {}", itemId, skuId, quantity);
                 
-            } catch (ArrayIndexOutOfBoundsException e) {
-                // 捕获数组越界异常
-                logger.error("添加商品到购物车失败，数组越界异常，商品ID: {}, 错误: {}", itemId, e.getMessage());
-                failedItems.put(itemId, "数组越界异常: " + e.getMessage());
-            } catch (ClassCastException e) {
-                // 捕获类型转换异常
-                logger.error("添加商品到购物车失败，类型转换异常，商品ID: {}, 错误: {}", itemId, e.getMessage());
-                failedItems.put(itemId, "类型转换异常: " + e.getMessage());
-            } catch (Exception e) {
+            }   catch (Exception e) {
                 // 捕获其他异常
                 logger.error("添加商品到购物车失败，商品ID: {}, 错误: {}", itemId, e.getMessage());
                 failedItems.put(itemId, "未知异常: " + e.getMessage());
