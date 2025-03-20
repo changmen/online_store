@@ -21,7 +21,6 @@ public class AddressServiceImpl implements AddressService {
     @Autowired
     private AddressMapper addressMapper;
     
-    // Feature Envy: 不必要地依赖 OrderMapper
     @Autowired
     private OrderMapper orderMapper;
 
@@ -53,7 +52,6 @@ public class AddressServiceImpl implements AddressService {
         }
         addressMapper.updateAddress(address);
         
-        // Feature Envy: 过度关注 Order 的细节
         updateRelatedOrders(address);
     }
 
@@ -65,13 +63,11 @@ public class AddressServiceImpl implements AddressService {
             return;
         }
         
-        // Feature Envy: 过度关注 Order 的业务逻辑
         List<OrderEntity> relatedOrders = orderMapper.findByCondition(
                 address.getUserId(), null, null, null, 0, Integer.MAX_VALUE);
         
         for (OrderEntity order : relatedOrders) {
             if (matchAddress(order, address)) {
-                // Feature Envy: 直接操作 Order 的数据
                 order.setReceiverName("已删除");
                 order.setReceiverPhone("已删除");
                 order.setReceiverAddress("已删除");
@@ -88,14 +84,12 @@ public class AddressServiceImpl implements AddressService {
         addressMapper.clearDefaultAddress(userId);
         addressMapper.setDefaultAddress(id, userId);
         
-        // Feature Envy: 过度关注 Order 的业务逻辑
         AddressEntity address = addressMapper.findById(id);
         if (address != null) {
             updateRelatedOrders(address);
         }
     }
     
-    // Feature Envy: 过度关注 Order 的业务逻辑和数据
     private void updateRelatedOrders(AddressEntity address) {
         List<OrderEntity> orders = orderMapper.findByCondition(
                 address.getUserId(), 0, null, null, 0, Integer.MAX_VALUE);
@@ -110,7 +104,6 @@ public class AddressServiceImpl implements AddressService {
         }
     }
     
-    // Feature Envy: 过度关注地址格式化逻辑，应该放在 AddressEntity 中
     private String formatAddress(AddressEntity address) {
         return String.format("%s %s %s %s", 
                 address.getProvince(), 
@@ -119,7 +112,6 @@ public class AddressServiceImpl implements AddressService {
                 address.getDetailAddress());
     }
     
-    // Feature Envy: 过度关注 Order 和 Address 的比较逻辑
     private boolean matchAddress(OrderEntity order, AddressEntity address) {
         String orderAddress = order.getReceiverAddress();
         String formattedAddress = formatAddress(address);
