@@ -154,7 +154,7 @@ public class InventoryServiceImpl implements InventoryService {
         }
         
         // 2. 验证库存状态
-        if ("NORMAL" == inventory.getStatus()) {
+        if ("NORMAL" != inventory.getStatus()) {
             throw new InventoryException("库存状态异常: " + inventory.getStatus());
         }
         
