@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.OrderStatisticsMapper">
+
+    <insert id="insertStatistics" parameterType="com.example.onlinestore.entity.OrderStatisticsEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO order_statistics (
+            user_id, item_id, order_count, total_amount, statistics_date,
+            created_at, updated_at
+        ) VALUES (
+            #{userId}, #{itemId}, #{orderCount}, #{totalAmount}, #{statisticsDate},
+            NOW(), NOW()
+        )
+    </insert>
+
+    <insert id="batchInsertStatistics" parameterType="java.util.List">
+        INSERT INTO order_statistics (
+            user_id, item_id, order_count, total_amount, statistics_date,
+            created_at, updated_at
+        ) VALUES 
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.userId}, #{item.itemId}, #{item.orderCount}, #{item.totalAmount}, #{item.statisticsDate},
+                NOW(), NOW()
+            )
+        </foreach>
+    </insert>
+
+    <select id="findByUserId" resultType="com.example.onlinestore.entity.OrderStatisticsEntity">
+        SELECT * FROM order_statistics
+        WHERE user_id = #{userId}
+        AND statistics_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY statistics_date DESC
+    </select>
+
+    <select id="findByItemId" resultType="com.example.onlinestore.entity.OrderStatisticsEntity">
+        SELECT * FROM order_statistics
+        WHERE item_id = #{itemId}
+        AND statistics_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY statistics_date DESC
+    </select>
+
+    <delete id="deleteBeforeDate">
+        DELETE FROM order_statistics WHERE statistics_date &lt; #{date}
+    </delete>
+
+</mapper> 
