@@ -9,6 +9,7 @@ import com.example.onlinestore.dto.ItemQueryDTO;
 import com.example.onlinestore.entity.ItemEntity;
 import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exception.BizException;
+import com.example.onlinestore.exception.CacheOperateException;
 import com.example.onlinestore.mapper.ItemMapper;
 import com.example.onlinestore.service.ItemService;
 import com.example.onlinestore.service.SkuService;
@@ -86,11 +87,16 @@ public class ItemServiceImpl implements ItemService {
         // 如果启用了缓存，先从缓存中获取
         if (cacheEnabled) {
             String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            Item cachedItem = cacheManager.get(cacheKey, Item.class);
-            if (cachedItem != null) {
-                logger.debug("Cache hit for item: {}", itemId);
-                return cachedItem;
+            try {
+                Item  cachedItem = cacheManager.get(cacheKey, Item.class);
+                if (cachedItem != null) {
+                    return cachedItem;
+                }
+            } catch (CacheOperateException e) {
+                // 从DB中获取， 仅仅记录日志
+                logger.error("Failed to get item from cache", e);
             }
+
         }
         
         // 缓存未命中，从数据库获取
@@ -100,8 +106,12 @@ public class ItemServiceImpl implements ItemService {
         // 如果启用了缓存且查询结果不为空，则缓存结果
         if (cacheEnabled && item != null) {
             String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            cacheManager.set(cacheKey, item, itemCacheExpireSeconds);
-            logger.debug("Cached item: {}", itemId);
+            try {
+                cacheManager.set(cacheKey, item, itemCacheExpireSeconds);
+            } catch (CacheOperateException e) {
+                // 仅记录日志
+                logger.error("Failed to set item cache", e);
+            }
         }
         
         return item;
@@ -143,10 +153,15 @@ public class ItemServiceImpl implements ItemService {
         if (cacheEnabled) {
             // 更新单个商品缓存
             String cacheKey = String.format(CACHE_KEY_ITEM, item.getId());
-            cacheManager.set(cacheKey, item, itemCacheExpireSeconds);
-            
+            try {
+                cacheManager.set(cacheKey, item, itemCacheExpireSeconds);
+            } catch (CacheOperateException e) {
+                // 仅记录日志
+                logger.error("Failed to update item cache", e);
+            }
             // 清除列表缓存
             clearItemListCache();
+
         }
     }
 
@@ -158,8 +173,12 @@ public class ItemServiceImpl implements ItemService {
         if (cacheEnabled) {
             // 删除单个商品缓存
             String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            cacheManager.delete(cacheKey);
-            
+            try {
+                cacheManager.delete(cacheKey);
+            } catch (CacheOperateException e) {
+                logger.error("Failed to delete item cache。itemId:{}", itemId, e);
+            }
+
             // 清除列表缓存
             clearItemListCache();
         }
@@ -168,14 +187,12 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<Item> getAllItems(int page, int size) {
 
-        // 缓存未命中，从数据库获取
         int offset = (page - 1) * size;
         List<ItemEntity> itemEntities = itemMapper.findAllWithPagination(offset, size);
-        List<Item> items = itemEntities.stream()
+
+        return itemEntities.stream()
                 .map(this::convertToItem)
                 .collect(Collectors.toList());
-
-        return items;
     }
     
     @Override
@@ -190,13 +207,11 @@ public class ItemServiceImpl implements ItemService {
             offset, 
             queryDTO.getSize()
         );
-        
-        List<Item> items = itemEntities.stream()
+
+
+        return itemEntities.stream()
                 .map(this::convertToItem)
                 .collect(Collectors.toList());
-        
-
-        return items;
     }
     
     @Override
@@ -223,7 +238,11 @@ public class ItemServiceImpl implements ItemService {
         // 清除商品缓存
         if (cacheEnabled) {
             String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            cacheManager.delete(cacheKey);
+            try {
+                cacheManager.delete(cacheKey);
+            } catch (CacheOperateException e) {
+                logger.error("Failed to delete item cache。itemId:{}", itemId, e);
+            }
         }
     }
     
@@ -239,7 +258,11 @@ public class ItemServiceImpl implements ItemService {
         // 清除商品缓存
         if (cacheEnabled) {
             String cacheKey = String.format(CACHE_KEY_ITEM, sku.getItemId());
-            cacheManager.delete(cacheKey);
+            try {
+                cacheManager.delete(cacheKey);
+            } catch (CacheOperateException e) {
+                logger.error("Failed to delete item cache。itemId:{}", sku.getItemId(), e);
+            }
         }
     }
     
@@ -254,7 +277,11 @@ public class ItemServiceImpl implements ItemService {
         // 清除商品缓存
         if (cacheEnabled && itemId != null) {
             String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            cacheManager.delete(cacheKey);
+            try {
+                cacheManager.delete(cacheKey);
+            } catch (CacheOperateException e) {
+                logger.error("Failed to delete item cache。itemId:{}", itemId, e);
+            }
         }
     }
 
@@ -269,7 +296,11 @@ public class ItemServiceImpl implements ItemService {
         // 这里可以使用更精细的缓存清除策略，但为了简单起见，我们使用通配符删除所有列表缓存
         // 在实际生产环境中，可能需要更精确的缓存失效策略
         logger.debug("Clearing all item list caches");
-        cacheManager.clear();
+        try {
+            cacheManager.clear();
+        } catch (CacheOperateException e) {
+            logger.error("Failed to clear item list caches", e);
+        }
     }
 
     private Item convertToItem(ItemEntity itemEntity) {

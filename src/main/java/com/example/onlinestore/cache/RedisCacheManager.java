@@ -1,14 +1,16 @@
 package com.example.onlinestore.cache;
 
+import com.example.onlinestore.exception.CacheOperateException;
 import com.example.onlinestore.utils.JacksonJsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -18,17 +20,18 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class RedisCacheManager implements CacheManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(RedisCacheManager.class);
-
-    private static final String CACHE_PREFIX = "item:cache:";
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisCacheManager.class);
 
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+    @Value("${spring.redis.cache-prefix:Redis.Cache.}")
+    private String redisCachePrefix;
+
 
     @Override
-    public <T> T get(String key, Class<T> clazz) {
-        String fullKey = CACHE_PREFIX + key;
+    public <T> T get(String key, Class<T> clazz) throws CacheOperateException {
+        String fullKey = redisCachePrefix + key;
         String jsonValue = redisTemplate.opsForValue().get(fullKey);
 
         if (jsonValue == null) {
@@ -36,22 +39,22 @@ public class RedisCacheManager implements CacheManager {
         }
 
         try {
-            // 将JSON字符串转换回原始类型
             return JacksonJsonUtils.toObject(jsonValue, clazz);
-        } catch (Exception e) {
-            logger.error("Failed to deserialize cache value for key: {}", key, e);
-            return null;
+        } catch (IOException e) {
+            LOGGER.error("Failed to deserialize cache value for key: {}", key, e);
+            throw new CacheOperateException("Failed to deserialize cache value for key: " + key);
         }
     }
 
     @Override
-    public <T> void set(String key, T value) {
-        set(key, value, -1); // 不过期
+    public <T> void set(String key, T value) throws CacheOperateException {
+        // 支持不过期缓存
+        set(key, value, -1);
     }
 
     @Override
-    public <T> void set(String key, T value, long expireSeconds) {
-        String fullKey = CACHE_PREFIX + key;
+    public <T> void set(String key, T value, long expireSeconds) throws CacheOperateException {
+        String fullKey = redisCachePrefix + key;
 
         try {
             // 将对象序列化为JSON字符串
@@ -63,32 +66,33 @@ public class RedisCacheManager implements CacheManager {
                 redisTemplate.opsForValue().set(fullKey, jsonValue);
             }
 
-            logger.debug("Cache set: key={}, expireSeconds={}", key, expireSeconds);
+            LOGGER.debug("Cache set: key={}, expireSeconds={}", key, expireSeconds);
         } catch (JsonProcessingException e) {
-            logger.error("Failed to serialize cache value for key: {}", key, e);
+            LOGGER.error("Failed to serialize cache value for key: {}", key, e);
+            throw new CacheOperateException("Failed to serialize cache value for key: " + key);
         }
     }
 
     @Override
-    public void delete(String key) {
-        String fullKey = CACHE_PREFIX + key;
+    public void delete(String key) throws CacheOperateException {
+        String fullKey = redisCachePrefix + key;
         redisTemplate.delete(fullKey);
-        logger.debug("Cache deleted: key={}", key);
+        LOGGER.debug("Cache deleted: key={}", key);
     }
 
     @Override
-    public boolean exists(String key) {
-        String fullKey = CACHE_PREFIX + key;
+    public boolean exists(String key) throws CacheOperateException {
+        String fullKey = redisCachePrefix + key;
         Boolean exists = redisTemplate.hasKey(fullKey);
         return Boolean.TRUE.equals(exists);
     }
 
     @Override
-    public void clear() {
-        Set<String> keys = redisTemplate.keys(CACHE_PREFIX + "*");
+    public void clear() throws CacheOperateException {
+        Set<String> keys = redisTemplate.keys(redisCachePrefix + "*");
         if (!keys.isEmpty()) {
             redisTemplate.delete(keys);
-            logger.debug("Cache cleared: {} keys removed", keys.size());
+            LOGGER.debug("Cache cleared: {} keys removed", keys.size());
         }
     }
 } 
