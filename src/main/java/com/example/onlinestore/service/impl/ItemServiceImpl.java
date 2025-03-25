@@ -68,12 +68,13 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public void updateItem(Item item) {
+        Long userId = UserContext.getCurrentUser().getId();
 
         if (item.getId() == null) {
             throw new IllegalArgumentException("itemId不能为空");
         }
 
-        Item curItem = getItemById(item.getId());
+        ItemEntity curItem = itemMapper.findByUserIdAndItemId(userId, item.getId());
         if (curItem == null) {
             throw new BizException(ErrorCode.ITEM_NOT_FOUND);
         }

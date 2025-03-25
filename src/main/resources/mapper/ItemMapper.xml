@@ -59,8 +59,8 @@
     <select id="findByName" resultType="com.example.onlinestore.entity.ItemEntity">
         SELECT * FROM items WHERE name = #{name} LIMIT 1
     </select>
-    
-    <select id="findByNameExcludeId" resultType="com.example.onlinestore.entity.ItemEntity">
-        SELECT * FROM items WHERE name = #{name} AND id != #{excludeId} LIMIT 1
+    <select id="findByUserIdAndItemId" resultType="com.example.onlinestore.entity.ItemEntity">
+        SELECT id, user_id, category_id, name, description, image, secondary_name, sku_id, create_at, updated_at FROM items WHERE user_id = #{userId}  AND item_id = #{itemId} LIMIT 1
     </select>
+
 </mapper> 
