@@ -8,6 +8,7 @@ public class Item implements Serializable {
     @Serial
     private static final long serialVersionUID = 8328093958488219106L;
     private Long id;
+    private Long userId;
     private Long categoryId;
     private String name;
     private String description;
@@ -22,6 +23,14 @@ public class Item implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public Long getCategoryId() {

@@ -10,6 +10,7 @@ public class ItemEntity implements Serializable {
     private static final long serialVersionUID = 2418723127713742396L;
 
     private Long id;
+    private Long userId;
     private Long categoryId;
     private String name;
     private String secondaryName;
@@ -25,6 +26,14 @@ public class ItemEntity implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public Long getCategoryId() {

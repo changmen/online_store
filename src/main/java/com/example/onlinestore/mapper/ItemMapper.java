@@ -10,6 +10,7 @@ import java.util.List;
 public interface ItemMapper {
     void insertItem(ItemEntity item);
     ItemEntity findById(Long id);
+    ItemEntity findByUserIdAndItemId(@Param("userId") Long userId, @Param("itemId") Long itemId);
     void updateItem(ItemEntity item);
     void deleteItem(Long id);
     List<ItemEntity> findAllWithPagination(@Param("offset") int offset, @Param("limit") int limit);
@@ -46,12 +47,4 @@ public interface ItemMapper {
      * @return 商品实体
      */
     ItemEntity findByName(@Param("name") String name);
-    
-    /**
-     * 根据商品名称查询商品（排除指定ID）
-     * @param name 商品名称
-     * @param excludeId 排除的商品ID
-     * @return 商品实体
-     */
-    ItemEntity findByNameExcludeId(@Param("name") String name, @Param("excludeId") Long excludeId);
 }

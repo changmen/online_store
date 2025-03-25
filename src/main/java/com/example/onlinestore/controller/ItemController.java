@@ -29,13 +29,9 @@ public class ItemController {
      * 创建商品
      */
     @PostMapping
-    public Response<Long> createItem(@RequestBody Item item, @RequestHeader("X-User-Id") String userId) {
-        try {
-            itemService.addItem(userId, item);
-            return Response.success(item.getId());
-        } catch (ItemNameInvalidException e) {
-            return Response.fail(e.getMessage());
-        }
+    public Response<Long> createItem(@RequestBody Item item) {
+        itemService.addItem(item);
+        return Response.success(item.getId());
     }
 
     /**
