@@ -3,14 +3,17 @@ package com.example.onlinestore.service.impl;
 import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.bean.Sku;
 import com.example.onlinestore.bean.VirtualItem;
+import com.example.onlinestore.context.UserContext;
 import com.example.onlinestore.dto.ItemQueryDTO;
 import com.example.onlinestore.entity.ItemEntity;
-import com.example.onlinestore.exception.ItemNameInvalidException;
+import com.example.onlinestore.errors.ErrorCode;
+import com.example.onlinestore.exception.BizException;
 import com.example.onlinestore.mapper.ItemMapper;
 import com.example.onlinestore.service.ItemService;
 import com.example.onlinestore.service.SkuService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cglib.beans.BeanCopier;
 import org.springframework.stereotype.Service;
 
@@ -22,8 +25,10 @@ import java.util.stream.Collectors;
 @Service
 public class ItemServiceImpl implements ItemService {
 
-    private static final int MAX_NAME_LENGTH = 64;
-    private static final Pattern VALID_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9\\u4e00-\\u9fa5\\s]+$");
+    private static final Pattern VALID_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9\\u4e00-\\u9fa5\\s_\\-]+$");
+
+    @Value("${item.name.max.length:64}")
+    private int itemNameMaxLength;
 
     @Autowired
     private ItemMapper itemMapper;
@@ -32,27 +37,22 @@ public class ItemServiceImpl implements ItemService {
     private SkuService skuService;
 
     @Override
-    public void addItem(String userId, Item item) {
+    public void addItem(Item item) {
         // 验证商品名称
-        if (item.getName() == null || item.getName().trim().isEmpty()) {
-            throw new ItemNameInvalidException("商品名称不能为空");
+        if (StringUtils.isBlank(item.getName())) {
+            throw new BizException(ErrorCode.ITEM_NAME_NULL);
         }
         
         // 验证名称长度
-        if (item.getName().length() > MAX_NAME_LENGTH) {
-            throw new ItemNameInvalidException("商品名称不能超过64个字符");
+        if (item.getName().length() > itemNameMaxLength) {
+            throw new BizException(ErrorCode.ITEM_NAME_MAX_LENGTH_EXCEED);
         }
         
         // 验证名称是否包含特殊字符
         if (!VALID_NAME_PATTERN.matcher(item.getName()).matches()) {
-            throw new ItemNameInvalidException("商品名称不能包含特殊字符");
+            throw new BizException(ErrorCode.ITEM_NAME_CONTAIN_INVALID_CHAR);
         }
-        
-        // 验证名称是否重复
-        ItemEntity existingItem = itemMapper.findByName(item.getName());
-        if (existingItem != null) {
-            throw new ItemNameInvalidException("商品名称已存在");
-        }
+
         
         ItemEntity itemEntity = convertToItemEntity(item);
         itemMapper.insertItem(itemEntity);
@@ -68,26 +68,31 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public void updateItem(Item item) {
+
+        if (item.getId() == null) {
+            throw new IllegalArgumentException("itemId不能为空");
+        }
+
+        Item curItem = getItemById(item.getId());
+        if (curItem == null) {
+            throw new BizException(ErrorCode.ITEM_NOT_FOUND);
+        }
+
         // 验证商品名称
-        if (item.getName() == null || item.getName().trim().isEmpty()) {
-            throw new ItemNameInvalidException("商品名称不能为空");
+        if (StringUtils.isBlank(item.getName())) {
+            throw new BizException(ErrorCode.ITEM_NAME_NULL);
         }
         
         // 验证名称长度
-        if (item.getName().length() > MAX_NAME_LENGTH) {
-            throw new ItemNameInvalidException("商品名称不能超过64个字符");
+        if (item.getName().length() > itemNameMaxLength) {
+            throw new BizException(ErrorCode.ITEM_NAME_MAX_LENGTH_EXCEED);
         }
         
         // 验证名称是否包含特殊字符
         if (!VALID_NAME_PATTERN.matcher(item.getName()).matches()) {
-            throw new ItemNameInvalidException("商品名称不能包含特殊字符");
+            throw new BizException(ErrorCode.ITEM_NAME_CONTAIN_INVALID_CHAR);
         }
-        
-        // 验证名称是否重复（排除当前商品）
-        ItemEntity existingItem = itemMapper.findByNameExcludeId(item.getName(), item.getId());
-        if (existingItem != null) {
-            throw new ItemNameInvalidException("商品名称已存在");
-        }
+
         
         ItemEntity itemEntity = convertToItemEntity(item);
         itemMapper.updateItem(itemEntity);
@@ -179,10 +184,11 @@ public class ItemServiceImpl implements ItemService {
         if (item == null) {
             return null;
         }
-        
+
         ItemEntity itemEntity = new ItemEntity();
         BeanCopier copier = BeanCopier.create(Item.class, ItemEntity.class, false);
         copier.copy(item, itemEntity, null);
+        itemEntity.setUserId(UserContext.getCurrentUser().getId());
         return itemEntity;
     }
     
