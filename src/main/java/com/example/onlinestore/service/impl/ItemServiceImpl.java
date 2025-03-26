@@ -215,65 +215,51 @@ public class ItemServiceImpl implements ItemService {
     
     @Override
     public void addSkuToItem(Long itemId, Sku sku) {
+        if (itemId == null) {
+            throw new IllegalArgumentException("itemId不能为空");
+        }
+
+        Item item = getItemById(itemId);
+        if (item == null) {
+            throw new BizException(ErrorCode.ITEM_NOT_FOUND);
+        }
         // 设置商品ID
         sku.setItemId(itemId);
         skuService.addSku(sku);
-        
-        // 如果是第一个SKU，更新商品的默认SKU ID
-        Item item = getItemById(itemId);
-        if (item.getSkuId() == null) {
-            item.setSkuId(sku.getId());
-            updateItem(item);
-        }
-        
-        // 清除商品缓存
-        if (cacheEnabled) {
-            String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            try {
-                cacheManager.delete(cacheKey);
-            } catch (CacheOperateException e) {
-                logger.error("Failed to delete item cache. itemId:{}", itemId, e);
-            }
-        }
     }
     
     @Override
     public List<Sku> getSkusByItemId(Long itemId) {
+        if (itemId == null) {
+            throw new IllegalArgumentException("itemId不能为空");
+        }
+
+        Item item = getItemById(itemId);
+        if (item == null) {
+            throw new BizException(ErrorCode.ITEM_NOT_FOUND);
+        }
+
         return skuService.getSkusByItemId(itemId);
     }
     
     @Override
     public void updateItemSku(Sku sku) {
-        skuService.updateSku(sku);
-        
-        // 清除商品缓存
-        if (cacheEnabled) {
-            String cacheKey = String.format(CACHE_KEY_ITEM, sku.getItemId());
-            try {
-                cacheManager.delete(cacheKey);
-            } catch (CacheOperateException e) {
-                logger.error("Failed to delete item cache.itemId:{}", sku.getItemId(), e);
-            }
+        Sku curSku = skuService.getSkuById(sku.getId());
+        if (curSku == null) {
+            throw new BizException(ErrorCode.SKU_NOT_FOUND);
         }
+        skuService.updateSku(sku);
     }
     
     @Override
     public void deleteItemSku(Long skuId) {
         // 获取SKU信息，用于后续清除缓存
         Sku sku = skuService.getSkuById(skuId);
-        Long itemId = sku != null ? sku.getItemId() : null;
-        
-        skuService.deleteSku(skuId);
-        
-        // 清除商品缓存
-        if (cacheEnabled && itemId != null) {
-            String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            try {
-                cacheManager.delete(cacheKey);
-            } catch (CacheOperateException e) {
-                logger.error("Failed to delete item cache.itemId:{}", itemId, e);
-            }
+        if (sku == null) {
+            throw new BizException(ErrorCode.SKU_NOT_FOUND);
         }
+        skuService.deleteSku(skuId);
+
     }
 
     private Item convertToItem(ItemEntity itemEntity) {
@@ -303,15 +289,5 @@ public class ItemServiceImpl implements ItemService {
         itemEntity.setUserId(UserContext.getCurrentUser().getId());
         return itemEntity;
     }
-    
-    @SuppressWarnings("unused")
-    private ItemEntity buildItemEntity(String userId, String name, String description, String image, String secondaryName, String pingJia, Long skuId, Map<String, Map<String, String>> itemAttributes, Map<String, Map<String, String>> itemExtensions) {
-        ItemEntity entity = new ItemEntity();
-        entity.setName(name);
-        entity.setDescription(description);
-        entity.setImage(image);
-        entity.setSecondaryName(secondaryName);
-        entity.setSkuId(skuId);
-        return entity;
-    }
+
 }

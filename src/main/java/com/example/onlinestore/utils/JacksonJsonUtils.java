@@ -48,11 +48,12 @@ public class JacksonJsonUtils {
      * @param tClass 列表元素类型对应的Class对象
      * @return 解析后的List对象，元素类型与tClass一致
      * @throws IOException JSON解析或反序列化过程中发生错误时抛出
+     * @throws IllegalArgumentException 如果JSON字符串为空或格式不正确，将抛出此异常
      */
     public static <T> List<T> toList(String json, Class<T> tClass) throws IOException {
 
         if (StringUtils.isBlank(json)) {
-            return new ArrayList<>(0);
+            throw new IllegalArgumentException("JSON is blank");
         }
         JavaType javaType = JSON_MAPPER.getTypeFactory().constructParametricType(List.class, tClass);
         return JSON_MAPPER.readValue(json, javaType);

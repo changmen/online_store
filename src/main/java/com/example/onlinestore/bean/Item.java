@@ -13,7 +13,6 @@ public class Item implements Serializable {
     private String name;
     private String description;
     private String image;
-    private Long skuId;
     private String secondaryName;
     private Map<String, Object> extraProperties;
 
@@ -73,14 +72,6 @@ public class Item implements Serializable {
         this.secondaryName = secondaryName;
     }
 
-
-    public Long getSkuId() {
-        return skuId;
-    }
-
-    public void setSkuId(Long skuId) {
-        this.skuId = skuId;
-    }
 
     public Map<String, Object> getExtraProperties() {
         return extraProperties;

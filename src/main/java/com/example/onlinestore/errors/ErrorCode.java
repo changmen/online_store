@@ -5,6 +5,7 @@ public enum ErrorCode {
     ITEM_NAME_MAX_LENGTH_EXCEED("ErrorCode.ItemName.MaxLength.Exceed", "商品名称不能超过64个字符"),
     ITEM_NAME_CONTAIN_INVALID_CHAR("ErrorCode.ItemName.Contain.InvalidChar", "商品名称不能包含特殊字符"),
     ITEM_NOT_FOUND("ErrorCode.Item.NotFound", "商品不存在"),
+    SKU_NOT_FOUND("ErrorCode.Sku.NotFound", "商品规格不存在"),
     ;
 
     ErrorCode(String code, String message) {
