@@ -7,17 +7,17 @@ import com.example.onlinestore.exception.CacheOperateException;
  */
 public interface CacheManager {
 
-    class CacheItem<T> {
-        private final T value;
+    class CacheItem {
+        private final String value;
         // 过期时间，单位为毫秒，小于或等于0表示不过期
         private final long expireTime;
 
-        public CacheItem(T value, long expireTime) {
+        public CacheItem(String value, long expireTime) {
             this.value = value;
             this.expireTime = expireTime;
         }
 
-        public T getValue() {
+        public String getValue() {
             return value;
         }
 
@@ -64,8 +64,4 @@ public interface CacheManager {
      */
     boolean exists(String key) throws CacheOperateException;
 
-    /**
-     * 清空所有缓存
-     */
-    void clear() throws CacheOperateException;
 } 

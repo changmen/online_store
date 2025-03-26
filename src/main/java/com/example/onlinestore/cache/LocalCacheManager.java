@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -24,9 +25,14 @@ public class LocalCacheManager implements CacheManager, DisposableBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalCacheManager.class);
 
     // 缓存数据
-    private final Map<String, CacheItem<?>> cache = new ConcurrentHashMap<>();
+    private final Map<String, CacheItem> cache = new ConcurrentHashMap<>();
+
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    @Value("${cache.max-size:10000}")
+    private int maxCacheSize;
+
 
     public LocalCacheManager() {
         // 每分钟执行一次清理过期缓存的任务
@@ -35,7 +41,7 @@ public class LocalCacheManager implements CacheManager, DisposableBean {
 
     @Override
     public <T> T get(String key, Class<T> clazz) throws CacheOperateException {
-        CacheItem<?> item = cache.get(key);
+        CacheItem item = cache.get(key);
         if (item == null) {
             return null;
         }
@@ -46,13 +52,8 @@ public class LocalCacheManager implements CacheManager, DisposableBean {
             return null;
         }
 
-        String jsonValue = (String) item.getValue();
-        try {
-            return JacksonJsonUtils.toObject(jsonValue, clazz);
-        } catch (IOException e) {
-            LOGGER.error("Failed to deserialize cache value for key: {}", key, e);
-            throw new CacheOperateException("Failed to deserialize cache value for key: " + key);
-        }
+        String jsonValue = item.getValue();
+        return deserialize(key,jsonValue, clazz);
     }
 
     @Override
@@ -63,6 +64,12 @@ public class LocalCacheManager implements CacheManager, DisposableBean {
 
     @Override
     public <T> void set(String key, T value, long expireSeconds) throws CacheOperateException {
+
+        if (cache.size() >= maxCacheSize) {
+            LOGGER.warn("Cache is full, cannot set new cache item");
+            throw new CacheOperateException("Cache is full");
+        }
+
         try {
             // 将对象序列化为JSON字符串
             String jsonValue = JacksonJsonUtils.toString(value);
@@ -70,7 +77,7 @@ public class LocalCacheManager implements CacheManager, DisposableBean {
             long expireTime = expireSeconds > 0 ?
                     System.currentTimeMillis() + expireSeconds * 1000 : -1;
 
-            cache.put(key, new CacheItem<>(jsonValue, expireTime));
+            cache.put(key, new CacheItem(jsonValue, expireTime));
         } catch (JsonProcessingException e) {
             LOGGER.error("Failed to serialize cache value for key: {}", key, e);
             throw new CacheOperateException("Failed to serialize cache value for key: " + key);
@@ -85,7 +92,7 @@ public class LocalCacheManager implements CacheManager, DisposableBean {
 
     @Override
     public boolean exists(String key) throws CacheOperateException {
-        CacheItem<?> item = cache.get(key);
+        CacheItem item = cache.get(key);
         if (item == null) {
             return false;
         }
@@ -100,12 +107,6 @@ public class LocalCacheManager implements CacheManager, DisposableBean {
     }
 
     @Override
-    public void clear() throws CacheOperateException {
-        cache.clear();
-        LOGGER.debug("Cache cleared");
-    }
-
-    @Override
     public void destroy() throws Exception {
         scheduler.shutdownNow();
         LOGGER.debug("Cache destroyed");
@@ -116,7 +117,7 @@ public class LocalCacheManager implements CacheManager, DisposableBean {
      */
     private void cleanExpiredCache() {
         int count = 0;
-        for (Map.Entry<String, CacheItem<?>> entry : cache.entrySet()) {
+        for (Map.Entry<String, CacheItem> entry : cache.entrySet()) {
             if (entry.getValue().isExpired()) {
                 cache.remove(entry.getKey());
                 count++;
@@ -124,6 +125,15 @@ public class LocalCacheManager implements CacheManager, DisposableBean {
         }
         if (count > 0) {
             LOGGER.debug("Cleaned {} expired cache items", count);
+        }
+    }
+
+    private <T>  T deserialize(String key, String json, Class<T> clazz) throws CacheOperateException {
+        try {
+            return JacksonJsonUtils.toObject(json, clazz);
+        } catch (IOException e) {
+            LOGGER.error("Failed to deserialize cache value for key: {}", key, e);
+            throw new CacheOperateException("Failed to deserialize cache value for key: " + key);
         }
     }
 

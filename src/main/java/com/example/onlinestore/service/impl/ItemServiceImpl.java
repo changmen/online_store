@@ -45,8 +45,6 @@ public class ItemServiceImpl implements ItemService {
     @Value("${item.name.max.length:64}")
     private int itemNameMaxLength;
 
-
-
     @Autowired
     private ItemMapper itemMapper;
     
@@ -77,9 +75,7 @@ public class ItemServiceImpl implements ItemService {
         itemMapper.insertItem(itemEntity);
         // 设置回ID
         item.setId(itemEntity.getId());
-        
-        // 清除相关缓存
-        clearItemListCache();
+
     }
 
     @Override
@@ -159,8 +155,6 @@ public class ItemServiceImpl implements ItemService {
                 // 仅记录日志
                 logger.error("Failed to update item cache", e);
             }
-            // 清除列表缓存
-            clearItemListCache();
 
         }
     }
@@ -176,11 +170,8 @@ public class ItemServiceImpl implements ItemService {
             try {
                 cacheManager.delete(cacheKey);
             } catch (CacheOperateException e) {
-                logger.error("Failed to delete item cache。itemId:{}", itemId, e);
+                logger.error("Failed to delete item cache. itemId:{}", itemId, e);
             }
-
-            // 清除列表缓存
-            clearItemListCache();
         }
     }
 
@@ -241,7 +232,7 @@ public class ItemServiceImpl implements ItemService {
             try {
                 cacheManager.delete(cacheKey);
             } catch (CacheOperateException e) {
-                logger.error("Failed to delete item cache。itemId:{}", itemId, e);
+                logger.error("Failed to delete item cache. itemId:{}", itemId, e);
             }
         }
     }
@@ -261,7 +252,7 @@ public class ItemServiceImpl implements ItemService {
             try {
                 cacheManager.delete(cacheKey);
             } catch (CacheOperateException e) {
-                logger.error("Failed to delete item cache。itemId:{}", sku.getItemId(), e);
+                logger.error("Failed to delete item cache.itemId:{}", sku.getItemId(), e);
             }
         }
     }
@@ -280,26 +271,8 @@ public class ItemServiceImpl implements ItemService {
             try {
                 cacheManager.delete(cacheKey);
             } catch (CacheOperateException e) {
-                logger.error("Failed to delete item cache。itemId:{}", itemId, e);
+                logger.error("Failed to delete item cache.itemId:{}", itemId, e);
             }
-        }
-    }
-
-    /**
-     * 清除所有商品列表相关的缓存
-     */
-    private void clearItemListCache() {
-        if (!cacheEnabled) {
-            return;
-        }
-        
-        // 这里可以使用更精细的缓存清除策略，但为了简单起见，我们使用通配符删除所有列表缓存
-        // 在实际生产环境中，可能需要更精确的缓存失效策略
-        logger.debug("Clearing all item list caches");
-        try {
-            cacheManager.clear();
-        } catch (CacheOperateException e) {
-            logger.error("Failed to clear item list caches", e);
         }
     }
 

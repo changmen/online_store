@@ -22,7 +22,6 @@ public class JacksonJsonUtils {
     static {
         JSON_MAPPER = new ObjectMapper();
         JSON_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        JSON_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         JSON_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
     }
@@ -69,15 +68,19 @@ public class JacksonJsonUtils {
      * @param json 要解析的JSON字符串，通常是一个JSON数组格式的字符串。
      * @return 返回一个包含解析后的字符串元素的列表。如果JSON字符串无法解析或格式不正确，可能会抛出异常。
      * @throws IOException 如果解析过程中发生I/O错误，或者JSON字符串格式不正确，将抛出此异常。
+     * @throws IllegalArgumentException 如果JSON字符串为空或格式不正确，将抛出此异常。
      */
     public static List<String> toListString(String json) throws IOException {
         if (StringUtils.isBlank(json)) {
-            return new ArrayList<>(0);
+            throw new IllegalArgumentException("JSON is blank");
         }
         JsonNode jsonNode = JSON_MAPPER.readTree(json);
+        if (!jsonNode.isArray()) {
+            throw new IllegalArgumentException("JSON is not array");
+        }
         List<String> result = new ArrayList<>();
         for(JsonNode node : jsonNode) {
-            result.add(node.toString());
+            result.add(node.asText());
         }
         return result;
     }

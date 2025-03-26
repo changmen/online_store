@@ -3,6 +3,7 @@ package com.example.onlinestore.cache;
 import com.example.onlinestore.exception.CacheOperateException;
 import com.example.onlinestore.utils.JacksonJsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,16 +34,11 @@ public class RedisCacheManager implements CacheManager {
         String fullKey = redisCachePrefix + key;
         String jsonValue = redisTemplate.opsForValue().get(fullKey);
 
-        if (jsonValue == null) {
+        if (StringUtils.isBlank(jsonValue)) {
+            LOGGER.debug("Cache not found: key={}", key);
             return null;
         }
-
-        try {
-            return JacksonJsonUtils.toObject(jsonValue, clazz);
-        } catch (IOException e) {
-            LOGGER.error("Failed to deserialize cache value for key: {}", key, e);
-            throw new CacheOperateException("Failed to deserialize cache value for key: " + key);
-        }
+        return deserialize(key, jsonValue, clazz);
     }
 
     @Override
@@ -87,12 +82,13 @@ public class RedisCacheManager implements CacheManager {
         return Boolean.TRUE.equals(exists);
     }
 
-    @Override
-    public void clear() throws CacheOperateException {
-        Set<String> keys = redisTemplate.keys(redisCachePrefix + "*");
-        if (!keys.isEmpty()) {
-            redisTemplate.delete(keys);
-            LOGGER.debug("Cache cleared: {} keys removed", keys.size());
+    private <T>  T deserialize(String key, String json, Class<T> clazz) throws CacheOperateException {
+        try {
+            return JacksonJsonUtils.toObject(json, clazz);
+        } catch (IOException e) {
+            LOGGER.error("Failed to deserialize cache value for key: {}", key, e);
+            throw new CacheOperateException("Failed to deserialize cache value for key: " + key);
         }
     }
+
 } 
