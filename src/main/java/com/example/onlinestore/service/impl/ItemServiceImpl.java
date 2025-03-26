@@ -4,9 +4,12 @@ import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.bean.Sku;
 import com.example.onlinestore.bean.VirtualItem;
 import com.example.onlinestore.cache.CacheManager;
+import com.example.onlinestore.context.UserContext;
 import com.example.onlinestore.dto.ItemQueryDTO;
 import com.example.onlinestore.entity.ItemEntity;
-import com.example.onlinestore.exception.ItemNameInvalidException;
+import com.example.onlinestore.errors.ErrorCode;
+import com.example.onlinestore.exception.BizException;
+import com.example.onlinestore.exception.CacheOperateException;
 import com.example.onlinestore.mapper.ItemMapper;
 import com.example.onlinestore.service.ItemService;
 import com.example.onlinestore.service.SkuService;
@@ -18,9 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cglib.beans.BeanCopier;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -28,20 +29,20 @@ import java.util.stream.Collectors;
 public class ItemServiceImpl implements ItemService {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemServiceImpl.class);
-    private static final int MAX_NAME_LENGTH = 64;
-    private static final Pattern VALID_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9\\u4e00-\\u9fa5\\s]+$");
-    
+    private static final Pattern VALID_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9\\u4e00-\\u9fa5\\s_\\-]+$");
+
+
     // 缓存相关常量
     private static final String CACHE_KEY_ITEM = "item:%d";
-    private static final String CACHE_KEY_ITEMS_BY_CATEGORY = "items:category:%d:page:%d:size:%d";
-    private static final String CACHE_KEY_ITEMS_BY_NAME = "items:name:%s:page:%d:size:%d";
-    private static final String CACHE_KEY_ITEMS_ALL = "items:all:page:%d:size:%d";
     
     @Value("${cache.item.expire-seconds:3600}")
     private long itemCacheExpireSeconds;
     
     @Value("${cache.enabled:true}")
     private boolean cacheEnabled;
+
+    @Value("${item.name.max.length:64}")
+    private int itemNameMaxLength;
 
     @Autowired
     private ItemMapper itemMapper;
@@ -53,28 +54,22 @@ public class ItemServiceImpl implements ItemService {
     private CacheManager cacheManager;
 
     @Override
-    public void addItem(String userId, Item item) {
+    public void addItem(Item item) {
         // 验证商品名称
-        if (item.getName() == null || item.getName().trim().isEmpty()) {
-            throw new ItemNameInvalidException("商品名称不能为空");
+        if (StringUtils.isBlank(item.getName())) {
+            throw new BizException(ErrorCode.ITEM_NAME_NULL);
         }
         
         // 验证名称长度
-        if (item.getName().length() > MAX_NAME_LENGTH) {
-            throw new ItemNameInvalidException("商品名称不能超过64个字符");
+        if (item.getName().length() > itemNameMaxLength) {
+            throw new BizException(ErrorCode.ITEM_NAME_MAX_LENGTH_EXCEED);
         }
         
         // 验证名称是否包含特殊字符
         if (!VALID_NAME_PATTERN.matcher(item.getName()).matches()) {
-            throw new ItemNameInvalidException("商品名称不能包含特殊字符");
+            throw new BizException(ErrorCode.ITEM_NAME_CONTAIN_INVALID_CHAR);
         }
-        
-        // 验证名称是否重复
-        ItemEntity existingItem = itemMapper.findByName(item.getName());
-        if (existingItem != null) {
-            throw new ItemNameInvalidException("商品名称已存在");
-        }
-        
+
         ItemEntity itemEntity = convertToItemEntity(item);
         itemMapper.insertItem(itemEntity);
         // 设置回ID
@@ -87,11 +82,16 @@ public class ItemServiceImpl implements ItemService {
         // 如果启用了缓存，先从缓存中获取
         if (cacheEnabled) {
             String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            Item cachedItem = cacheManager.get(cacheKey, Item.class);
-            if (cachedItem != null) {
-                logger.debug("Cache hit for item: {}", itemId);
-                return cachedItem;
+            try {
+                Item  cachedItem = cacheManager.get(cacheKey, Item.class);
+                if (cachedItem != null) {
+                    return cachedItem;
+                }
+            } catch (CacheOperateException e) {
+                // 从DB中获取， 仅仅记录日志
+                logger.error("Failed to get item from cache", e);
             }
+
         }
         
         // 缓存未命中，从数据库获取
@@ -101,8 +101,12 @@ public class ItemServiceImpl implements ItemService {
         // 如果启用了缓存且查询结果不为空，则缓存结果
         if (cacheEnabled && item != null) {
             String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            cacheManager.set(cacheKey, item, itemCacheExpireSeconds);
-            logger.debug("Cached item: {}", itemId);
+            try {
+                cacheManager.set(cacheKey, item, itemCacheExpireSeconds);
+            } catch (CacheOperateException e) {
+                // 仅记录日志
+                logger.error("Failed to set item cache", e);
+            }
         }
         
         return item;
@@ -110,27 +114,33 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public void updateItem(Item item) {
+        Long userId = UserContext.getCurrentUser().getId();
+
+        if (item.getId() == null) {
+            throw new IllegalArgumentException("itemId不能为空");
+        }
+
+        ItemEntity curItem = itemMapper.findByUserIdAndItemId(userId, item.getId());
+        if (curItem == null) {
+            throw new BizException(ErrorCode.ITEM_NOT_FOUND);
+        }
+
         // 验证商品名称
-        if (item.getName() == null || item.getName().trim().isEmpty()) {
-            throw new ItemNameInvalidException("商品名称不能为空");
+        if (StringUtils.isBlank(item.getName())) {
+            throw new BizException(ErrorCode.ITEM_NAME_NULL);
         }
         
         // 验证名称长度
-        if (item.getName().length() > MAX_NAME_LENGTH) {
-            throw new ItemNameInvalidException("商品名称不能超过64个字符");
+        if (item.getName().length() > itemNameMaxLength) {
+            throw new BizException(ErrorCode.ITEM_NAME_MAX_LENGTH_EXCEED);
         }
         
         // 验证名称是否包含特殊字符
         if (!VALID_NAME_PATTERN.matcher(item.getName()).matches()) {
-            throw new ItemNameInvalidException("商品名称不能包含特殊字符");
+            throw new BizException(ErrorCode.ITEM_NAME_CONTAIN_INVALID_CHAR);
         }
-        
-        // 验证名称是否重复（排除当前商品）
-        ItemEntity existingItem = itemMapper.findByNameExcludeId(item.getName(), item.getId());
-        if (existingItem != null) {
-            throw new ItemNameInvalidException("商品名称已存在");
-        }
-        
+
+
         ItemEntity itemEntity = convertToItemEntity(item);
         itemMapper.updateItem(itemEntity);
         
@@ -138,7 +148,13 @@ public class ItemServiceImpl implements ItemService {
         if (cacheEnabled) {
             // 更新单个商品缓存
             String cacheKey = String.format(CACHE_KEY_ITEM, item.getId());
-            cacheManager.set(cacheKey, item, itemCacheExpireSeconds);
+            try {
+                cacheManager.set(cacheKey, item, itemCacheExpireSeconds);
+            } catch (CacheOperateException e) {
+                // 仅记录日志
+                logger.error("Failed to update item cache", e);
+            }
+
         }
     }
 
@@ -150,10 +166,14 @@ public class ItemServiceImpl implements ItemService {
         if (cacheEnabled) {
             // 删除单个商品缓存
             String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            cacheManager.delete(cacheKey);
+            try {
+                cacheManager.delete(cacheKey);
+            } catch (CacheOperateException e) {
+                logger.error("Failed to delete item cache. itemId:{}", itemId, e);
+            }
         }
     }
-    
+
     @Override
     public List<Item> queryItems(ItemQueryDTO queryDTO) {
 
@@ -183,55 +203,51 @@ public class ItemServiceImpl implements ItemService {
     
     @Override
     public void addSkuToItem(Long itemId, Sku sku) {
+        if (itemId == null) {
+            throw new IllegalArgumentException("itemId不能为空");
+        }
+
+        Item item = getItemById(itemId);
+        if (item == null) {
+            throw new BizException(ErrorCode.ITEM_NOT_FOUND);
+        }
         // 设置商品ID
         sku.setItemId(itemId);
         skuService.addSku(sku);
-        
-        // 如果是第一个SKU，更新商品的默认SKU ID
-        Item item = getItemById(itemId);
-        if (item.getSkuId() == null) {
-            item.setSkuId(sku.getId());
-            updateItem(item);
-        }
-        
-        // 清除商品缓存
-        if (cacheEnabled) {
-            String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            cacheManager.delete(cacheKey);
-        }
     }
     
     @Override
     public List<Sku> getSkusByItemId(Long itemId) {
+        if (itemId == null) {
+            throw new IllegalArgumentException("itemId不能为空");
+        }
+
+        Item item = getItemById(itemId);
+        if (item == null) {
+            throw new BizException(ErrorCode.ITEM_NOT_FOUND);
+        }
+
         return skuService.getSkusByItemId(itemId);
     }
     
     @Override
     public void updateItemSku(Sku sku) {
-        skuService.updateSku(sku);
-        
-        // 清除商品缓存
-        if (cacheEnabled) {
-            String cacheKey = String.format(CACHE_KEY_ITEM, sku.getItemId());
-            cacheManager.delete(cacheKey);
+        Sku curSku = skuService.getSkuById(sku.getId());
+        if (curSku == null) {
+            throw new BizException(ErrorCode.SKU_NOT_FOUND);
         }
+        skuService.updateSku(sku);
     }
     
     @Override
     public void deleteItemSku(Long skuId) {
         // 获取SKU信息，用于后续清除缓存
         Sku sku = skuService.getSkuById(skuId);
-        Long itemId = sku != null ? sku.getItemId() : null;
-        
-        skuService.deleteSku(skuId);
-        
-        // 清除商品缓存
-        if (cacheEnabled && itemId != null) {
-            String cacheKey = String.format(CACHE_KEY_ITEM, itemId);
-            cacheManager.delete(cacheKey);
+        if (sku == null) {
+            throw new BizException(ErrorCode.SKU_NOT_FOUND);
         }
+        skuService.deleteSku(skuId);
     }
-
 
     private Item convertToItem(ItemEntity itemEntity) {
         if (itemEntity == null) {
@@ -253,10 +269,11 @@ public class ItemServiceImpl implements ItemService {
         if (item == null) {
             return null;
         }
-        
+
         ItemEntity itemEntity = new ItemEntity();
         BeanCopier copier = BeanCopier.create(Item.class, ItemEntity.class, false);
         copier.copy(item, itemEntity, null);
+        itemEntity.setUserId(UserContext.getCurrentUser().getId());
         return itemEntity;
     }
 }

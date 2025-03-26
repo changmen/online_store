@@ -8,11 +8,11 @@ public class Item implements Serializable {
     @Serial
     private static final long serialVersionUID = 8328093958488219106L;
     private Long id;
+    private Long userId;
     private Long categoryId;
     private String name;
     private String description;
     private String image;
-    private Long skuId;
     private String secondaryName;
     private Map<String, Object> extraProperties;
 
@@ -22,6 +22,14 @@ public class Item implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public Long getCategoryId() {
@@ -64,14 +72,6 @@ public class Item implements Serializable {
         this.secondaryName = secondaryName;
     }
 
-
-    public Long getSkuId() {
-        return skuId;
-    }
-
-    public void setSkuId(Long skuId) {
-        this.skuId = skuId;
-    }
 
     public Map<String, Object> getExtraProperties() {
         return extraProperties;

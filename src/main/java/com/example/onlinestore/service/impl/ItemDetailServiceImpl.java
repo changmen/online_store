@@ -7,9 +7,11 @@ import com.example.onlinestore.cache.CacheManager;
 import com.example.onlinestore.dto.CategoryDTO;
 import com.example.onlinestore.dto.ItemDetailDTO;
 import com.example.onlinestore.dto.ReviewStatisticsDTO;
+import com.example.onlinestore.exception.CacheOperateException;
 import com.example.onlinestore.service.CategoryService;
-import com.example.onlinestore.service.ItemService;
 import com.example.onlinestore.service.ItemDetailService;
+import com.example.onlinestore.service.ItemService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +60,12 @@ public class ItemDetailServiceImpl implements ItemDetailService {
         // 如果启用了缓存，先从缓存中获取
         if (cacheEnabled) {
             String cacheKey = String.format(CACHE_KEY_PRODUCT_DETAIL, itemId);
-            ItemDetailDTO cachedDetail = cacheManager.get(cacheKey, ItemDetailDTO.class);
+            ItemDetailDTO cachedDetail = null;
+            try {
+                cachedDetail = cacheManager.get(cacheKey, ItemDetailDTO.class);
+            } catch (CacheOperateException e) {
+                logger.error("Failed to get product detail from cache. itemId:{}, skuId:{}", itemId, skuId, e);
+            }
             if (cachedDetail != null) {
                 logger.debug("Cache hit for product detail: {}", itemId);
                 
@@ -82,8 +89,11 @@ public class ItemDetailServiceImpl implements ItemDetailService {
         // 如果启用了缓存且构建成功，则缓存结果
         if (cacheEnabled && detailDTO != null) {
             String cacheKey = String.format(CACHE_KEY_PRODUCT_DETAIL, itemId);
-            cacheManager.set(cacheKey, detailDTO, productDetailCacheExpireSeconds);
-            logger.debug("Cached product detail: {}", itemId);
+            try {
+                cacheManager.set(cacheKey, detailDTO, productDetailCacheExpireSeconds);
+            } catch (CacheOperateException e) {
+                logger.error("Failed to set product detail cache. itemId:{}", itemId, e);
+            }
         }
         
         return detailDTO;
@@ -132,22 +142,29 @@ public class ItemDetailServiceImpl implements ItemDetailService {
         // 如果启用了缓存，先从缓存中获取
         if (cacheEnabled) {
             String cacheKey = String.format(CACHE_KEY_PRODUCT_DETAIL_CONTENT, itemId);
-            String cachedContent = cacheManager.get(cacheKey, String.class);
-            if (cachedContent != null) {
-                logger.debug("Cache hit for product detail content: {}", itemId);
-                return cachedContent;
+            try {
+                String cachedContent = cacheManager.get(cacheKey, String.class);
+                if (StringUtils.isNoneBlank(cachedContent)) {
+                    logger.debug("Cache hit for product detail content: {}", itemId);
+                    return cachedContent;
+                }
+            } catch (CacheOperateException e) {
+                logger.error("Failed to get product detail content from cache. itemId:{}", itemId, e);
             }
+
         }
         
         // 缓存未命中，从数据库或其他服务获取
-        // 这里简化处理，实际可能需要从CMS系统或其他服务获取
         String detailContent = fetchProductDetailContent(itemId);
         
         // 如果启用了缓存且获取成功，则缓存结果
         if (cacheEnabled) {
             String cacheKey = String.format(CACHE_KEY_PRODUCT_DETAIL_CONTENT, itemId);
-            cacheManager.set(cacheKey, detailContent, productDetailCacheExpireSeconds);
-            logger.debug("Cached product detail content: {}", itemId);
+            try {
+                cacheManager.set(cacheKey, detailContent, productDetailCacheExpireSeconds);
+            } catch (CacheOperateException e) {
+                logger.error("Failed to set product detail content cache. itemId:{}", itemId, e);
+            }
         }
         
         return detailContent;
@@ -197,15 +214,7 @@ public class ItemDetailServiceImpl implements ItemDetailService {
                             break;
                         }
                     }
-                } else if (item.getSkuId() != null && skus != null) {
-                    // 如果没有指定SKU ID，使用商品默认SKU
-                    for (Sku sku : skus) {
-                        if (item.getSkuId().equals(sku.getId())) {
-                            detailDTO.setSelectedSku(sku);
-                            break;
-                        }
-                    }
-                } else if (skus != null && !skus.isEmpty()) {
+                }  else if (skus != null && !skus.isEmpty()) {
                     // 如果没有默认SKU，使用第一个SKU
                     detailDTO.setSelectedSku(skus.get(0));
                 }

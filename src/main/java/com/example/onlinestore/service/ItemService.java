@@ -7,7 +7,7 @@ import com.example.onlinestore.dto.ItemQueryDTO;
 import java.util.List;
 
 public interface ItemService {
-    void addItem(String userId, Item item);
+    void addItem(Item item);
     Item getItemById(long itemId);
     void updateItem(Item item);
     void deleteItem(long itemId);
