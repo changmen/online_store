@@ -25,21 +25,17 @@ public class CacheConfig {
     @Autowired
     private RedisCacheManager redisCacheManager;
     
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
-    }
-    
     /**
      * 根据配置选择缓存管理器
      */
     @Bean
     @Primary
     public CacheManager cacheManager() {
+
         if ("redis".equalsIgnoreCase(cacheType)) {
             return redisCacheManager;
-        } else {
-            return localCacheManager;
         }
+        // 默认使用本地缓存
+        return localCacheManager;
     }
 } 
