@@ -40,6 +40,6 @@ public interface BrandService {
      * @param brand 新的品牌数据实体对象，必须有效且不为null（需包含待更新的字段）
      * @return 更新后的品牌实体对象
      */
-    Brand updateBrand(@NotNull Long id, @NotNull @Valid Brand brand);
+    boolean updateBrand(@NotNull Long id, @NotNull @Valid Brand brand);
 
 }

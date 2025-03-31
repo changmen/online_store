@@ -46,7 +46,7 @@ public class BrandServiceImpl implements BrandService {
     }
 
     @Override
-    public Brand updateBrand( @NotNull Long id, @NotNull @Valid Brand brand) {
+    public boolean updateBrand( @NotNull Long id, @NotNull @Valid Brand brand) {
         synchronized (BRAND_NAME_LOCK) {
             Brand curBrand = getBrandById(id);
             brand.setName(StringUtils.toRootUpperCase(brand.getName()));
@@ -85,7 +85,8 @@ public class BrandServiceImpl implements BrandService {
             }
 
             if (!needToUpdate) {
-                return curBrand;
+                logger.info("no need to update brand. brandId:{}", id);
+                return false;
             }
 
             updatingBrandEntity.setUpdatedAt(LocalDateTime.now());
@@ -95,7 +96,7 @@ public class BrandServiceImpl implements BrandService {
                 throw new BizException(ErrorCode.INTERNAL_ERROR);
             }
 
-            return brand;
+            return true;
         }
     }
 
