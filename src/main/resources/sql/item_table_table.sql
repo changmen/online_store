@@ -1,0 +1,16 @@
+CREATE TABLE IF NOT EXISTS item (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '商品唯一标识ID',
+  `brand_id` BIGINT UNSIGNED NOT NULL COMMENT '关联品牌ID',
+  `category_id` BIGINT UNSIGNED NOT NULL COMMENT '关联类目ID',
+  `name` VARCHAR(255) NOT NULL COMMENT '商品名称',
+  `description` TEXT COMMENT '商品详细描述（支持富文本）',
+  `main_image_url` VARCHAR(512) COMMENT '商品主图URL',
+  `sub_image_urls` VARCHAR(2048) COMMENT '子图URL集合（多个用逗号分隔）',
+  `status` VARCHAR(20) NOT NULL DEFAULT 'ON_SALE' COMMENT '商品状态：ON_SALE-售卖中/OFF_SALE-已下架',
+  `sort_score` INT NOT NULL DEFAULT 0 COMMENT '排序权重分（越大越靠前）',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间（ISO8601格式）',
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间（ISO8601格式）',
+  PRIMARY KEY (`id`),
+  INDEX idx_brand (`brand_id`),
+  INDEX idx_category_status (`category_id`, `status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品信息表';
