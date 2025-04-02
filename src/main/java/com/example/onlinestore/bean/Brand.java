@@ -22,7 +22,7 @@ public class Brand implements Serializable {
     private static final long serialVersionUID = -8605879756585481300L;
 
     /**
-     * 实体唯一标识符
+     * 实体唯一标识符, 数据库默认自增
      * - 主键字段
      */
     private Long id;
@@ -33,7 +33,7 @@ public class Brand implements Serializable {
      * - 非空约束
      */
     @NotNull(message = "名称字段不能为空")
-    @Size( max = 64, message = "名称字段最大长度不能超过64")
+    @Size(max = 64, message = "名称字段最大长度不能超过64")
     private String name;
 
     /**
@@ -78,9 +78,7 @@ public class Brand implements Serializable {
      * - 控制前端展示状态（如：0-隐藏，1-显示）
      * - 非空约束
      */
-    @NotNull
+    @NotNull(message = "显示状态字段不能为空")
     @Range(min = 0, max = 1, message = "显示状态标识必须为0或1")
     private Integer visible;
-
-
 }

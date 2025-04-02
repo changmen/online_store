@@ -40,17 +40,17 @@ public class Page<T> implements Serializable {
      * 单个分页的数据容量，表示每页最多包含的记录数
      */
     private int pageSize;
-    
+
     public Page() {
     }
-    
+
     public Page(List<T> items, long total, int pageNum, int pageSize) {
         this.items = items;
         this.totalCount = total;
         this.pageNum = pageNum;
         this.pageSize = pageSize;
     }
-    
+
     public static <T> Page<T> of(List<T> items, long total, int pageNum, int pageSize) {
         if (items == null) {
             items = List.of();

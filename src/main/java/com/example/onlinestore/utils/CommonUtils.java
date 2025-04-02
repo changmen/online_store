@@ -17,7 +17,7 @@ public class CommonUtils {
      */
     public static <T> boolean updateFieldIfChanged(T newValue, T oldValue, Consumer<T> setter) {
         // 当新值有效且与旧值不同时执行更新
-        if (newValue != null && Objects.equals(newValue, oldValue)) {
+        if (newValue != null && !Objects.equals(newValue, oldValue)) {
             setter.accept(newValue);
             return true;
         }
