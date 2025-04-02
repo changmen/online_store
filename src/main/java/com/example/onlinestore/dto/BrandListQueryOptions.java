@@ -20,7 +20,7 @@ import java.util.List;
 @Setter
 @EqualsAndHashCode(callSuper = true)
 @ToString
-public class BrandListQueryOptions extends PageRequest{
+public class BrandListQueryOptions extends PageRequest {
     @Serial
     private static final long serialVersionUID = 1406567832771578631L;
 

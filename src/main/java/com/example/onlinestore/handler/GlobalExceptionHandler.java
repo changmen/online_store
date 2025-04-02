@@ -66,28 +66,34 @@ public class GlobalExceptionHandler {
 
         logger.error("BizException. errorCode:{}, params:{}", e.getErrorCode(), e.getParams(), e);
 
-        String messagae;
+        String message;
         try {
-            messagae = messageSource.getMessage(e.getErrorCode().getCode(), null, LocaleContextHolder.getLocale());
-            if (StringUtils.isBlank(messagae)) {
-                messagae = e.getErrorCode().getDefaultMessage();
+            message = messageSource.getMessage(e.getErrorCode().getCode(), null, LocaleContextHolder.getLocale());
+            if (StringUtils.isBlank(message)) {
+                message = e.getErrorCode().getDefaultMessage();
             }
 
         } catch (NoSuchMessageException ne) {
             logger.error("NoSuchMessageException. {}", e.getErrorCode().getCode());
-            messagae = e.getErrorCode().getDefaultMessage();
+            message = e.getErrorCode().getDefaultMessage();
         }
 
         if (e.getParams() != null && e.getParams().length > 0) {
-            messagae = MessageFormat.format(messagae, e.getParams());
+            message = MessageFormat.format(message, e.getParams());
         }
-        return Response.fail(messagae);
+        return Response.fail(message);
     }
 
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ConstraintViolationException.class)
     public Response<String> handleException(ConstraintViolationException e) {
         logger.error("ConstraintViolationException", e);
-        return Response.failWithInternalError();
+        StringBuilder message = new StringBuilder("参数验证失败: ");
+        e.getConstraintViolations().forEach(violation ->
+                message.append(violation.getPropertyPath())
+                        .append(": ")
+                        .append(violation.getMessage())
+                        .append("; "));
+        return Response.fail(message.toString());
     }
 }

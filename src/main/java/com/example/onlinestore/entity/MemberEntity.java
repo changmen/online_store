@@ -3,8 +3,10 @@ package com.example.onlinestore.entity;
 import com.example.onlinestore.bean.Member;
 import com.example.onlinestore.bean.MemberBaseInfo;
 import com.example.onlinestore.enums.GenderType;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -13,6 +15,8 @@ import java.time.LocalDateTime;
 // 用户表
 @Setter
 @Getter
+@EqualsAndHashCode
+@ToString
 public class MemberEntity implements Serializable  {
     @Serial
     private static final long serialVersionUID = -5135051549283930313L;

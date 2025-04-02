@@ -1,12 +1,14 @@
 package com.example.onlinestore.bean;
 
-import jakarta.validation.Valid;
+import com.example.onlinestore.constants.Constants;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.validator.constraints.Range;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -30,27 +32,28 @@ public class Brand implements Serializable {
      * - 最大长度限制：64字符
      * - 非空约束
      */
-    @NotNull
-    @Size( max = 64)
+    @NotNull(message = "名称字段不能为空")
+    @Size( max = 64, message = "名称字段最大长度不能超过64")
     private String name;
 
     /**
      * 描述信息字段
-     * - 最大长度限制：1024字符
+     * - 最大长度限制512
      * - 非空约束
      */
-    @NotNull
-    @Size(max = 1024)
+    @NotNull(message = "描述信息字段不能为空")
+    @Size(max = 512, message = "描述信息字段最大长度不能超过512")
     private String description;
 
     /**
      * 品牌/组织LOGO字段
      * - 存储LOGO路径或标识符
-     * - 最大长度限制：256字符
+     * - 最大长度限制：128字符
      * - 非空约束
      */
-    @NotNull
-    @Size(max = 256)
+    @NotNull(message = "品牌LOGO字段不能为空")
+    @Size(max = 128, message = "品牌LOGO字段最大长度不能超过128")
+    @Pattern(regexp = Constants.URL_PATTERN, message = "Logo必须是有效的URL地址")
     private String logo;
 
     /**
@@ -58,8 +61,8 @@ public class Brand implements Serializable {
      * - 最大长度限制：1024字符
      * - 非空约束
      */
-    @NotNull
-    @Size(max = 1024)
+    @NotNull(message = "品牌故事字段不能为空")
+    @Size(max = 1024, message = "品牌故事字段最大长度不能超过1024")
     private String story;
 
     /**
@@ -67,7 +70,7 @@ public class Brand implements Serializable {
      * - 用于系统排序的数值型权重
      * - 非空约束
      */
-    @NotNull
+    @NotNull(message = "排序权重字段不能为空")
     private Integer sortScore;
 
     /**
@@ -76,7 +79,8 @@ public class Brand implements Serializable {
      * - 非空约束
      */
     @NotNull
-    private Integer showStatus;
+    @Range(min = 0, max = 1, message = "显示状态标识必须为0或1")
+    private Integer visible;
 
 
 }

@@ -18,24 +18,23 @@
     </sql>
 
     <insert id="insert" parameterType="com.example.onlinestore.entity.BrandEntity">
-        INSERT INTO brand (`id`,`name`, description, logo, story, sort_score, show_status, created_at, updated_at)
+        INSERT INTO brand (`id`,`name`, `description`, `logo`, `story`, `sort_score`, `show_status`, `created_at`, `updated_at`)
         VALUES (#{name}, #{description}, #{logo}, #{story}, #{sortScore}, #{showStatus}, #{createdAt}, #{updatedAt})
     </insert>
 
     <select id="findById" resultMap="brandResultMap">
         SELECT
         <include refid="Brand_basic_column" />
-        FROM brand WHERE brand_id = #{id}
+        FROM brand WHERE `brand_id` = #{id}
     </select>
 
     <delete id="deleteById">
-        DELETE FROM brand WHERE id = #{id}
+        DELETE FROM `brand` WHERE `id` = #{id}
     </delete>
 
     <update id="update">
         UPDATE brand
         <set>
-            <if test="name != null">`name` = #{name},</if>
             <if test="description != null">`description` = #{description},</if>
             <if test="logo != null">`logo` = #{logo},</if>
             <if test="story != null">`story` = #{story},</if>

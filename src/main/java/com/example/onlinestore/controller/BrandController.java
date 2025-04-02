@@ -41,10 +41,10 @@ public class BrandController {
     }
 
     @PutMapping("/{brandId}")
-    public Response<Boolean> updateBrand(@NotNull @PathVariable("brandId") Long brandId,
+    public Response<Void> updateBrand(@NotNull @PathVariable("brandId") Long brandId,
                                        @Valid @RequestBody Brand brand) {
-        boolean updatedBrand = brandService.updateBrand(brandId, brand);
-        return Response.success(updatedBrand);
+          brandService.updateBrand(brandId, brand);
+        return Response.success();
     }
 
     @DeleteMapping("/{brandId}")

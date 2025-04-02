@@ -1,7 +1,9 @@
 package com.example.onlinestore.dto;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -11,6 +13,8 @@ import java.io.Serializable;
  */
 @Getter
 @Setter
+@EqualsAndHashCode
+@ToString
 public class Response<T> implements Serializable {
 
     @Serial

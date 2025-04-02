@@ -39,11 +39,10 @@ public interface BrandService {
      *
      * @param id    品牌的唯一标识符，不能为null
      * @param brand 包含新品牌信息的对象，需要满足校验规则（通过@Valid注解触发校验），不能为null
-     * @return boolean 更新操作结果：true表示更新成功，false表示更新失败
-     * @throws com.example.onlinestore.exceptions.BizException 如果更新失败，抛出业务异常，当品牌不存在时，会跑出BRAND_NAME_MODIFY_FORBIDDEN的BizException.
+     * @throws com.example.onlinestore.exceptions.BizException 当根据id找不到对应品牌记录，或者品牌名称重复时抛出业务异常
      *
      */
-    boolean updateBrand(@NotNull Long id, @NotNull @Valid Brand brand);
+    void updateBrand(@NotNull Long id, @NotNull @Valid Brand brand);
 
 
 }
