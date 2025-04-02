@@ -8,18 +8,18 @@
         <result property="logo" column="logo"/>
         <result property="story" column="story"/>
         <result property="sortScore" column="sort_score"/>
-        <result property="showStatus" column="show_status"/>
+        <result property="visible" column="visible"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <sql id="Brand_basic_column">
-        `id`, `name`, `description`, `logo`, `story`, `sort_score`, `show_status`, `created_at`, `updated_at`
+        `id`, `name`, `description`, `logo`, `story`, `sort_score`, `visible`, `created_at`, `updated_at`
     </sql>
 
     <insert id="insert" parameterType="com.example.onlinestore.entity.BrandEntity">
-        INSERT INTO brand (`id`,`name`, `description`, `logo`, `story`, `sort_score`, `show_status`, `created_at`, `updated_at`)
-        VALUES (#{name}, #{description}, #{logo}, #{story}, #{sortScore}, #{showStatus}, #{createdAt}, #{updatedAt})
+        INSERT INTO brand (`id`,`name`, `description`, `logo`, `story`, `sort_score`, `visible`, `created_at`, `updated_at`)
+        VALUES (#{name}, #{description}, #{logo}, #{story}, #{sortScore}, #{visible}, #{createdAt}, #{updatedAt})
     </insert>
 
     <select id="findById" resultMap="brandResultMap">
@@ -39,7 +39,7 @@
             <if test="logo != null">`logo` = #{logo},</if>
             <if test="story != null">`story` = #{story},</if>
             <if test="sortScore != null">`sort_score` = #{sortScore},</if>
-            <if test="showStatus != null">`show_status` = #{showStatus},</if>
+            <if test="showStatus != null">`visible` = #{visible},</if>
             <if test="updatedAt != null">`updated_at` = #{updatedAt}</if>
         </set>
         WHERE id = #{id}
@@ -58,8 +58,8 @@
         <include refid="Brand_basic_column" />
         FROM `brand`
         WHERE
-        <if test="options != null and options.showStatus != null">
-            `show_status` = #{options.showStatus}
+        <if test="options != null and options.visible != null">
+            `visible` = #{options.visible}
         </if>
         <if test="options != null and options.brandIds != null and options.brandIds.size() > 0 ">
             AND `id` in
