@@ -9,7 +9,6 @@ import lombok.ToString;
 import org.hibernate.validator.constraints.Range;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,6 +20,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @ToString
 public class BrandListQueryOptions extends PageRequest {
+
     @Serial
     private static final long serialVersionUID = 1406567832771578631L;
 
@@ -31,7 +31,7 @@ public class BrandListQueryOptions extends PageRequest {
      * - null: 表示不进行状态过滤
      */
     @Range(min = 0, max = 1, message = "显示状态标识必须为0或1")
-    private Integer showStatus;
+    private Integer visible;
 
     /**
      * 排序字段名称
@@ -48,6 +48,6 @@ public class BrandListQueryOptions extends PageRequest {
      * - 不能超过100 id的查询， 超过后需要通过分页参数进行查询
      */
     @Size(max = 100)
-    private List<Long> brandIds = new ArrayList<>();
+    private List<Long> brandIds;
 
 }

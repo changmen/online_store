@@ -19,11 +19,11 @@ public class BrandController {
     @GetMapping("")
     public Response<Page<Brand>> listBrands(@RequestParam(value = "pageNum", required = false, defaultValue = "1") Integer pageNum,
                                             @RequestParam(value = "pageSize", required = false, defaultValue = "10") Integer pageSize,
-                                            @RequestParam(value = "showStatus", required = false, defaultValue = "1") Integer showStatus) {
+                                            @RequestParam(value = "visible", required = false, defaultValue = "1") Integer visible) {
         BrandListQueryOptions options = new BrandListQueryOptions();
         options.setPageNum(pageNum);
         options.setPageSize(pageSize);
-        options.setShowStatus(showStatus);
+        options.setVisible(visible);
         Page<Brand> brands = brandService.listBrands(options);
         return Response.success(brands);
     }
@@ -42,8 +42,8 @@ public class BrandController {
 
     @PutMapping("/{brandId}")
     public Response<Void> updateBrand(@NotNull @PathVariable("brandId") Long brandId,
-                                       @Valid @RequestBody Brand brand) {
-          brandService.updateBrand(brandId, brand);
+                                      @Valid @RequestBody Brand brand) {
+        brandService.updateBrand(brandId, brand);
         return Response.success();
     }
 

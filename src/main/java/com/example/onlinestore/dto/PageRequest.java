@@ -19,13 +19,13 @@ public class PageRequest implements Serializable {
     private static final long serialVersionUID = -8445831075808655383L;
 
     /**
-     * Current page number for pagination. Must be at least 1. Default is 1.
+     * 每页显示条数，必须在1到100之间，默认值为10
      */
     @Min(value = 1)
     private int pageNum = 1;
 
     /**
-     * Number of items per page for pagination. Must be between 1 and 100. Default is 10.
+     * 当前页码，必须至少为1，默认值为1
      */
     @Min(value = 1)
     @Max(value = 100)
