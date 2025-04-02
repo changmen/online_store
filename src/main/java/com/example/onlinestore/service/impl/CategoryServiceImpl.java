@@ -81,7 +81,7 @@ public class CategoryServiceImpl implements CategoryService, InitializingBean, D
     }
 
     private void loadCategory() {
-        LOGGER.info("Start to load category.");
+        LOGGER.debug("Start to load category.");
         synchronized (LOAD_LOCKER) {
             int limit = 1000;
             try {
@@ -132,6 +132,6 @@ public class CategoryServiceImpl implements CategoryService, InitializingBean, D
             }
         }
 
-        LOGGER.info("Complete to load category.");
+        LOGGER.debug("Complete to load category.");
     }
 }

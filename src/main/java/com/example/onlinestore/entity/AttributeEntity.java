@@ -56,6 +56,12 @@ public class AttributeEntity implements Serializable {
     private Integer sortScore;
 
     /**
+     * 是否可见标记
+     * <p>0-不可见 1-可见</p>
+     */
+    private Integer visible;
+
+    /**
      * 记录创建时间戳
      */
     private LocalDateTime createdAt;

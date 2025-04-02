@@ -9,23 +9,24 @@
         <result property="searchable" column="searchable"/>
         <result property="inputType" column="input_type"/>
         <result property="sortScore" column="sort_score"/>
+        <result property="visible" column="visible"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <sql id="Attribute_base_sql">
-        `id`, `name`, `attribute_type`, `required`, `searchable`, `input_type`, `sort_score`, `created_at`, `updated_at`
+        `id`, `name`, `attribute_type`, `required`, `searchable`, `input_type`, `visible`, `sort_score`, `created_at`, `updated_at`
     </sql>
 
     <insert id="insert" parameterType="com.example.onlinestore.entity.AttributeEntity">
-        INSERT INTO attribute (`id`, `name`, `attribute_type`, `required`, `searchable`, `input_type`, `sort_score`, `created_at`, `updated_at`)
-        VALUES (#{id}, #{name}, #{attributeType}, #{required}, #{searchable}, #{inputType}, #{sortScore})
+        INSERT INTO `attribute` (`id`, `name`, `attribute_type`, `required`, `searchable`, `input_type`, `sort_score`, `visible`, `created_at`, `updated_at`)
+        VALUES (#{id}, #{name}, #{attributeType}, #{required}, #{searchable}, #{inputType}, #{sortScore}, #{visible}, #{createdAt}, #{updatedAt})
     </insert>
 
     <select id="findById" resultMap="attributeResultMap">
         SELECT
         <include refid="Attribute_base_sql" />
-        FROM attribute WHERE `id` = #{id}
+        FROM `attribute` WHERE `id` = #{id}
     </select>
 
     <delete id="deleteById">
@@ -33,14 +34,25 @@
     </delete>
 
     <update id="update">
-        UPDATE attribute
+        UPDATE `attribute`
         <set>
+            <if test="name != null">`name` = #{name}</if>
             <if test="required != null">`required` = #{required},</if>
             <if test="searchable != null">`searchable` = #{searchable},</if>
             <if test="inputType != null">`input_type` = #{inputType},</if>
             <if test="sortScore != null">`sort_score` = #{sortScore},</if>
+            <if test="visible != null">`visible` = #{visible},</if>
+            `updated_at` = NOW()
         </set>
         WHERE id = #{id}
     </update>
+
+    <select id="findByName" resultMap="attributeResultMap">
+        SELECT
+        <include refid="Attribute_base_sql" />
+        FROM `attribute`
+        WHERE `name` = #{name}
+        LIMIT 1
+    </select>
 
 </mapper>

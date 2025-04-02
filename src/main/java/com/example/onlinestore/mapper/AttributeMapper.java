@@ -37,4 +37,12 @@ public interface AttributeMapper {
      */
     int update(AttributeEntity attributeEntity);
 
+    /**
+     * 根据属性名称查询属性实体
+     *
+     * @param name 要查询的属性名称
+     * @return 匹配的属性实体对象，包含所有字段值；未找到时返回null
+     */
+    AttributeEntity findByName(String name);
+
 }

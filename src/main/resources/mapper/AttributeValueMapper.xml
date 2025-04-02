@@ -19,7 +19,7 @@
 
     <!-- 插入操作 -->
     <insert id="insert" parameterType="com.example.onlinestore.entity.AttributeValueEntity">
-        INSERT INTO attribute_value (`attribute_id`, `value`, `sort_score`, `created_at`, `updated_at`)
+        INSERT INTO `attribute_value` (`attribute_id`, `value`, `sort_score`, `created_at`, `updated_at`)
         VALUES (#{attributeId}, #{value}, #{sortScore}, #{createdAt}, #{updatedAt})
     </insert>
 
@@ -45,5 +45,12 @@
         </set>
         WHERE id = #{id}
     </update>
+
+    <select id="findAllAttributeValuesByAttributeId" resultMap="attributeValueResultMap">
+        SELECT
+        <include refid="AttributeValue_base_sql" />
+        FROM `attribute_value`
+        WHERE `attribute_id` = #{attributeId}
+    </select>
 
 </mapper>

@@ -3,6 +3,8 @@ package com.example.onlinestore.mapper;
 import com.example.onlinestore.entity.AttributeValueEntity;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 @Mapper
 public interface AttributeValueMapper {
     /**
@@ -36,5 +38,13 @@ public interface AttributeValueMapper {
      * @return 受影响的数据行数，通常1表示更新成功，0表示失败
      */
     int update(AttributeValueEntity attributeValueEntity);
+    /**
+     * 根据属性ID获取所有关联的属性值列表
+     *
+     * @param attributeId 属性唯一标识符，不能为null
+     * @return 包含AttributeValueEntity对象的列表，按自然顺序排列。
+     *         当无匹配结果时返回空列表（非null）
+     */
+    List<AttributeValueEntity> findAllAttributeValuesByAttributeId(Long attributeId);
 
 }

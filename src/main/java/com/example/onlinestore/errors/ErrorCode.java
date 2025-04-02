@@ -12,6 +12,8 @@ public enum ErrorCode {
     BRAND_NOT_FOUND("ErrorCode.Brand.NotFound", "品牌不存在"),
     BRAND_NAME_DUPLICATED("ErrorCode.Brand.Name.Duplicated", "品牌名称:{0}已存在"),
     BRAND_NAME_MODIFY_FORBIDDEN("ErrorCode.Brand.Name.Modify.Forbidden", "品牌名称不能修改"),
+    ATTRIBUTE_NAME_DUPLICATED("ErrorCode.Attribute.Name.Duplicated", "属性名称:{0}已存在"),
+    ATTRIBUTE_NOT_FOUND("ErrorCode.Attribute.NotFound", "属性不存在"),
     ;
     ErrorCode(String code, String defaultMessage) {
         this.code = code;
