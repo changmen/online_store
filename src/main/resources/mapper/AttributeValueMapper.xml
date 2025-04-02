@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.AttributeValueMapper">
+
+    <!-- 基本结果映射 -->
+    <resultMap id="attributeValueResultMap" type="com.example.onlinestore.entity.AttributeValueEntity">
+        <id property="id" column="id"/>
+        <result property="attributeId" column="attribute_id"/>
+        <result property="value" column="value"/>
+        <result property="sortScore" column="sort_score"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- 公共SQL字段 -->
+    <sql id="AttributeValue_base_sql">
+        `id`, `attribute_id`, `value`, `sort_score`, `created_at`, `updated_at`
+    </sql>
+
+    <!-- 插入操作 -->
+    <insert id="insert" parameterType="com.example.onlinestore.entity.AttributeValueEntity">
+        INSERT INTO attribute_value (`attribute_id`, `value`, `sort_score`, `created_at`, `updated_at`)
+        VALUES (#{attributeId}, #{value}, #{sortScore}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <!-- 根据ID查询 -->
+    <select id="findById" resultMap="attributeValueResultMap">
+        SELECT
+        <include refid="AttributeValue_base_sql" />
+        FROM `attribute_value` WHERE `id` = #{id}
+    </select>
+
+    <!-- 根据ID删除 -->
+    <delete id="deleteById">
+        DELETE FROM `attribute_value` WHERE `id` = #{id}
+    </delete>
+
+    <!-- 动态更新 -->
+    <update id="update" parameterType="com.example.onlinestore.entity.AttributeValueEntity">
+        UPDATE attribute_value
+        <set>
+            <if test="value != null and value != ''">`value` = #{value},</if>
+            <if test="sortScore != null">`sort_score` = #{sortScore},</if>
+            `updated_at` = #{updatedAt}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+</mapper>

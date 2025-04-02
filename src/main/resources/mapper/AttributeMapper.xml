@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.AttributeMapper">
+    <resultMap id="attributeResultMap" type="com.example.onlinestore.entity.AttributeEntity">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="attributeType" column="attribute_type"/>
+        <result property="required" column="required"/>
+        <result property="searchable" column="searchable"/>
+        <result property="inputType" column="input_type"/>
+        <result property="sortScore" column="sort_score"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="Attribute_base_sql">
+        `id`, `name`, `attribute_type`, `required`, `searchable`, `input_type`, `sort_score`, `created_at`, `updated_at`
+    </sql>
+
+    <insert id="insert" parameterType="com.example.onlinestore.entity.AttributeEntity">
+        INSERT INTO attribute (`id`, `name`, `attribute_type`, `required`, `searchable`, `input_type`, `sort_score`, `created_at`, `updated_at`)
+        VALUES (#{id}, #{name}, #{attributeType}, #{required}, #{searchable}, #{inputType}, #{sortScore})
+    </insert>
+
+    <select id="findById" resultMap="attributeResultMap">
+        SELECT
+        <include refid="Attribute_base_sql" />
+        FROM attribute WHERE `id` = #{id}
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM `attribute` WHERE `id` = #{id}
+    </delete>
+
+    <update id="update">
+        UPDATE attribute
+        <set>
+            <if test="required != null">`required` = #{required},</if>
+            <if test="searchable != null">`searchable` = #{searchable},</if>
+            <if test="inputType != null">`input_type` = #{inputType},</if>
+            <if test="sortScore != null">`sort_score` = #{sortScore},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+</mapper>
