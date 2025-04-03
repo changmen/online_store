@@ -10,6 +10,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Item createItem(CreateItemRequest request) {
+        // 校验
         return null;
     }
 
