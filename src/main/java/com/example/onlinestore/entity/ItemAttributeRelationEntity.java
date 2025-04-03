@@ -1,9 +1,18 @@
 package com.example.onlinestore.entity;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 public class ItemAttributeRelationEntity implements Serializable {
     @Serial
     private static final long serialVersionUID = 4040514916416817888L;

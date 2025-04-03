@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.ItemAttributeRelationMapper">
+    <resultMap id="itemAttributeRelationResultMap" type="com.example.onlinestore.entity.ItemAttributeRelationEntity">
+        <id property="id" column="id"/>
+        <result property="itemId" column="item_id"/>
+        <result property="attributeId" column="attribute_id"/>
+        <result property="valueId" column="value_id"/>
+        <result property="inputValue" column="input_value"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+    <!-- 基础字段映射 -->
+    <sql id="Base_Column_List">
+        `id`, `item_id`, `attribute_id`, `value_id`, `input_value`, `created_at`, `updated_at`
+    </sql>
+
+    <!-- 单条插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id"
+            parameterType="com.example.onlinestore.entity.ItemAttributeRelationEntity">
+        INSERT INTO `item_attribute_relation`
+            (`item_id`, `attribute_id`, `value_id`, `input_value`)
+        VALUES
+            (#{itemId}, #{attributeId}, #{valueId}, #{inputValue})
+    </insert>
+
+    <!-- 批量插入 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO `item_attribute_relation`
+        (`item_id`, `attribute_id`, `value_id`, `input_value`)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.itemId}, #{item.attributeId}, #{item.valueId}, #{item.inputValue})
+        </foreach>
+    </insert>
+
+    <!-- 根据物品ID查询 -->
+    <select id="findByItemId" resultType="com.example.onlinestore.entity.ItemAttributeRelationEntity">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `item_attribute_relation`
+        WHERE `item_id` = #{itemId}
+    </select>
+
+    <!-- 复合条件删除 -->
+    <delete id="deleteByItemIdAndAttributeId">
+        DELETE FROM `item_attribute_relation`
+        WHERE `item_id` = #{itemId}
+          AND `attribute_id` = #{attributeId}
+    </delete>
+
+</mapper>
