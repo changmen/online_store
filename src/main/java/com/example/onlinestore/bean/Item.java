@@ -8,6 +8,7 @@ import lombok.ToString;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 
 @Getter
 @Setter
@@ -61,6 +62,11 @@ public class Item implements Serializable {
      * 排序权重值，数值越大在排序列表中位置越靠前
      */
     private Integer sortScore;
+
+    /**
+     * 商品属性集合，用于描述商品的各种属性信息
+     */
+    private List<Attribute> attributes;
 
 
 

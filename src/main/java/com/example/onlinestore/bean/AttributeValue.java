@@ -1,6 +1,5 @@
 package com.example.onlinestore.bean;
 
-import com.example.onlinestore.dto.AttributeResponse;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;

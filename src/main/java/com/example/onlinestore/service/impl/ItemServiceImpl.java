@@ -5,6 +5,7 @@ import com.example.onlinestore.bean.Brand;
 import com.example.onlinestore.bean.Category;
 import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.dto.CreateItemRequest;
+import com.example.onlinestore.dto.GetItemOptions;
 import com.example.onlinestore.dto.ItemAttributeRequest;
 import com.example.onlinestore.entity.ItemEntity;
 import com.example.onlinestore.enums.AttributeInputType;
@@ -16,7 +17,10 @@ import com.example.onlinestore.service.*;
 import com.example.onlinestore.utils.JacksonJsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +35,7 @@ import java.util.function.Function;
 
 @Service
 public class ItemServiceImpl implements ItemService {
+    private static final Logger logger = LoggerFactory.getLogger(ItemServiceImpl.class);
 
     @Value("${forbidden-words:刀}")
     private String forbiddenWords;
@@ -114,14 +119,88 @@ public class ItemServiceImpl implements ItemService {
         if (effectRows != 1) {
             throw new BizException(ErrorCode.INTERNAL_ERROR);
         }
-        return convertToEntity(itemEntity,item -> request.getDescription(), item -> category, item -> brand);
+        return convertToEntity(itemEntity, item -> request.getDescription(), item -> category, item -> brand);
     }
 
     @Override
-    public void updateItem(Long id, CreateItemRequest request) {
+    public void updateItem(@NotNull Long id, @Valid CreateItemRequest request) {
+        Item item = getItemById(id, GetItemOptions.builder().withCategoryDetail(false).withBrandDetail(false).withAttributeDetail(false).build());
+        categoryService.getCategoryById(request.getCategoryId());
+        brandService.getBrandById(request.getBrandId());
+        // 校验
+        if (getForbiddenWords().stream().anyMatch(request.getName()::contains)) {
+            throw new BizException(ErrorCode.ITEM_NAME_CONTAINS_FORBIDDEN_WORDS, request.getName());
+        }
+
+        if (StringUtils.isNotBlank(request.getDescription())) {
+            if (getForbiddenWords().stream().anyMatch(request.getDescription()::contains)) {
+                throw new BizException(ErrorCode.ITEM_DESCRIPTION_CONTAINS_FORBIDDEN_WORDS, request.getDescription());
+            }
+        }
+
+        for (ItemAttributeRequest attributeRequest : request.getAttributes()) {
+            Attribute attribute = attributeService.getAttributeById(attributeRequest.getAttributeId());
+            if (attribute.getInputType() == AttributeInputType.SINGLE_SELECT || attribute.getInputType() == AttributeInputType.MULTI_SELECT) {
+                // 此时需要校验value
+                if (attributeRequest.getAttributeValueId() == null) {
+                    throw new BizException(ErrorCode.ITEM_ATTRIBUTE_VALUE_IS_EMPTY, attributeRequest.getAttributeId());
+                }
+
+            } else {
+                if (StringUtils.isBlank(attributeRequest.getValue())) {
+                    throw new BizException(ErrorCode.ITEM_ATTRIBUTE_VALUE_IS_EMPTY, attributeRequest.getAttributeId());
+                }
+            }
+        }
+
+
+        ItemEntity itemEntity = new ItemEntity();
+        if (uploadDescriptionToOSS) {
+            // 存储描述到OSS
+            String url = ossService.uploadItemDescription(request.getDescription());
+            itemEntity.setDescriptionUrl(url);
+        } else {
+            itemEntity.setDescription(request.getDescription());
+        }
+
+        itemEntity.setUpdatedAt(LocalDateTime.now());
+        int effectRows = itemMapper.update(itemEntity);
+        if (effectRows != 1) {
+            logger.error("update item failed. because effect rows is 0. itemId:{}", id);
+            throw new BizException(ErrorCode.INTERNAL_ERROR);
+        }
 
     }
 
+    @Override
+    public Item getItemById(Long id, GetItemOptions getOpts) {
+        ItemEntity itemEntity = itemMapper.findById(id);
+        if (itemEntity == null) {
+            logger.error("item not found, id: {}", id);
+            throw new BizException(ErrorCode.ITEM_NOT_FOUND);
+        }
+        return convertToEntity(itemEntity,
+                this::getItemDescription,
+                item -> {
+                    if (getOpts.isWithCategoryDetail()) {
+                        return this.getItemCategory(item);
+                    } else {
+                        Category category = new Category();
+                        category.setId(itemEntity.getCategoryId());
+                        return category;
+                    }
+                },
+
+                item -> {
+                    if (getOpts.isWithBrandDetail()) {
+                        return this.getItemBrand(item);
+                    } else {
+                        Brand brand = new Brand();
+                        brand.setId(itemEntity.getBrandId());
+                        return brand;
+                    }
+                });
+    }
 
     private Item convertToEntity(ItemEntity itemEntity, Function<ItemEntity, String> descriptionMap, Function<ItemEntity, Category> categoryMap, Function<ItemEntity, Brand> brandMap) {
         Item item = new Item();
@@ -143,12 +222,14 @@ public class ItemServiceImpl implements ItemService {
         }
         return itemEntity.getDescription();
     }
+
     private Brand getItemBrand(ItemEntity itemEntity) {
         if (itemEntity.getBrandId() != null) {
             return brandService.getBrandById(itemEntity.getBrandId());
         }
         return null;
     }
+
     private Category getItemCategory(ItemEntity itemEntity) {
         if (itemEntity.getCategoryId() != null) {
             return categoryService.getCategoryById(itemEntity.getCategoryId());
