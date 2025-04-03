@@ -37,6 +37,11 @@ public class ItemEntity implements Serializable {
      * 商品详细描述文本（支持富文本）
      */
     private String description;
+
+    /**
+     * 商品详细描述URL地址
+     */
+    private String descriptionUrl;
     /**
      * 商品主图URL地址
      */

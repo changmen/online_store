@@ -115,6 +115,16 @@ public class AttributeServiceImpl implements AttributeService {
         return List.of();
     }
 
+    @Override
+    public AttributeValue getAttributeValueById(Long id) {
+        AttributeValueEntity attributeValueEntity = attributeValueMapper.findById(id);
+        if (attributeValueEntity != null) {
+            return convertToAttributeValue(attributeValueEntity);
+        }
+        logger.error("attribute value not found, id: {}", id);
+        throw new BizException(ErrorCode.ATTRIBUTE_VALUE_NOT_FOUND);
+    }
+
     private  AttributeEntity getAttributeEntity(CreateAttributeRequest request, String name, LocalDateTime now) {
         AttributeEntity attributeEntity = new AttributeEntity();
         attributeEntity.setName(name);

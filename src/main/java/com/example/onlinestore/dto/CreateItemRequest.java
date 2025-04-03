@@ -58,9 +58,14 @@ public class CreateItemRequest implements Serializable {
      */
     private List<String> subImageUrls;
 
-
+    /**
+     * 商品属性集合
+     */
     @NotNull(message = "attributes不能为空")
     private List<ItemAttributeRequest> attributes;
+
+    @Min(value = 1, message = "sortScore的值只能为正整数")
+    private Integer sortScore;
 
 
 }

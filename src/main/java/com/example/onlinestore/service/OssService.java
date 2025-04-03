@@ -12,7 +12,7 @@ public interface OssService {
      * @param content 商品描述内容
      * @return OSS文件URL
      */
-    String uploadItemDescription(Long itemId, String content);
+    String uploadItemDescription(String content);
     
     /**
      * 从OSS获取商品描述内容

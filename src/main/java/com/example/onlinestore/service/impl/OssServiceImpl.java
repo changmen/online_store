@@ -1,10 +1,14 @@
 package com.example.onlinestore.service.impl;
 
 import com.aliyun.oss.*;
+import com.example.onlinestore.bean.Brand;
 import com.example.onlinestore.config.OssConfig;
+import com.example.onlinestore.entity.ItemEntity;
 import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.service.OssService;
+import com.example.onlinestore.utils.DateUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -26,7 +30,6 @@ public class OssServiceImpl implements OssService {
 
     private static final Logger logger = LoggerFactory.getLogger(OssServiceImpl.class);
     private static final String ITEM_DESCRIPTION_PREFIX = "item/description/";
-    private static final String ITEM_DESCRIPTION_SUFFIX = ".html";
     @Autowired
     private OssConfig ossConfig;
 
@@ -36,14 +39,13 @@ public class OssServiceImpl implements OssService {
     /**
      * 上传商品描述文件到OSS
      * 
-     * @param itemId 商品ID
      * @param content 商品描述内容
      * @return OSS文件URL
      */
     @Override
-    public String uploadItemDescription(Long itemId, String content) {
+    public String uploadItemDescription(String content) {
         initClient();
-        String objectName = generateObjectName(itemId);
+        String objectName = generateItemDescriptionObjectName();
 
         try {
             // 将内容转换为输入流
@@ -51,14 +53,13 @@ public class OssServiceImpl implements OssService {
             try (InputStream inputStream = new ByteArrayInputStream(contentBytes)) {
                 // 上传到OSS
                 ossClient.putObject(ossConfig.getBucketName(), objectName, inputStream);
-                logger.info("Successfully uploaded item description for item: {}", itemId);
 
                 // 返回OSS文件URL
                 return generateOssUrl(objectName);
             }
         } catch (OSSException | ClientException | IOException e) {
-            logger.error("Failed to upload item description to OSS for item: {}", itemId, e);
-            throw new RuntimeException("Failed to upload item description to OSS", e);
+            logger.error("Failed to upload item description to OSS", e);
+            throw new BizException(ErrorCode.REQUEST_OSS_FAILED);
         } finally {
             if (this.ossClient != null) {
                 ossClient.shutdown();
@@ -95,7 +96,7 @@ public class OssServiceImpl implements OssService {
             return content.toString();
         } catch (IOException e) {
             logger.error("Failed to get item description from OSS URL: {}", ossUrl, e);
-            throw new BizException(ErrorCode.INTERNAL_ERROR);
+            throw new BizException(ErrorCode.REQUEST_OSS_FAILED);
         }
     }
 
@@ -103,8 +104,8 @@ public class OssServiceImpl implements OssService {
     /**
      * 生成OSS对象名称
      */
-    private String generateObjectName(Long itemId) {
-        return ITEM_DESCRIPTION_PREFIX + itemId + "_" + UUID.randomUUID().toString() + ITEM_DESCRIPTION_SUFFIX;
+    private String generateItemDescriptionObjectName() {
+        return ITEM_DESCRIPTION_PREFIX + "/" + DateUtils.getCurrentDate() + "/" + UUID.randomUUID();
     }
 
     /**
@@ -120,4 +121,5 @@ public class OssServiceImpl implements OssService {
             this.ossClient =  new OSSClientBuilder().build(ossConfig.getEndpoint(), ossConfig.getAccessKeyId(), ossConfig.getAccessKeySecret());
         }
     }
+
 } 

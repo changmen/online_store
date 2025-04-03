@@ -19,7 +19,7 @@
     <select id="findAllCategories" resultMap="categoryResultMap">
         SELECT
             <include refid="Base_Column"/>
-        FROM category
+        FROM `category`
         ORDER BY id DESC
             LIMIT #{offset}, #{limit}
     </select>

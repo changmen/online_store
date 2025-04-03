@@ -58,4 +58,13 @@ public interface AttributeService {
      */
     List<AttributeValue> findAllAttributeValuesByAttributeId(Long attributeId);
 
+
+    /**
+     * 根据主键查询属性值详情
+     *
+     * @param id 要查询属性值的主键ID
+     * @return 匹配的完整属性值对象（未找到时可能返回null或抛出异常）
+     */
+    AttributeValue getAttributeValueById(Long id);
+
 }
