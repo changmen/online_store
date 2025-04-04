@@ -2,6 +2,7 @@ package com.example.onlinestore.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.io.Serial;
@@ -56,6 +57,7 @@ public class CreateItemRequest implements Serializable {
      * 商品子图URL集合
      * 多个URL用逗号分隔存储
      */
+    @Size(max = 5, message = "子图不能超过5个")
     private List<String> subImageUrls;
 
     /**

@@ -3,6 +3,7 @@ package com.example.onlinestore.service;
 import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.dto.CreateItemRequest;
 import com.example.onlinestore.dto.GetItemOptions;
+import com.example.onlinestore.dto.UpdateItemRequest;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -27,7 +28,7 @@ public interface ItemService {
      * @throws BizException                 当指定ID的Item不存在或者访问DB失败抛出时抛出
      * @throws ConstraintViolationException 当ID或请求参数校验不通过时抛出
      */
-    void updateItem(@NotNull Long id, @Valid CreateItemRequest request);
+    void updateItem(@NotNull Long id, @Valid UpdateItemRequest request);
 
 
     /**
@@ -39,6 +40,6 @@ public interface ItemService {
      * @throws BizException                 当指定ID的Item不存在时抛出, 或者访问DB失败抛出
      * @throws ConstraintViolationException 当ID或getOpts参数校验不通过时抛出
      */
-    Item getItemById(@NotNull Long id, @NotNull GetItemOptions getOpts);
+    Item getItemById(@NotNull Long id);
 
 }

@@ -12,6 +12,9 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * 商品不允许更新类目和品牌，允许更新名称，描述，主图，子图，属性，在更新的场景下，为null则不进行更新
+ */
 @Setter
 @Getter
 @EqualsAndHashCode
@@ -43,7 +46,7 @@ public class UpdateItemRequest implements Serializable {
     /**
      * 子图URL集合（存储格式需根据具体业务实现），在更新的场景下，为null则不进行更新
      */
-    private String subImageUrls;
+    private List<String> subImageUrls;
 
     /**
      * 商品属性参数列表，包含商品的可配置属性, 在更新的场景下，为null则不进行更新

@@ -80,7 +80,7 @@ public class AttributeResponse implements Serializable {
      * @param attribute 用于创建AttributeResponse的源属性对象，应包含必要的属性信息
      * @return 新构建的AttributeResponse实例，封装了从给定属性转换后的响应数据
      */
-    public static AttributeResponse Of(Attribute attribute) {
+    public static AttributeResponse of(Attribute attribute) {
 
         // 创建响应对象并复制基础属性
         AttributeResponse response = new AttributeResponse();

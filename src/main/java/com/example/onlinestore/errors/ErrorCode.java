@@ -18,7 +18,7 @@ public enum ErrorCode {
     ITEM_DESCRIPTION_CONTAINS_FORBIDDEN_WORDS("ErrorCode.Item.Description.Contains.Forbidden.Words", "商品描述不能包含以下关键字:{0}"),
     ATTRIBUTE_VALUE_NOT_FOUND("ErrorCode.Attribute.Value.NotFound", "属性值不存在"),
     ITEM_ATTRIBUTE_VALUE_IS_EMPTY("ErrorCode.Item.Attribute.Value.Is.Empty", "商品属性：{}值不能为空"),
-    REQUEST_OSS_FAILED("ErrorCode.Request.Oss.Failed", "请求OSS失败"),
+    REQUEST_OSS_FAILED("ErrorCode.Request.OSS.Failed", "请求OSS失败"),
     ;
     ErrorCode(String code, String defaultMessage) {
         this.code = code;

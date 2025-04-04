@@ -7,6 +7,7 @@ import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.dto.CreateItemRequest;
 import com.example.onlinestore.dto.GetItemOptions;
 import com.example.onlinestore.dto.ItemAttributeRequest;
+import com.example.onlinestore.dto.UpdateItemRequest;
 import com.example.onlinestore.entity.ItemEntity;
 import com.example.onlinestore.enums.AttributeInputType;
 import com.example.onlinestore.enums.ItemStatus;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -96,13 +98,13 @@ public class ItemServiceImpl implements ItemService {
         if (uploadDescriptionToOSS) {
             // 存储描述到OSS
             String url = ossService.uploadItemDescription(request.getDescription());
-            itemEntity.setDescriptionUrl(url);
+            itemEntity.setDescriptionURL(url);
         }
 
         itemEntity.setName(request.getName());
-        itemEntity.setMainImageUrl(request.getMainImageUrl());
+        itemEntity.setMainImageURL(request.getMainImageUrl());
         try {
-            itemEntity.setSubImageUrls(JacksonJsonUtils.toString(request.getSubImageUrls()));
+            itemEntity.setSubImageURLs(JacksonJsonUtils.toString(request.getSubImageUrls()));
         } catch (JsonProcessingException e) {
             itemEntity.setDescription(request.getDescription());
         }
@@ -119,14 +121,12 @@ public class ItemServiceImpl implements ItemService {
         if (effectRows != 1) {
             throw new BizException(ErrorCode.INTERNAL_ERROR);
         }
-        return convertToEntity(itemEntity, item -> request.getDescription(), item -> category, item -> brand);
+        return convertToEntity(itemEntity, item -> request.getDescription());
     }
 
     @Override
-    public void updateItem(@NotNull Long id, @Valid CreateItemRequest request) {
-        Item item = getItemById(id, GetItemOptions.builder().withCategoryDetail(false).withBrandDetail(false).withAttributeDetail(false).build());
-        categoryService.getCategoryById(request.getCategoryId());
-        brandService.getBrandById(request.getBrandId());
+    public void updateItem(@NotNull Long id, @Valid UpdateItemRequest request) {
+        getItemById(id);
         // 校验
         if (getForbiddenWords().stream().anyMatch(request.getName()::contains)) {
             throw new BizException(ErrorCode.ITEM_NAME_CONTAINS_FORBIDDEN_WORDS, request.getName());
@@ -154,17 +154,25 @@ public class ItemServiceImpl implements ItemService {
         }
 
 
-        ItemEntity itemEntity = new ItemEntity();
+        ItemEntity updateItemEntity = new ItemEntity();
         if (uploadDescriptionToOSS) {
             // 存储描述到OSS
             String url = ossService.uploadItemDescription(request.getDescription());
-            itemEntity.setDescriptionUrl(url);
+            updateItemEntity.setDescriptionURL(url);
         } else {
-            itemEntity.setDescription(request.getDescription());
+            updateItemEntity.setDescription(request.getDescription());
         }
 
-        itemEntity.setUpdatedAt(LocalDateTime.now());
-        int effectRows = itemMapper.update(itemEntity);
+        updateItemEntity.setUpdatedAt(LocalDateTime.now());
+        updateItemEntity.setName(request.getName());
+        updateItemEntity.setMainImageURL(request.getMainImageUrl());
+        try {
+            updateItemEntity.setSubImageURLs(JacksonJsonUtils.toString(request.getSubImageUrls()));
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to convert subImageUrls to JSON string when item update. itemId:{}", id, e);
+            throw new BizException(ErrorCode.INTERNAL_ERROR);
+        }
+        int effectRows = itemMapper.update(updateItemEntity);
         if (effectRows != 1) {
             logger.error("update item failed. because effect rows is 0. itemId:{}", id);
             throw new BizException(ErrorCode.INTERNAL_ERROR);
@@ -173,69 +181,42 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Item getItemById(Long id, GetItemOptions getOpts) {
+    public Item getItemById(@NotNull Long id) {
         ItemEntity itemEntity = itemMapper.findById(id);
         if (itemEntity == null) {
             logger.error("item not found, id: {}", id);
             throw new BizException(ErrorCode.ITEM_NOT_FOUND);
         }
-        return convertToEntity(itemEntity,
-                this::getItemDescription,
-                item -> {
-                    if (getOpts.isWithCategoryDetail()) {
-                        return this.getItemCategory(item);
-                    } else {
-                        Category category = new Category();
-                        category.setId(itemEntity.getCategoryId());
-                        return category;
-                    }
-                },
-
-                item -> {
-                    if (getOpts.isWithBrandDetail()) {
-                        return this.getItemBrand(item);
-                    } else {
-                        Brand brand = new Brand();
-                        brand.setId(itemEntity.getBrandId());
-                        return brand;
-                    }
-                });
+        return convertToEntity(itemEntity, this::getItemDescription);
     }
 
-    private Item convertToEntity(ItemEntity itemEntity, Function<ItemEntity, String> descriptionMap, Function<ItemEntity, Category> categoryMap, Function<ItemEntity, Brand> brandMap) {
+    private Item convertToEntity(ItemEntity itemEntity, Function<ItemEntity, String> descriptionMap) {
         Item item = new Item();
         item.setId(itemEntity.getId());
-        item.setBrand(brandMap.apply(itemEntity));
-        item.setCategory(categoryMap.apply(itemEntity));
+        item.setBrandId(itemEntity.getBrandId());
+        item.setCategoryId(itemEntity.getCategoryId());
         item.setName(itemEntity.getName());
         item.setDescription(descriptionMap.apply(itemEntity));
-        item.setMainImageUrl(itemEntity.getMainImageUrl());
-        item.setSubImageUrls(itemEntity.getSubImageUrls());
+        item.setMainImageURL(itemEntity.getMainImageURL());
+        if (StringUtils.isNotBlank(itemEntity.getSubImageURLs())) {
+            try {
+                item.setSubImageURLs(JacksonJsonUtils.toListString(itemEntity.getSubImageURLs()));
+            } catch (IOException e) {
+                logger.error("parse subImageUrls failed. itemEntity:{}", itemEntity, e);
+            }
+        }
         item.setStatus(ItemStatus.valueOf(itemEntity.getStatus()));
         item.setSortScore(itemEntity.getSortScore());
         return item;
     }
 
     private String getItemDescription(ItemEntity itemEntity) {
-        if (StringUtils.isNotBlank(itemEntity.getDescriptionUrl())) {
-            return ossService.getItemDescription(itemEntity.getDescriptionUrl());
+        if (StringUtils.isNotBlank(itemEntity.getDescriptionURL())) {
+            return ossService.getItemDescription(itemEntity.getDescriptionURL());
         }
         return itemEntity.getDescription();
     }
 
-    private Brand getItemBrand(ItemEntity itemEntity) {
-        if (itemEntity.getBrandId() != null) {
-            return brandService.getBrandById(itemEntity.getBrandId());
-        }
-        return null;
-    }
-
-    private Category getItemCategory(ItemEntity itemEntity) {
-        if (itemEntity.getCategoryId() != null) {
-            return categoryService.getCategoryById(itemEntity.getCategoryId());
-        }
-        return null;
-    }
 
     private Set<String> getForbiddenWords() {
         return new HashSet<>(Arrays.asList(forbiddenWords.split(",")));

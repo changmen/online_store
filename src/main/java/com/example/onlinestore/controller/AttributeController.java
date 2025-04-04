@@ -19,13 +19,13 @@ public class AttributeController {
     @PostMapping("")
     public Response<AttributeResponse> addAttribute(@Valid @RequestBody CreateAttributeRequest request) {
         Attribute attribute = attributeService.createAttribute(request);
-        return Response.success(AttributeResponse.Of(attribute));
+        return Response.success(AttributeResponse.of(attribute));
     }
 
     @GetMapping("/{id}")
     public Response<AttributeResponse> getAttribute(@PathVariable("id") Long attributeId) {
         Attribute attribute = attributeService.getAttributeById(attributeId);
-        return Response.success(AttributeResponse.Of(attribute));
+        return Response.success(AttributeResponse.of(attribute));
     }
 
 

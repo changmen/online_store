@@ -41,15 +41,15 @@ public class ItemEntity implements Serializable {
     /**
      * 商品详细描述URL地址
      */
-    private String descriptionUrl;
+    private String descriptionURL;
     /**
      * 商品主图URL地址
      */
-    private String mainImageUrl;
+    private String mainImageURL;
     /**
      * 商品子图URL地址集合（多个URL用逗号分隔）
      */
-    private String subImageUrls;
+    private String subImageURLs;
     /**
      * 商品状态（如：ON_SALE-售卖中/OFF_SALE-已下架）
      */

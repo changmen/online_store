@@ -26,12 +26,12 @@ public class Item implements Serializable {
     /**
      * 关联的品牌信息对象，包含品牌名称、Logo等详细信息
      */
-    private Brand brand;
+    private Long brandId;
 
     /**
      * 关联的商品分类对象，描述商品所属的类目信息
      */
-    private Category category;
+    private Long categoryId;
 
     /**
      * 商品名称，最大长度应符合业务规范要求
@@ -46,12 +46,12 @@ public class Item implements Serializable {
     /**
      * 主图URL地址，用于商品列表展示的首图
      */
-    private String mainImageUrl;
+    private String mainImageURL;
 
     /**
      * 子图URL集合（JSON格式存储），包含商品详情页展示的附加图片
      */
-    private String subImageUrls;
+    private List<String> subImageURLs;
 
     /**
      * 商品状态枚举值（如：上架/下架/待审核等）
