@@ -41,4 +41,7 @@ public interface ItemAttributeRelationMapper {
      */
     int deleteByItemIdAndAttributeId(@Param("itemId") Long itemId, @Param("attributeId") Long attributeId);
 
+
+    int deleteByItemIdAndAttributeIds(@Param("itemId") Long itemId, @Param("attributeIds") List<Long> attributeIds);
+
 }

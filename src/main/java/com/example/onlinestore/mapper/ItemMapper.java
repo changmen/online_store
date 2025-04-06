@@ -1,7 +1,12 @@
 package com.example.onlinestore.mapper;
 
+import com.example.onlinestore.dto.BrandListQueryOptions;
+import com.example.onlinestore.dto.ItemListQueryRequest;
 import com.example.onlinestore.entity.ItemEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 @Mapper
 public interface ItemMapper {
@@ -36,5 +41,7 @@ public interface ItemMapper {
      * @return 查找到的Item实体对象，未找到时返回null
      */
     ItemEntity findById(Long id);
+
+    List<ItemEntity> queryItemsByOptions(@Param("options") ItemListQueryRequest options);
 }
 

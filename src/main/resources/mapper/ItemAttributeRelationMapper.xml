@@ -49,4 +49,12 @@
           AND `attribute_id` = #{attributeId}
     </delete>
 
+    <delete id="deleteByItemIdAndAttributeIds">
+        DELETE FROM `item_attribute_relation`
+        WHERE `item_id` = #{itemId}
+          AND `attribute_id` IN
+        <foreach collection="attributeIds" item="attributeId" open="(" close=")" separator=",">
+            #{attributeId}
+        </foreach>
+    </delete>
 </mapper>

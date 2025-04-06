@@ -3,6 +3,7 @@ package com.example.onlinestore.service;
 import com.example.onlinestore.bean.Attribute;
 import com.example.onlinestore.bean.AttributeValue;
 import com.example.onlinestore.dto.CreateAttributeRequest;
+import com.example.onlinestore.dto.ItemAttributeRequest;
 import com.example.onlinestore.dto.UpdateAttributeRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -32,7 +33,7 @@ public interface AttributeService {
      * @param id 要删除属性的主键ID（必须对应已存在的属性）
      * @return 被删除的属性对象（包含删除前的数据快照）
      */
-    Attribute deleteAttribute(@Valid Long id);
+    Attribute deleteAttribute(@NotNull Long id);
 
     /**
      * 根据主键查询属性详情，并附带属性值列表
@@ -40,7 +41,7 @@ public interface AttributeService {
      * @param id 要查询属性的主键ID
      * @return 匹配的完整属性对象（未找到时可能返回null或抛出异常）
      */
-    Attribute getAttributeByIdWithValues(@Valid Long id);
+    Attribute getAttributeByIdWithValues(@NotNull Long id);
 
     /**
      * 根据主键查询属性详情
@@ -48,7 +49,7 @@ public interface AttributeService {
      * @param id 要查询属性的主键ID
      * @return 匹配的完整属性对象（未找到时可能返回null或抛出异常）
      */
-    Attribute getAttributeById(@Valid Long id);
+    Attribute getAttributeById(@NotNull Long id);
 
     /**
      * 获取指定属性关联的所有属性值
@@ -56,7 +57,7 @@ public interface AttributeService {
      * @param attributeId 要查询的属性主键ID
      * @return 该属性下的所有属性值集合（可能返回空集合）
      */
-    List<AttributeValue> findAllAttributeValuesByAttributeId(Long attributeId);
+    List<AttributeValue> findAllAttributeValuesByAttributeId(@NotNull Long attributeId);
 
 
     /**
@@ -65,6 +66,9 @@ public interface AttributeService {
      * @param id 要查询属性值的主键ID
      * @return 匹配的完整属性值对象（未找到时可能返回null或抛出异常）
      */
-    AttributeValue getAttributeValueById(Long id);
+    AttributeValue getAttributeValueById(@NotNull Long id);
+
+
+    void ensureItemAttributes(@NotNull Long itemId, @Valid List<ItemAttributeRequest> attributes);
 
 }

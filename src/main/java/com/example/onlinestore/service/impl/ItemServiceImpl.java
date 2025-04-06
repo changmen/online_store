@@ -4,10 +4,8 @@ import com.example.onlinestore.bean.Attribute;
 import com.example.onlinestore.bean.Brand;
 import com.example.onlinestore.bean.Category;
 import com.example.onlinestore.bean.Item;
-import com.example.onlinestore.dto.CreateItemRequest;
-import com.example.onlinestore.dto.GetItemOptions;
-import com.example.onlinestore.dto.ItemAttributeRequest;
-import com.example.onlinestore.dto.UpdateItemRequest;
+import com.example.onlinestore.dto.*;
+import com.example.onlinestore.entity.BrandEntity;
 import com.example.onlinestore.entity.ItemEntity;
 import com.example.onlinestore.enums.AttributeInputType;
 import com.example.onlinestore.enums.ItemStatus;
@@ -17,6 +15,8 @@ import com.example.onlinestore.mapper.ItemMapper;
 import com.example.onlinestore.service.*;
 import com.example.onlinestore.utils.JacksonJsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
@@ -25,13 +25,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 
@@ -47,6 +45,8 @@ public class ItemServiceImpl implements ItemService {
 
     @Value("${item.default-sort-score:1}")
     private int defaultItemSortScore;
+
+    private static final String DEFAULT_ITEM_LIST_QUERY_ORDERBY = "id DESC";
 
     @Autowired
     private AttributeService attributeService;
@@ -64,6 +64,7 @@ public class ItemServiceImpl implements ItemService {
     private CategoryService categoryService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Item createItem(@Valid CreateItemRequest request) {
         // 校验名称是否包含敏感字符
         if (getForbiddenWords().stream().anyMatch(request.getName()::contains)) {
@@ -91,8 +92,8 @@ public class ItemServiceImpl implements ItemService {
             }
         }
 
-        Category category = categoryService.getCategoryById(request.getCategoryId());
-        Brand brand = brandService.getBrandById(request.getBrandId());
+        categoryService.getCategoryById(request.getCategoryId());
+        brandService.getBrandById(request.getBrandId());
 
         ItemEntity itemEntity = new ItemEntity();
         if (uploadDescriptionToOSS) {
@@ -121,10 +122,15 @@ public class ItemServiceImpl implements ItemService {
         if (effectRows != 1) {
             throw new BizException(ErrorCode.INTERNAL_ERROR);
         }
+
+        attributeService.ensureItemAttributes(itemEntity.getId(), request.getAttributes());
+
+        //
         return convertToEntity(itemEntity, item -> request.getDescription());
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateItem(@NotNull Long id, @Valid UpdateItemRequest request) {
         getItemById(id);
         // 校验
@@ -177,6 +183,8 @@ public class ItemServiceImpl implements ItemService {
             logger.error("update item failed. because effect rows is 0. itemId:{}", id);
             throw new BizException(ErrorCode.INTERNAL_ERROR);
         }
+        attributeService.ensureItemAttributes(id, request.getAttributes());
+
 
     }
 
@@ -188,6 +196,14 @@ public class ItemServiceImpl implements ItemService {
             throw new BizException(ErrorCode.ITEM_NOT_FOUND);
         }
         return convertToEntity(itemEntity, this::getItemDescription);
+    }
+
+    @Override
+    public Page<Item> listItems(ItemListQueryRequest itemListQueryRequest) {
+        PageHelper.startPage(itemListQueryRequest.getPageNum(), itemListQueryRequest.getPageSize(), DEFAULT_ITEM_LIST_QUERY_ORDERBY);
+        List<ItemEntity> itemEntities = itemMapper.queryItemsByOptions(itemListQueryRequest);
+        PageInfo<ItemEntity> pageInfo = new PageInfo<>(itemEntities);
+        return Page.of(itemEntities.stream().map(itemEntity -> convertToEntity(itemEntity, this::getItemDescription)).toList(), pageInfo.getTotal(), itemListQueryRequest.getPageNum(), itemListQueryRequest.getPageSize());
     }
 
     private Item convertToEntity(ItemEntity itemEntity, Function<ItemEntity, String> descriptionMap) {

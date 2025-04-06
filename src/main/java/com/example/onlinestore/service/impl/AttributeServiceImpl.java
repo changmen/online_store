@@ -1,28 +1,37 @@
 package com.example.onlinestore.service.impl;
 
+import com.alibaba.nacos.shaded.com.google.common.collect.Lists;
 import com.example.onlinestore.bean.Attribute;
 import com.example.onlinestore.bean.AttributeValue;
 import com.example.onlinestore.dto.CreateAttributeRequest;
+import com.example.onlinestore.dto.ItemAttributeRequest;
 import com.example.onlinestore.dto.UpdateAttributeRequest;
 import com.example.onlinestore.entity.AttributeEntity;
 import com.example.onlinestore.entity.AttributeValueEntity;
+import com.example.onlinestore.entity.ItemAttributeRelationEntity;
 import com.example.onlinestore.enums.AttributeInputType;
 import com.example.onlinestore.enums.AttributeType;
 import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.AttributeMapper;
 import com.example.onlinestore.mapper.AttributeValueMapper;
+import com.example.onlinestore.mapper.ItemAttributeRelationMapper;
 import com.example.onlinestore.service.AttributeService;
 import com.example.onlinestore.utils.CommonUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class AttributeServiceImpl implements AttributeService {
@@ -34,6 +43,9 @@ public class AttributeServiceImpl implements AttributeService {
 
     @Autowired
     private AttributeValueMapper attributeValueMapper;
+
+    @Autowired
+    private ItemAttributeRelationMapper itemAttributeRelationMapper;
 
     @Override
     public Attribute createAttribute(@Valid CreateAttributeRequest request) {
@@ -123,6 +135,57 @@ public class AttributeServiceImpl implements AttributeService {
         }
         logger.error("attribute value not found, id: {}", id);
         throw new BizException(ErrorCode.ATTRIBUTE_VALUE_NOT_FOUND);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void ensureItemAttributes(@NotNull Long itemId, @Valid List<ItemAttributeRequest> attributes) {
+        List<ItemAttributeRelationEntity> relationEntities = itemAttributeRelationMapper.findByItemId(itemId);
+
+        List<ItemAttributeRelationEntity> newRelations;
+
+
+        if (CollectionUtils.isEmpty(relationEntities)) {
+            newRelations = attributes.stream().map(attribute -> {
+                ItemAttributeRelationEntity relationEntity = new ItemAttributeRelationEntity();
+                relationEntity.setItemId(itemId);
+                relationEntity.setAttributeId(attribute.getAttributeId());
+                relationEntity.setValueId(attribute.getAttributeValueId());
+                relationEntity.setInputValue(attribute.getValue());
+                relationEntity.setCreatedAt(LocalDateTime.now());
+                return relationEntity;
+            }).toList();
+        } else {
+            Set<Long> curAttributeIds = relationEntities.stream().map(ItemAttributeRelationEntity::getAttributeId).collect(Collectors.toSet());
+
+            int effectRows = itemAttributeRelationMapper.deleteByItemIdAndAttributeIds(itemId, new ArrayList<>(curAttributeIds));
+            if (effectRows != curAttributeIds.size()) {
+                logger.error("delete item attribute relations failed. because effect rows is {}", effectRows);
+                throw new BizException(ErrorCode.INTERNAL_ERROR);
+            }
+
+            newRelations = attributes.stream().filter(attribute -> !curAttributeIds.contains(attribute.getAttributeId())).map(attribute -> {
+                ItemAttributeRelationEntity relationEntity = new ItemAttributeRelationEntity();
+                relationEntity.setItemId(itemId);
+                relationEntity.setAttributeId(attribute.getAttributeId());
+                relationEntity.setValueId(attribute.getAttributeValueId());
+                relationEntity.setInputValue(attribute.getValue());
+                relationEntity.setCreatedAt(LocalDateTime.now());
+                return relationEntity;
+            }).toList();
+
+        }
+
+        if (CollectionUtils.isEmpty(newRelations)) {
+            logger.info("no new attribute relations to insert, itemId: {}", itemId);
+            return;
+        }
+        if (itemAttributeRelationMapper.batchInsert(newRelations) != newRelations.size()) {
+            logger.error("insert item attribute relations failed. because effect rows is {}", newRelations.size());
+            throw new BizException(ErrorCode.INTERNAL_ERROR);
+        }
+
+
     }
 
     private  AttributeEntity getAttributeEntity(CreateAttributeRequest request, String name, LocalDateTime now) {

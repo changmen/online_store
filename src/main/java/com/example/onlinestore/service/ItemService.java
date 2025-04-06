@@ -1,9 +1,7 @@
 package com.example.onlinestore.service;
 
 import com.example.onlinestore.bean.Item;
-import com.example.onlinestore.dto.CreateItemRequest;
-import com.example.onlinestore.dto.GetItemOptions;
-import com.example.onlinestore.dto.UpdateItemRequest;
+import com.example.onlinestore.dto.*;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -41,5 +39,7 @@ public interface ItemService {
      * @throws ConstraintViolationException 当ID或getOpts参数校验不通过时抛出
      */
     Item getItemById(@NotNull Long id);
+
+    Page<Item> listItems(@Valid ItemListQueryRequest getOpts);
 
 }
