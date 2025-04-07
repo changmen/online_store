@@ -41,7 +41,14 @@ public interface ItemAttributeRelationMapper {
      */
     int deleteByItemIdAndAttributeId(@Param("itemId") Long itemId, @Param("attributeId") Long attributeId);
 
-
+    /**
+     * 根据条目ID和属性ID列表删除关联记录
+     *
+     * @param itemId 要删除的关联条目ID，非空
+     * @param attributeIds 要删除的属性ID列表，非空列表
+     * @return 返回被删除的记录数量。当返回值大于0时表示成功删除指定数量的记录，
+     *         返回0表示没有符合条件的记录被删除
+     */
     int deleteByItemIdAndAttributeIds(@Param("itemId") Long itemId, @Param("attributeIds") List<Long> attributeIds);
 
 }
