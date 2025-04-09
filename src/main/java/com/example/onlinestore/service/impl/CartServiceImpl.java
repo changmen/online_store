@@ -48,7 +48,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CartItem addToCart(@NotNull Long memberId, @Valid AddToCartRequest request) {
+    public CartItem addToCart(@NotNull Long memberId, @NotNull @Valid AddToCartRequest request) {
         // 检查SKU是否存在
         Sku sku = skuService.getSkuById(request.getSkuId());
 
@@ -90,7 +90,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateCartItem(@NotNull Long memberId, @NotNull Long cartItemId, @Valid UpdateCartItemRequest request) {
+    public void updateCartItem(@NotNull Long memberId, @NotNull Long cartItemId, @NotNull @Valid UpdateCartItemRequest request) {
         // 获取购物车项锁
         synchronized (ITEM_SKU_LOCK) {
             // 检查购物车项是否存在且属于该会员
@@ -211,5 +211,19 @@ public class CartServiceImpl implements CartService {
         cartItem.setSkuName(sku.getName());
         cartItem.setSkuImage(sku.getImage());
         return cartItem;
+    }
+
+    private CartEntity convertToCartEntity(Long memberId, Sku sku, AddToCartRequest request) {
+        LocalDateTime now = LocalDateTime.now();
+        CartEntity cartEntity = new CartEntity();
+        cartEntity.setMemberId(memberId);
+        cartEntity.setSkuId(request.getSkuId());
+        cartEntity.setQuantity(request.getQuantity());
+        cartEntity.setPrice(sku.getPrice());
+        cartEntity.setTotalPrice(sku.getPrice().multiply(new BigDecimal(request.getQuantity())));
+        cartEntity.setSelected(1);
+        cartEntity.setCreatedAt(now);
+        cartEntity.setUpdatedAt(now);
+        return cartEntity;
     }
 } 

@@ -14,10 +14,10 @@ public interface CartService {
      * 添加商品到购物车
      *
      * @param memberId 会员ID
-     * @param request 添加购物车请求
+     * @param request  添加购物车请求
      * @return 购物车项
      */
-    CartItem addToCart(@NotNull Long memberId, @Valid AddToCartRequest request);
+    CartItem addToCart(@NotNull Long memberId, @NotNull @Valid AddToCartRequest request);
 
     /**
      * 更新购物车项
@@ -25,12 +25,12 @@ public interface CartService {
      * @param memberId   会员ID
      * @param cartItemId 购物车项ID
      */
-    void updateCartItem(@NotNull Long memberId, @NotNull Long cartItemId, @Valid UpdateCartItemRequest request);
+    void updateCartItem(@NotNull Long memberId, @NotNull Long cartItemId, @NotNull @Valid UpdateCartItemRequest request);
 
     /**
      * 删除购物车项
      *
-     * @param memberId 会员ID
+     * @param memberId   会员ID
      * @param cartItemId 购物车项ID
      */
     void deleteCartItem(@NotNull Long memberId, @NotNull Long cartItemId);
@@ -65,6 +65,7 @@ public interface CartService {
      * @return 购物车项
      */
     CartItem getCartItemById(@NotNull Long cartItemId);
+
     /**
      * 更新购物车项的数量
      *
