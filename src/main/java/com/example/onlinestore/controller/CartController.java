@@ -21,7 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/carts")
 public class CartController {
-    private static final Logger logger = LoggerFactory.getLogger(CartController.class)
+    private static final Logger logger = LoggerFactory.getLogger(CartController.class);
 
     @Autowired
     private CartService cartService;
