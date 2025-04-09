@@ -23,12 +23,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 public class CartServiceImpl implements CartService {
     private static final Logger logger = LoggerFactory.getLogger(CartServiceImpl.class);
+    /**
+     * 购物车项加锁对象
+     */
+    private final Object ITEM_LOCK = new Object();
+    /**
+     * 购物车商品SKU锁
+     */
+    private final Object ITEM_SKU_LOCK = new Object();
 
     @Autowired
     private CartMapper cartMapper;
@@ -38,7 +45,6 @@ public class CartServiceImpl implements CartService {
 
     @Autowired
     private CartMetrics cartMetrics;
-
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -84,27 +90,33 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CartItem updateCartItem(@NotNull Long memberId, @NotNull Long cartItemId, @Valid UpdateCartItemRequest request) {
-        // 检查购物车项是否存在且属于该会员
-        CartEntity cartEntity = cartMapper.findById(cartItemId);
-        if (cartEntity == null || !cartEntity.getMemberId().equals(memberId)) {
-            throw new BizException(ErrorCode.CART_ITEM_NOT_FOUND);
+    public void updateCartItem(@NotNull Long memberId, @NotNull Long cartItemId, @Valid UpdateCartItemRequest request) {
+        // 获取购物车项锁
+        synchronized (ITEM_SKU_LOCK) {
+            // 检查购物车项是否存在且属于该会员
+            CartEntity cartEntity = cartMapper.findById(cartItemId);
+            if (cartEntity == null || !cartEntity.getMemberId().equals(memberId)) {
+                throw new BizException(ErrorCode.CART_ITEM_NOT_FOUND);
+            }
+
+            // 获取SKU锁
+            synchronized (ITEM_LOCK) {
+                // 检查SKU库存是否充足
+                if (!skuService.checkStock(cartEntity.getSkuId(), request.getQuantity())) {
+                    throw new BizException(ErrorCode.SKU_STOCK_INSUFFICIENT);
+                }
+
+                // 更新购物车项
+                cartMapper.updateQuantity(cartItemId, request.getQuantity());
+                cartMapper.updateSelected(cartItemId, request.getSelected() ? 1 : 0);
+
+                cartMetrics.incrementUpdateCart();
+
+                // 获取最新的SKU信息
+                Sku sku = skuService.getSkuById(cartEntity.getSkuId());
+                convertToCartItem(cartEntity, sku);
+            }
         }
-
-        // 检查SKU库存是否充足
-        if (!skuService.checkStock(cartEntity.getSkuId(), request.getQuantity())) {
-            throw new BizException(ErrorCode.SKU_STOCK_INSUFFICIENT);
-        }
-
-        // 更新购物车项
-        cartMapper.updateQuantity(cartItemId, request.getQuantity());
-        cartMapper.updateSelected(cartItemId, request.getSelected() ? 1 : 0);
-
-        cartMetrics.incrementUpdateCart();
-
-        // 获取最新的SKU信息
-        Sku sku = skuService.getSkuById(cartEntity.getSkuId());
-        return convertToCartItem(cartEntity, sku);
     }
 
     @Override
@@ -165,6 +177,30 @@ public class CartServiceImpl implements CartService {
             return convertToCartItem(cartEntity, sku);
         }
         throw new BizException(ErrorCode.CART_ITEM_NOT_FOUND, cartItemId);
+    }
+
+    @Override
+    public void updateCartItemQuantity(Long memberId, Long cartItemId, Integer quantity) {
+        // 获取购物车项锁
+        synchronized (ITEM_LOCK) {
+            // 检查购物车项是否存在且属于该会员
+            CartEntity cartEntity = cartMapper.findById(cartItemId);
+            if (cartEntity == null || !cartEntity.getMemberId().equals(memberId)) {
+                throw new BizException(ErrorCode.CART_ITEM_NOT_FOUND);
+            }
+
+            // 获取SKU锁
+            synchronized (ITEM_SKU_LOCK) {
+                // 检查SKU库存是否充足
+                if (!skuService.checkStock(cartEntity.getSkuId(), quantity)) {
+                    throw new BizException(ErrorCode.SKU_STOCK_INSUFFICIENT);
+                }
+
+                // 更新购物车项数量
+                cartMapper.updateQuantity(cartItemId, quantity);
+                cartMetrics.incrementUpdateCart();
+            }
+        }
     }
 
     private CartItem convertToCartItem(CartEntity cartEntity, Sku sku) {

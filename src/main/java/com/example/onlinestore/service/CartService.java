@@ -22,11 +22,10 @@ public interface CartService {
     /**
      * 更新购物车项
      *
-     * @param memberId 会员ID
+     * @param memberId   会员ID
      * @param cartItemId 购物车项ID
-     * @return 更新后的购物车项
      */
-    CartItem updateCartItem(@NotNull Long memberId, @NotNull Long cartItemId, @Valid UpdateCartItemRequest request);
+    void updateCartItem(@NotNull Long memberId, @NotNull Long cartItemId, @Valid UpdateCartItemRequest request);
 
     /**
      * 删除购物车项
@@ -66,4 +65,12 @@ public interface CartService {
      * @return 购物车项
      */
     CartItem getCartItemById(@NotNull Long cartItemId);
+    /**
+     * 更新购物车项的数量
+     *
+     * @param memberId   会员ID
+     * @param cartItemId 购物车项ID
+     * @param quantity   数量
+     */
+    void updateCartItemQuantity(@NotNull Long memberId, @NotNull Long cartItemId, @NotNull Integer quantity);
 } 
