@@ -9,6 +9,8 @@ import com.example.onlinestore.dto.converter.CartItemConverter;
 import com.example.onlinestore.service.CartService;
 import com.example.onlinestore.service.MemberService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/carts")
 public class CartController {
+    private static final Logger logger = LoggerFactory.getLogger(CartController.class)
+
     @Autowired
     private CartService cartService;
 
@@ -36,8 +40,13 @@ public class CartController {
      */
     @PostMapping("/items")
     public Response<CartItemResponse> addToCart(@Valid @RequestBody AddToCartRequest request) {
-        CartItem cartItem = cartService.addToCart(memberService.getLoginMember().getId(), request);
-        return Response.success(cartItemConverter.convert(cartItem));
+        try{
+            CartItem cartItem = cartService.addToCart(memberService.getLoginMember().getId(), request);
+            return Response.success(cartItemConverter.convert(cartItem));
+        } catch (Exception e) {
+            logger.error("Failed to add to cart", e);
+            return Response.failWithInternalError();
+        }
     }
 
     /**

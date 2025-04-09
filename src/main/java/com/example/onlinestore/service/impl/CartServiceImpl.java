@@ -1,6 +1,7 @@
 package com.example.onlinestore.service.impl;
 
 import com.example.onlinestore.bean.CartItem;
+import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.bean.Sku;
 import com.example.onlinestore.dto.AddToCartRequest;
 import com.example.onlinestore.dto.UpdateCartItemRequest;
@@ -10,9 +11,11 @@ import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.CartMapper;
 import com.example.onlinestore.metrics.CartMetrics;
 import com.example.onlinestore.service.CartService;
+import com.example.onlinestore.service.ItemService;
 import com.example.onlinestore.service.SkuService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -45,6 +48,8 @@ public class CartServiceImpl implements CartService {
 
     @Autowired
     private CartMetrics cartMetrics;
+    @Autowired
+    private ItemService itemService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -140,6 +145,22 @@ public class CartServiceImpl implements CartService {
     @Override
     public List<CartItem> getCartItems(@NotNull Long memberId) {
         List<CartEntity> cartEntities = cartMapper.findByMemberId(memberId);
+        // 记录查询购物车商品信息
+        if (CollectionUtils.isNotEmpty(cartEntities)) {
+            int size = cartEntities.size();
+            while (size > 0) {
+                CartEntity cartEntity = cartEntities.get(size - 1);
+                try {
+                    Item item = itemService.getItemById(cartEntity.getItemId());
+                    logger.debug("get item success. itemId:{}, itemName:{}", cartEntity.getItemId(), item.getName());
+                } catch (Exception e) {
+                    logger.error("get item failed. itemId:{}", cartEntity.getItemId(), e);
+                    continue;
+
+                }
+                size--;
+            }
+        }
         return cartEntities.stream()
                 .map(cartEntity -> {
                     Sku sku = skuService.getSkuById(cartEntity.getSkuId());
