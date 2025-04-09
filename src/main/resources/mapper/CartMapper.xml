@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.CartMapper">
+    <resultMap id="cartResultMap" type="com.example.onlinestore.entity.CartEntity">
+        <id property="id" column="id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="itemId" column="item_id"/>
+        <result property="skuId" column="sku_id"/>
+        <result property="quantity" column="quantity"/>
+        <result property="price" column="price"/>
+        <result property="totalPrice" column="total_price"/>
+        <result property="selected" column="selected"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="Base_Column">
+        `id`, `member_id`, `sku_id`, `quantity`, `price`, `total_price`, `selected`,
+        `created_at`, `updated_at`
+    </sql>
+
+    <insert id="insert" parameterType="com.example.onlinestore.entity.CartEntity">
+        INSERT INTO `cart` (
+            `member_id`, `sku_id`, `quantity`, `price`, `total_price`, `selected`,
+            `created_at`, `updated_at`
+        )
+        VALUES (
+            #{memberId}, #{skuId}, #{quantity}, #{price}, #{totalPrice}, #{selected},
+            #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.example.onlinestore.entity.CartEntity">
+        UPDATE `cart`
+        <set>
+            <if test="memberId != null">`member_id` = #{memberId},</if>
+            <if test="skuId != null">`sku_id` = #{skuId},</if>
+            <if test="quantity != null">`quantity` = #{quantity},</if>
+            <if test="price != null">`price` = #{price},</if>
+            <if test="totalPrice != null">`total_price` = #{totalPrice},</if>
+            <if test="selected != null">`selected` = #{selected},</if>
+            `updated_at` = #{updatedAt}
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM `cart` WHERE `id` = #{id}
+    </delete>
+
+    <select id="findById" resultMap="cartResultMap">
+        SELECT
+        <include refid="Base_Column"/>
+        FROM `cart`
+        WHERE `id` = #{id}
+    </select>
+
+    <select id="findByMemberId" resultMap="cartResultMap">
+        SELECT
+        <include refid="Base_Column"/>
+        FROM `cart`
+        WHERE `member_id` = #{memberId}
+    </select>
+
+    <select id="findByMemberIdAndSkuId" resultMap="cartResultMap">
+        SELECT
+        <include refid="Base_Column"/>
+        FROM `cart`
+        WHERE `member_id` = #{memberId} AND `sku_id` = #{skuId}
+    </select>
+
+    <update id="updateQuantity">
+        UPDATE `cart`
+        SET `quantity` = #{quantity},
+            `total_price` = `price` * #{quantity},
+            `updated_at` = NOW()
+        WHERE `id` = #{id}
+    </update>
+
+    <update id="updateSelected">
+        UPDATE `cart`
+        SET `selected` = #{selected},
+            `updated_at` = NOW()
+        WHERE `id` = #{id}
+    </update>
+
+    <delete id="clearByMemberId">
+        DELETE FROM `cart` WHERE `member_id` = #{memberId}
+    </delete>
+</mapper> 
