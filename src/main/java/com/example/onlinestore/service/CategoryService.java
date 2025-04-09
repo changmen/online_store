@@ -34,4 +34,11 @@ public interface CategoryService {
      * 获取子类目
      */
     List<Category> getChildCategories(Long parentId);
+
+    /**
+     * 获取类目路径
+     * @param categoryId 类目ID
+     * @return 类目路径，格式为：根类目ID->父类目ID->...->当前类目ID
+     */
+    String getCategoryPath(Long categoryId);
 }
