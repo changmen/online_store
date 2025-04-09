@@ -1,5 +1,6 @@
 package com.example.onlinestore.utils;
 
+import com.alibaba.fastjson.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,7 @@ public class PriceCalculator {
      * @return 最终价格
      */
     public BigDecimal calculateFinalPrice(BigDecimal originalPrice, int quantity, BigDecimal discountRate, Map<String, BigDecimal> extraFees) {
+        logger.debug("Calculating final price: originalPrice={}, quantity={}, discountRate={}, extraFees={}", originalPrice, quantity, discountRate, JSON.toJSONString(extraFees));
         // 计算折扣价格
         BigDecimal discountPrice = calculateDiscountPrice(originalPrice, discountRate);
 
