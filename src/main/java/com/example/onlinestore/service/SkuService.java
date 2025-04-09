@@ -46,5 +46,12 @@ public interface SkuService {
      * @return SKU 实体对象, 包含属性值
      */
     Sku getSkuById(@NotNull Long skuId);
-
+    /**
+     * 检查SKU库存是否充足
+     *
+     * @param id SKU ID
+     * @param quantity 需要检查的数量
+     * @return 是否充足 true:充足，false:不足
+     */
+    boolean checkStock(@NotNull Long id, @NotNull Integer quantity);
 }

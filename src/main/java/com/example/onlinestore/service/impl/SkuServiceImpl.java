@@ -232,4 +232,10 @@ public class SkuServiceImpl implements SkuService {
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Override
+    public boolean checkStock(@NotNull Long id, @NotNull Integer quantity) {
+        Sku sku = this.getSkuById(id);
+        return sku.getStockQuantity() >= quantity;
+    }
 }
