@@ -58,16 +58,16 @@
         WHERE
         1=1
         <if test="options != null and options.name != null">
-            AND `name` = #{name}
+            AND `name` = #{options.name}
         </if>
         <if test="options != null and options.categoryId != null">
-            AND `category_id` = #{categoryId}
+            AND `category_id` = #{options.categoryId}
         </if>
         <if test="options != null and options.brandId != null">
-            AND `brand_id` = #{brandId}
+            AND `brand_id` = #{options.brandId}
         </if>
         <if test="options != null and options.nameLike != null">
-            AND `name` LIKE '%${nameLike}%'
+            AND `name` LIKE '%${options.nameLike}%'
         </if>
     </select>
 </mapper>

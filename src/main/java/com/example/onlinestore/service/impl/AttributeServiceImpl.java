@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -47,7 +47,7 @@ public class AttributeServiceImpl implements AttributeService {
     private ItemAttributeRelationMapper itemAttributeRelationMapper;
 
     @Override
-    public Attribute createAttribute(@Valid CreateAttributeRequest request) {
+    public Attribute createAttribute(@NotNull @Valid CreateAttributeRequest request) {
         // 校验名称是否重复
         String name = request.getName();
         if (attributeMapper.findByName(name) != null) {
@@ -66,7 +66,7 @@ public class AttributeServiceImpl implements AttributeService {
 
 
     @Override
-    public void updateAttribute(@NotNull Long id, @Valid UpdateAttributeRequest request) {
+    public void updateAttribute(@NotNull Long id, @NotNull @Valid UpdateAttributeRequest request) {
         Attribute attribute = getAttributeById(id);
         AttributeEntity updatingEntity = new AttributeEntity();
         boolean needUpdate = CommonUtils.updateFieldIfChanged(request.getName(), attribute.getName(), updatingEntity::setName)
@@ -90,9 +90,13 @@ public class AttributeServiceImpl implements AttributeService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteAttribute(@Valid Long id) {
+    public void deleteAttribute(@NotNull Long id) {
+
+        //校验属性是否存在
         getAttributeById(id);
-        List<ItemAttributeRelationEntity> relationEntities = itemAttributeRelationMapper.findByItemIdAndAttributeId(id, 0, 10);
+
+        // 有商品或者SKU用到该属性就不能删除，所以只要有一条记录存在就不能删除
+        List<ItemAttributeRelationEntity> relationEntities = itemAttributeRelationMapper.findByAndAttributeId(id, 0, 1);
         if (CollectionUtils.isNotEmpty(relationEntities)) {
             Set<Long> referenceIds = relationEntities.stream().map(ItemAttributeRelationEntity::getItemId).collect(Collectors.toSet());
             logger.error("attribute:{} is reference by item, can not delete, itemIds:{}", id, referenceIds);
@@ -118,7 +122,7 @@ public class AttributeServiceImpl implements AttributeService {
     }
 
     @Override
-    public Attribute getAttributeByIdWithValues(Long id) {
+    public Attribute getAttributeByIdWithValues(@NotNull Long id) {
         Attribute attribute = getAttributeById(id);
         if (attribute.getInputType() == AttributeInputType.SINGLE_SELECT || attribute.getInputType() == AttributeInputType.MULTI_SELECT) {
             List<AttributeValue> values = findAllAttributeValuesByAttributeId(id);
@@ -145,11 +149,11 @@ public class AttributeServiceImpl implements AttributeService {
             List<AttributeValueEntity> values = attributeValueMapper.findAllAttributeValuesByAttributeId(attributeId);
             return values.stream().map(this::convertToAttributeValue).toList();
         }
-        return List.of();
+        return Collections.emptyList();
     }
 
     @Override
-    public AttributeValue getAttributeValueById(Long id) {
+    public AttributeValue getAttributeValueById(@NotNull Long id) {
         AttributeValueEntity attributeValueEntity = attributeValueMapper.findById(id);
         if (attributeValueEntity != null) {
             return convertToAttributeValue(attributeValueEntity);
@@ -160,8 +164,9 @@ public class AttributeServiceImpl implements AttributeService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void ensureItemAttributes(@NotNull Long itemId, @NotNull Long skuId, @Valid List<ItemAttributeRequest> attributes) {
-        List<ItemAttributeRelationEntity> relationEntities = itemAttributeRelationMapper.findByItemIdAndSkuId(itemId,skuId);
+    public void ensureItemAttributes(@NotNull Long itemId, @NotNull Long skuId, @NotNull @Valid List<ItemAttributeRequest> attributes) {
+
+        List<ItemAttributeRelationEntity> relationEntities = itemAttributeRelationMapper.findByItemIdAndSkuId(itemId, skuId);
 
         List<ItemAttributeRelationEntity> newRelations;
 
@@ -179,9 +184,9 @@ public class AttributeServiceImpl implements AttributeService {
                 return relationEntity;
             }).toList();
         } else {
-            Set<Long> curAttributeIds = relationEntities.stream().map(ItemAttributeRelationEntity::getAttributeId).collect(Collectors.toSet());
+            List<Long> curAttributeIds = relationEntities.stream().map(ItemAttributeRelationEntity::getAttributeId).collect(Collectors.toList());
 
-            int effectRows = itemAttributeRelationMapper.deleteByItemIdAndAttributeIds(itemId, new ArrayList<>(curAttributeIds));
+            int effectRows = itemAttributeRelationMapper.deleteByItemIdAndAttributeIds(itemId, curAttributeIds);
             if (effectRows != curAttributeIds.size()) {
                 logger.error("delete item attribute relations failed. because effect rows is {}", effectRows);
                 throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
@@ -197,7 +202,7 @@ public class AttributeServiceImpl implements AttributeService {
                 relationEntity.setCreatedAt(now);
                 relationEntity.setUpdatedAt(now);
                 return relationEntity;
-            }).toList();
+            }).collect(Collectors.toList());
 
         }
 

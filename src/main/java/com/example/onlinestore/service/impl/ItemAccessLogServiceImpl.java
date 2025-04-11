@@ -97,12 +97,12 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
     /**
      * 创建访问日志实体
      */
-    private ItemAccessLogEntity createAccessLogEntity(Long itemId, String itemName, String memberId, String userName, String ip, String userAgent, String referer, String sessionId) {
+    private ItemAccessLogEntity createAccessLogEntity(Long itemId, String itemName, String memberId, String memberName, String ip, String userAgent, String referer, String sessionId) {
         ItemAccessLogEntity logEntity = new ItemAccessLogEntity();
         logEntity.setItemId(itemId);
         logEntity.setItemName(itemName);
         logEntity.setMemberId(memberId);
-        logEntity.setMemberName(userName);
+        logEntity.setMemberName(memberName);
         logEntity.setIp(ip);
         logEntity.setUserAgent(userAgent);
         logEntity.setReferer(referer);

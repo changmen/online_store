@@ -58,4 +58,7 @@
             #{attributeId}
         </foreach>
     </delete>
+
+    <select id="findByAndAttributeId" resultMap="itemAttributeRelationResultMap">
+    </select>
 </mapper>

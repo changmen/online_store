@@ -63,7 +63,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Item createItem(@Valid CreateItemRequest request) {
+    public Item createItem(@NotNull @Valid CreateItemRequest request) {
         // 校验名称是否包含敏感字符
         if (getForbiddenWords().stream().anyMatch(StringUtils.toRootLowerCase(StringUtils.trim(request.getName()))::contains)) {
             throw new BizException(ErrorCode.ITEM_NAME_CONTAINS_FORBIDDEN_WORDS, request.getName());
@@ -122,7 +122,7 @@ public class ItemServiceImpl implements ItemService {
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
-        attributeService.ensureItemAttributes(itemEntity.getId(), 0L,request.getAttributes());
+        attributeService.ensureItemAttributes(itemEntity.getId(), 0L, request.getAttributes());
 
         //
         return convertToEntity(itemEntity, item -> request.getDescription());
@@ -130,7 +130,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateItem(@NotNull Long id, @Valid UpdateItemRequest request) {
+    public void updateItem(@NotNull Long id, @NotNull @Valid UpdateItemRequest request) {
         getItemById(id);
         // 校验
         if (getForbiddenWords().stream().anyMatch(StringUtils.toRootLowerCase(StringUtils.trim(request.getName()))::contains)) {
@@ -198,7 +198,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Page<Item> listItems(ItemListQueryRequest queryRequest) {
+    public Page<Item> listItems(@NotNull @Valid ItemListQueryRequest queryRequest) {
         PageHelper.startPage(queryRequest.getPageNum(), queryRequest.getPageSize(), DEFAULT_ITEM_LIST_QUERY_ORDERBY);
         List<ItemEntity> itemEntities = itemMapper.queryItemsByOptions(queryRequest);
         PageInfo<ItemEntity> pageInfo = new PageInfo<>(itemEntities);
@@ -218,6 +218,7 @@ public class ItemServiceImpl implements ItemService {
                 item.setSubImageURLs(JacksonJsonUtils.toListString(itemEntity.getSubImageURLs()));
             } catch (IOException e) {
                 logger.error("parse subImageUrls failed. itemEntity:{}", itemEntity, e);
+                item.setSubImageURLs(Collections.emptyList());
             }
         }
         item.setStatus(ItemStatus.valueOf(itemEntity.getStatus()));
@@ -237,10 +238,10 @@ public class ItemServiceImpl implements ItemService {
         if (StringUtils.isBlank(this.forbiddenWords)) {
             return Collections.emptySet();
         }
-       return Arrays.stream(this.forbiddenWords.split(","))
-               .map(String::trim)
-               .map(String::toLowerCase)
-               .filter(StringUtils::isNotBlank)
-               .collect(Collectors.toSet());
+        return Arrays.stream(this.forbiddenWords.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
     }
 }

@@ -100,6 +100,7 @@ public class MemberServiceImpl implements MemberService{
         if (memberEntity != null) {
             return memberEntity.toMember();
         }
+        logger.info("member not found. memberName:{}", name);
         return null;
     }
 
