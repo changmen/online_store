@@ -16,10 +16,10 @@ public interface ItemService {
      *
      * @param request 包含新Item属性的请求对象，会自动进行参数校验（@Valid）
      * @return 持久化后的Item实体对象
-     * @throws BizException    商品名称和描述敏感词校验不过， 会抛出该异常
+     * @throws BizException                 商品名称和描述敏感词校验不过， 会抛出该异常
      * @throws ConstraintViolationException 当请求参数校验不通过时抛出
      */
-    Item createItem(@Valid CreateItemRequest request);
+    Item createItem(@NotNull @Valid CreateItemRequest request);
 
     /**
      * 更新指定ID的Item实体
@@ -29,13 +29,13 @@ public interface ItemService {
      * @throws BizException                 当指定ID的Item不存在或者访问DB失败抛出时抛出
      * @throws ConstraintViolationException 当ID或请求参数校验不通过时抛出
      */
-    void updateItem(@NotNull Long id, @Valid UpdateItemRequest request);
+    void updateItem(@NotNull Long id, @NotNull @Valid UpdateItemRequest request);
 
 
     /**
      * 根据指定ID获取对应的Item对象
      *
-     * @param id      要获取的Item唯一标识符，不可为null
+     * @param id 要获取的Item唯一标识符，不可为null
      * @return 查找到的Item实例，若未找到可能返回null（具体取决于实现逻辑）
      * @throws BizException                 当指定ID的Item不存在时抛出, 或者访问DB失败抛出
      * @throws ConstraintViolationException 当ID为NUll
@@ -51,11 +51,11 @@ public interface ItemService {
      *                     - 分页参数（页码、每页数量）
      *                     （参数需通过Spring验证框架校验，@Valid会触发参数校验）
      * @return 分页响应对象，包含：
-     *         - 当前页的数据列表（List<Item>）
-     *         - 分页信息（总记录数、总页数、当前页码等）
-     *         - 排序信息（当前排序字段和顺序）
+     * - 当前页的数据列表（List<Item>）
+     * - 分页信息（总记录数、总页数、当前页码等）
+     * - 排序信息（当前排序字段和顺序）
      */
-    Page<Item> listItems(@Valid ItemListQueryRequest queryRequest);
+    Page<Item> listItems(@NotNull @Valid ItemListQueryRequest queryRequest);
 
 
 }

@@ -46,6 +46,7 @@ public class ItemDetailServiceImpl implements ItemDetailService {
                 return JacksonJsonUtils.toObject(cachedValue, ItemDetail.class);
             } catch (IOException e) {
                 logger.error("Failed to deserialize cached item detail, itemId: {}", itemId, e);
+                redisTemplate.delete(cacheKey);
             }
         }
 

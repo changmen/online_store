@@ -19,7 +19,7 @@ public interface BrandService {
      * @param options 包含分页参数、过滤条件和排序规则的查询选项，必须有效且不为null
      * @return 分页结果对象，包含品牌数据列表及分页信息
      */
-    Page<Brand> listBrands(@Valid BrandListQueryOptions options);
+    Page<Brand> listBrands(@NotNull @Valid BrandListQueryOptions options);
 
     /**
      * 新增品牌信息

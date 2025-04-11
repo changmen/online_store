@@ -50,7 +50,7 @@ public class Sku implements Serializable {
     /**
      * 是否为默认规格（1：默认展示规格）
      */
-    private Integer isDefault;
+    private Integer defaultSku;
 
     /**
      * 当前库存数量（实时库存）

@@ -8,7 +8,7 @@
         <result property="name" column="name"/>
         <result property="description" column="description"/>
         <result property="price" column="price"/>
-        <result property="isDefault" column="is_default"/>
+        <result property="defaultSku" column="default_sku"/>
         <result property="stockQuantity" column="stock_quantity"/>
         <result property="soldQuantity" column="sold_quantity"/>
         <result property="warningQuantity" column="warning_quantity"/>
@@ -18,26 +18,26 @@
     </resultMap>
 
     <sql id="Base_Column">
-        `id`, `item_id`, `sku_code`, `name`, `description`, `price`, `is_default`, `stock_quantity`, `sold_quantity`, `warning_quantity`, `image`,`created_at`, `updated_at`
+        `id`, `item_id`, `sku_code`, `name`, `description`, `price`, `default_sku`, `stock_quantity`, `sold_quantity`, `warning_quantity`, `image`,`created_at`, `updated_at`
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" parameterType="com.example.onlinestore.entity.SkuEntity">
         INSERT INTO `sku` (
-            `item_id`, `sku_code`, `name`, `description`, `price`, `is_default`, `stock_quantity`, `sold_quantity`, `warning_quantity`, `image`, `created_at`, `updated_at`
+            `item_id`, `sku_code`, `name`, `description`, `price`, `default_sku`,`stock_quantity`, `sold_quantity`, `warning_quantity`, `image`,`created_at`, `updated_at`
         )
         VALUES (
-            #{itemId}, #{skuCode}, #{name}, #{description}, #{price}, #{isDefault},#{stockQuantity}, #{soldQuantity}, #{warningQuantity}, #{image},#{createdAt}, #{updatedAt}
+            #{itemId}, #{skuCode}, #{name}, #{description}, #{price}, #{defaultSku}, #{stockQuantity}, #{soldQuantity}, #{warningQuantity}, #{image}, #{createdAt}, #{updatedAt}
         )
     </insert>
 
     <insert id="batchInsert" useGeneratedKeys="true" parameterType="java.util.List">
         INSERT INTO `sku` (
-            `item_id`, `sku_code`, `name`, `description`, `price`, `is_default`,`stock_quantity`, `sold_quantity`, `warning_quantity`, `image`,`created_at`, `updated_at`
+            `item_id`, `sku_code`, `name`, `description`, `price`, `default_sku`, `stock_quantity`, `sold_quantity`, `warning_quantity`, `image`,`created_at`, `updated_at`
         )
         VALUES
         <foreach collection="list" item="item" separator=",">
             (
-            #{itemId}, #{skuCode}, #{name}, #{description}, #{price}, #{isDefault}, #{stockQuantity}, #{soldQuantity}, #{warningQuantity}, #{image},#{createdAt}, #{updatedAt}
+                #{itemId}, #{skuCode}, #{name}, #{description}, #{price}, #{defaultSku}, #{stockQuantity}, #{soldQuantity}, #{warningQuantity}, #{image}, #{createdAt}, #{updatedAt}
             )
         </foreach>
     </insert>
@@ -50,7 +50,7 @@
             <if test="name != null">`name` = #{name},</if>
             <if test="description != null">`description` = #{description},</if>
             <if test="price != null">`price` = #{price},</if>
-            <if test="isDefault != null">`is_default` = #{isDefault},</if>
+            <if test="defaultSku != null">`default_sku` = #{defaultSku},</if>
             <if test="stockQuantity != null">`stock_quantity` = #{stockQuantity},</if>
             <if test="soldQuantity != null">`sold_quantity` = #{soldQuantity},</if>
             <if test="warningQuantity != null">`warning_quantity` = #{warningQuantity},</if>

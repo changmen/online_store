@@ -45,7 +45,7 @@ public class SkuEntity implements Serializable {
     /**
      * 是否默认规格（0-否，1-是）
      */
-    private Integer isDefault;
+    private Integer defaultSku;
     /**
      * 当前库存数量
      */

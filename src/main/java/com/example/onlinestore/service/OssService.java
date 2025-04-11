@@ -10,6 +10,7 @@ public interface OssService {
      * 
      * @param content 商品描述内容
      * @return OSS文件URL
+     * @throws IllegalArgumentException 如果content为空字符串或者null，则抛出异常
      */
     String uploadItemDescription(String content);
     

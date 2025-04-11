@@ -10,7 +10,7 @@ public class ItemResponseConverter {
 
     public ItemResponse convert(Item item) {
         if (item == null) {
-            throw new IllegalArgumentException("item must not be null");
+            return null;
         }
 
         ItemResponse response = new ItemResponse();

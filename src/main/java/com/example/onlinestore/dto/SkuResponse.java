@@ -1,5 +1,6 @@
 package com.example.onlinestore.dto;
 
+import com.example.onlinestore.bean.ItemAttributeAndValue;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -48,9 +49,9 @@ public class SkuResponse implements Serializable {
      */
     private BigDecimal price;
     /**
-     * 标识是否为商品默认选中规格（true=默认规格，false=非默认）
+     * 标识是否为商品默认选中规格（1=默认规格，0=非默认）
      */
-    private Boolean isDefault;
+    private Integer defaultSku;
 
     /**
      * 当前库存数量
@@ -73,6 +74,6 @@ public class SkuResponse implements Serializable {
     /**
      * SKU规格参数列表（如：[{"颜色":"蓝色"}, {"内存":"256GB"}]）
      */
-    private List<AttributeResponse> attributes;
+    private List<ItemAttributeAndValue> attributes;
 
 }
