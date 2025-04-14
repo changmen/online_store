@@ -59,6 +59,11 @@
         </foreach>
     </delete>
 
-    <select id="findByAndAttributeId" resultMap="itemAttributeRelationResultMap">
+    <select id="findByAttributeId" resultMap="itemAttributeRelationResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `item_attribute_relation`
+        WHERE `attribute_id` = #{attributeId}
+        LIMIT #{offset}, #{limit}
     </select>
 </mapper>

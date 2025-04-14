@@ -37,6 +37,10 @@ public class ItemDetailServiceImpl implements ItemDetailService {
 
     @Override
     public ItemDetail getItemDetail(@NotNull Long itemId) {
+        if (itemId == null) {
+            throw new IllegalArgumentException("itemId is null");
+        }
+
         // 1. 尝试从缓存获取
         String cacheKey = CACHE_KEY_PREFIX + itemId;
         String cachedValue = redisTemplate.opsForValue().get(cacheKey);

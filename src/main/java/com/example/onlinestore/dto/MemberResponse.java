@@ -26,9 +26,6 @@ public class MemberResponse implements Serializable {
      */
     private MemberBaseInfoResponse baseInfo;
 
-    /**
-     * 用户基础信息，包含姓名、联系方式等详细信息
-     */
     @Getter
     @Setter
     @Builder

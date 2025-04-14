@@ -24,9 +24,8 @@ public class ItemDetailConverter {
         ItemDetailResponse response = new ItemDetailResponse();
         response.setItem(itemResponseConverter.convert(itemDetail.getItem()));
         if (CollectionUtils.isNotEmpty(itemDetail.getSkus())){
-            response.setSkus(itemDetail.getSkus().stream().map(sku -> skuConverter.convert(sku)).collect(Collectors.toList()));
+            response.setSkus(itemDetail.getSkus().stream().map(skuConverter::convert).collect(Collectors.toList()));
         }
         return response;
-
     }
 }

@@ -35,7 +35,7 @@ public class BrandServiceImpl implements BrandService {
     /**
      * 锁对象，保证品牌名称修改的原子性
      */
-    private final static Object BRAND_NAME_MODIFICATION_LOCK = BrandService.class;;
+    private final static Object BRAND_NAME_MODIFICATION_LOCK = new Object();
 
     @Autowired
     private BrandMapper brandMapper;
@@ -77,7 +77,7 @@ public class BrandServiceImpl implements BrandService {
             }
 
             updatingBrandEntity.setUpdatedAt(LocalDateTime.now());
-            int effectRows = brandMapper.update(updatingBrandEntity, id);
+            int effectRows = brandMapper.update(updatingBrandEntity);
             if (effectRows != 1) {
                 logger.error("update brand failed. because effect rows is 0. brandName:{}", brand.getName());
                 throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);

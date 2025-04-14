@@ -29,7 +29,7 @@ public enum ErrorCode {
     SKU_WARNING_QUANTITY_EXCEEDS_STOCK_QUANTITY("ErrorCode.SKU.Warning.Quantity.Exceeds.Stock.Quantity", "SKU预警库存数量不能超过库存数量"),
     ATTRIBUTE_TYPE_NOT_SKU("ErrorCode.Attribute.Type.Not.SKU", "属性:{0}类型不是SKU类型"),
     SKU_ATTRIBUTE_INPUT_TYPE_INVALID("ErrorCode.SKU.Attribute.Input.Type.Invalid", "SKU属性:{0}输入类型只能是单选或多选"),
-    SKU_ATTRIBUTE_VALUE_EMPTY("ErrorCode.SKU.Attribute.Value.Empty", "SKU属性:{0}值不能为空"),
+    SKU_ATTRIBUTE_VALUE_EMPTY("ErrorCode.SKU.Attribute.Value.Empty", "SKU属性值:{0}不能为空"),
     ;
     ErrorCode(String code, String defaultMessage) {
         this.code = code;

@@ -56,12 +56,11 @@ public interface BrandMapper {
      * @param brandEntity 品牌实体对象，包含需要更新的品牌字段信息。
      *                    必须包含有效的品牌ID作为更新条件，
      *                    其他非空字段将被更新到数据库对应记录中
-     * @param id 品牌ID
      *
      * @return 受影响的数据库记录行数。返回1表示更新成功，
      *         返回0表示没有记录被更新（可能由于ID不存在或数据未变化）
      */
-    int update(BrandEntity brandEntity,@Param("id") Long id);
+    int update(BrandEntity brandEntity);
 
 
 }
