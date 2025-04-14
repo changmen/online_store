@@ -1,5 +1,6 @@
 package com.example.onlinestore.dto;
 
+import com.example.onlinestore.constants.Constants;
 import com.example.onlinestore.enums.GenderType;
 import jakarta.validation.constraints.*;
 import lombok.EqualsAndHashCode;
@@ -18,27 +19,25 @@ public class MemberRegistryRequest implements Serializable {
     @Serial
     private static final long serialVersionUID = -7490516187847553182L;
 
-    @NotNull
-    @Size(min = 2, max = 16)
-    @Pattern(regexp = "^[\\u4e00-\\u9fa5]{2,16}$")
+    @NotNull(message = "姓名字段不能为空")
+    @Pattern(regexp = Constants.MEMBER_NAME_PATTERN, message = "姓名格式不正确,应为2-16位的中文、英文或数字")
     private String name;
 
-    @NotNull
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,16}$")
-    @Size(min = 8, max = 16)
+    @NotNull(message = "密码字段不能为空")
+    @Pattern(regexp = Constants.MEMBER_PASSWORD_PATTERN, message = "密码格式不正确,应为8-16位字母、数字和特殊字符的组合")
     private String password;
 
-    @Size(max = 16)
+    @Size(max = 16, message = "昵称长度不能大于16")
     private String nickName;
 
-    @NotNull
+    @NotNull(message = "性别字段不能为空")
     private GenderType gender;
 
-    @Min(18)
+    @Min(value = 18, message = "年龄必须大于等于18")
     private int age;
 
-    @NotNull
-    @Pattern(regexp = "^1[3-9]\\d{9}$")
+    @NotNull(message = "手机号码字段不能为空")
+    @Pattern(regexp = Constants.PHONE_PATTERN, message = "手机号码格式不正确,应为11位有效手机号")
     private String phone;
 
 }

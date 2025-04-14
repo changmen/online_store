@@ -2,9 +2,7 @@ package com.example.onlinestore.dto;
 
 import com.example.onlinestore.bean.Member;
 import com.example.onlinestore.enums.GenderType;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -12,6 +10,8 @@ import java.io.Serializable;
 @Setter
 @Getter
 @Builder
+@EqualsAndHashCode
+@ToString
 public class MemberResponse implements Serializable {
     @Serial
     private static final long serialVersionUID = 4907636112900361030L;
@@ -27,6 +27,8 @@ public class MemberResponse implements Serializable {
     @Getter
     @Setter
     @Builder
+    @EqualsAndHashCode
+    @ToString
     static class MemberBaseInfoResponse implements Serializable {
         @Serial
         private static final long serialVersionUID = 4053414940647847736L;
