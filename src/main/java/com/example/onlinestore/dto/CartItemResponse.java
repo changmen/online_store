@@ -36,5 +36,5 @@ public class CartItemResponse implements Serializable {
     /**
      * 是否被选中状态。
      */
-    private Boolean selected;
+    private Integer selected;
 }
