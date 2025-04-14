@@ -56,6 +56,7 @@ public interface SkuService {
      * @param id SKU ID
      * @param quantity 需要检查的数量
      * @return 是否充足 true:充足，false:不足
+     * @throws com.example.onlinestore.exceptions.BizException 如果根据SkuId查询不到Sku，或者访问DB失败，将抛出该业务异常
      */
-    boolean checkStock(@NotNull Long id, @NotNull Integer quantity);
+    boolean checkStock(@NotNull Long id, @NotNull @Min(value = 1, message = "库存数量必须大于0") Integer quantity);
 }
