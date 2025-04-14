@@ -43,7 +43,7 @@ public class ItemDetailController {
         String ip = WebUtils.getClientIp(request);
         String userAgent = request.getHeader("User-Agent");
         String referer = request.getHeader("Referer");
-        String sessionId = request.getSession().getId();
+        String sessionId = request.getSession(false) != null ? request.getSession(false).getId() : "";
         Member member = memberService.getLoginMember();
         Item item = detail.getItem();
 

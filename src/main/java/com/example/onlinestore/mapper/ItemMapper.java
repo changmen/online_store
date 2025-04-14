@@ -42,10 +42,10 @@ public interface ItemMapper {
     ItemEntity findById(Long id);
 
     /**
-     * 根据查询条件参数获取符合条件的项目实体列表
+     * 根据给定的查询条件查询项目列表。
      *
-     * @param options 查询条件参数对象，包含分页、过滤条件等查询参数
-     * @return 符合条件的ItemEntity列表，返回结果不为null但可能为空集合
+     * @param options 包含查询条件的请求对象
+     * @return 查询到的项目实体列表
      */
     List<ItemEntity> queryItemsByOptions(@Param("options") ItemListQueryRequest options);
 

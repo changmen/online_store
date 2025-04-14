@@ -41,7 +41,7 @@ public class MemberBaseInfo implements Serializable {
     /**
      * 用户绑定的手机号码
      */
-    @NotNull(message = "手机号码字段不能为空,应为11位有效手机号")
+    @NotNull(message = "手机号码字段不能为空")
     @Pattern(regexp = Constants.PHONE_PATTERN, message = "手机号码格式不正确,应为11位有效手机号")
     private String phone;
     /**

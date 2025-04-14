@@ -17,7 +17,7 @@ public class SkuConverter {
         skuResponse.setName(sku.getName());
         skuResponse.setDescription(sku.getDescription());
         skuResponse.setPrice(sku.getPrice());
-//        skuResponse.setIsDefault(sku.getDefaultSku());
+        skuResponse.setDefaultSku(sku.getDefaultSku());
         skuResponse.setStockQuantity(sku.getStockQuantity());
         skuResponse.setSoldQuantity(sku.getSoldQuantity());
         skuResponse.setWarningQuantity(sku.getWarningQuantity());

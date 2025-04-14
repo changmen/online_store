@@ -87,7 +87,7 @@ public interface SkuMapper {
      * 更新SKU库存
      *
      * @param id SKU ID
-     * @param quantity 更改的库存数量
+     * @param stockQuantity 更改的库存数量
      * @return 受影响的数据行数
      */
     int updateStockQuantity(@Param("id") Long id, @Param("stockQuantity") Integer stockQuantity);

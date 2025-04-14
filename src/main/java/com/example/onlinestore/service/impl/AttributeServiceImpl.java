@@ -96,7 +96,7 @@ public class AttributeServiceImpl implements AttributeService {
         getAttributeById(id);
 
         // 有商品或者SKU用到该属性就不能删除，所以只要有一条记录存在就不能删除
-        List<ItemAttributeRelationEntity> relationEntities = itemAttributeRelationMapper.findByAndAttributeId(id, 0, 1);
+        List<ItemAttributeRelationEntity> relationEntities = itemAttributeRelationMapper.findByAttributeId(id, 0, 1);
         if (CollectionUtils.isNotEmpty(relationEntities)) {
             Set<Long> referenceIds = relationEntities.stream().map(ItemAttributeRelationEntity::getItemId).collect(Collectors.toSet());
             logger.error("attribute:{} is reference by item, can not delete, itemIds:{}", id, referenceIds);

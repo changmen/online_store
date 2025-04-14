@@ -36,7 +36,7 @@ public interface ItemService {
      * 根据指定ID获取对应的Item对象
      *
      * @param id 要获取的Item唯一标识符，不可为null
-     * @return 查找到的Item实例，若未找到可能返回null（具体取决于实现逻辑）
+     * @return 查找到的Item实例
      * @throws BizException                 当指定ID的Item不存在时抛出, 或者访问DB失败抛出
      * @throws ConstraintViolationException 当ID为NUll
      */
