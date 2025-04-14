@@ -87,4 +87,11 @@
     <delete id="clearByMemberId">
         DELETE FROM `cart` WHERE `member_id` = #{memberId}
     </delete>
+
+    <update id="updateTotalPrice">
+        UPDATE `cart`
+        SET `total_price` = #{totalPrice},
+            `updated_at` = NOW()
+        WHERE `id` = #{id}
+    </update>
 </mapper> 

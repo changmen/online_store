@@ -2,6 +2,8 @@ package com.example.onlinestore.controller;
 
 import com.example.onlinestore.dto.Response;
 import com.example.onlinestore.utils.PriceCalculator;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +32,10 @@ public class PriceCalculatorController {
     public Response<Map<String, Object>> calculatePrice(
             @RequestParam("price") @Min(value = 0, message = "价格不能为负数") BigDecimal originalPrice,
             @RequestParam("quantity") @Min(value = 1, message = "数量必须大于0") int quantity,
-            @RequestParam(value = "discount", required = false, defaultValue = "0") BigDecimal discountRate,
+            @RequestParam(value = "discount", required = false, defaultValue = "0")
+            @DecimalMin(value = "0.0", message = "折扣率不能小于0")
+            @DecimalMax(value = "1.0", message = "折扣率不能大于1")
+            BigDecimal discountRate,
             @RequestParam(value = "promotion", required = false) String promotionCode) {
 
         logger.debug("Calculate price: price={}, quantity={}, discount={}, promotion={}",

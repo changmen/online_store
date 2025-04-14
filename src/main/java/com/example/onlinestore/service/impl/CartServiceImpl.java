@@ -56,22 +56,25 @@ public class CartServiceImpl implements CartService {
     public CartItem addToCart(@NotNull Long memberId, @NotNull @Valid AddToCartRequest request) {
         // 检查SKU是否存在
         Sku sku = skuService.getSkuById(request.getSkuId());
-
         // 检查库存是否充足
         if (!skuService.checkStock(request.getSkuId(), request.getQuantity())) {
             throw new BizException(ErrorCode.SKU_STOCK_INSUFFICIENT);
         }
-
         // 检查购物车是否已存在该商品
         CartEntity existingCart = cartMapper.findByMemberIdAndSkuId(memberId, request.getSkuId());
         if (existingCart != null) {
             // 更新数量
             int newQuantity = existingCart.getQuantity() + request.getQuantity();
             cartMapper.updateQuantity(existingCart.getId(), newQuantity);
+            BigDecimal newTotalPrice = sku.getPrice().multiply(new BigDecimal(newQuantity));
+            int effectRow = cartMapper.updateTotalPrice(existingCart.getId(), newTotalPrice);
+            if (effectRow != 1) {
+                logger.error("update cart item quantity failed. because effect rows is 0. skuId:{}", request.getSkuId());
+                throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
+            }
             cartMetrics.incrementUpdateCart();
             return convertToCartItem(existingCart, sku);
         }
-
         // 创建新的购物车项
         CartEntity cartEntity = new CartEntity();
         cartEntity.setMemberId(memberId);
@@ -82,13 +85,11 @@ public class CartServiceImpl implements CartService {
         cartEntity.setSelected(1);
         cartEntity.setCreatedAt(LocalDateTime.now());
         cartEntity.setUpdatedAt(LocalDateTime.now());
-
         int effectRows = cartMapper.insert(cartEntity);
         if (effectRows != 1) {
             logger.error("insert cart failed. because effect rows is 0. skuId:{}", request.getSkuId());
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-
         cartMetrics.incrementAddToCart();
         return convertToCartItem(cartEntity, sku);
     }

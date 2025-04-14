@@ -70,6 +70,12 @@ public class PriceCalculator {
             return BigDecimal.ZERO;
         }
 
+        // 确保数量至少为0
+        if (quantity <= 0) {
+            logger.warn("Quantity is not positive: {}, returning ZERO", quantity);
+            return BigDecimal.ZERO;
+        }
+
         return price.multiply(new BigDecimal(quantity)).setScale(2, RoundingMode.HALF_UP);
     }
 
@@ -77,8 +83,16 @@ public class PriceCalculator {
         if (extraFees == null || extraFees.isEmpty()) {
             return BigDecimal.ZERO;
         }
-
-        return extraFees.values().stream()
+        return extraFees.entrySet().stream()
+                .filter(entry -> entry.getValue() != null)
+                .map(entry -> {
+                    BigDecimal fee = entry.getValue();
+                    if (fee.compareTo(BigDecimal.ZERO) < 0) {
+                        logger.warn("Negative extra fee found for {}: {}, using absolute value", entry.getKey(), fee);
+                        return fee.abs();
+                    }
+                    return fee;
+                })
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);
     }

@@ -4,6 +4,7 @@ import com.example.onlinestore.entity.CartEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Mapper
@@ -80,4 +81,13 @@ public interface CartMapper {
      * @return 受影响的行数
      */
     int clearByMemberId(Long memberId);
+
+    /**
+     * 更新购物车项的总价
+     *
+     * @param id          购物车项ID
+     * @param totalPrice  新的总价
+     * @return 受影响的行数
+     */
+    int updateTotalPrice(@Param("id") Long id, @Param("totalPrice") BigDecimal totalPrice);
 } 
