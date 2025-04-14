@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.BrandMapper">
+    <resultMap id="brandResultMap" type="com.example.onlinestore.entity.BrandEntity">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="logo" column="logo"/>
+        <result property="story" column="story"/>
+        <result property="sortScore" column="sort_score"/>
+        <result property="visible" column="visible"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="Brand_basic_column">
+        `id`, `name`, `description`, `logo`, `story`, `sort_score`, `visible`, `created_at`, `updated_at`
+    </sql>
+
+    <insert id="insert" parameterType="com.example.onlinestore.entity.BrandEntity">
+        INSERT INTO brand (`id`,`name`, `description`, `logo`, `story`, `sort_score`, `visible`, `created_at`, `updated_at`)
+        VALUES (#{name}, #{description}, #{logo}, #{story}, #{sortScore}, #{visible}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <select id="findById" resultMap="brandResultMap">
+        SELECT
+        <include refid="Brand_basic_column" />
+        FROM brand WHERE `brand_id` = #{id}
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM `brand` WHERE `id` = #{id}
+    </delete>
+
+    <update id="update">
+        UPDATE brand
+        <set>
+            <if test="description != null">`description` = #{description},</if>
+            <if test="logo != null">`logo` = #{logo},</if>
+            <if test="story != null">`story` = #{story},</if>
+            <if test="sortScore != null">`sort_score` = #{sortScore},</if>
+            <if test="visible != null">`visible` = #{visible},</if>
+            <if test="updatedAt != null">`updated_at` = #{updatedAt}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="findByName" resultMap="brandResultMap">
+        SELECT
+        <include refid="Brand_basic_column" />
+        FROM brand
+        WHERE `name` = #{name}
+        LIMIT 1
+    </select>
+
+    <select id="findAllBrands" parameterType="com.example.onlinestore.dto.BrandListQueryOptions" resultMap="brandResultMap">
+        SELECT
+        <include refid="Brand_basic_column" />
+        FROM `brand`
+        WHERE
+        <if test="options != null and options.visible != null">
+            `visible` = #{options.visible}
+        </if>
+        <if test="options != null and options.brandIds != null and options.brandIds.size() > 0 ">
+            AND `id` in
+            <foreach collection="options.brandIds" item="brandId" open="(" separator="," close=")">
+                #{brandId}
+            </foreach>
+        </if>
+    </select>
+</mapper>

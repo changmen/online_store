@@ -45,7 +45,8 @@ public class MemberServiceImpl implements MemberService{
     public LoginResponse login(LoginRequest request) {
         MemberEntity user = memberMapper.findByName(request.getUsername());
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException(messageSource.getMessage("error.invalid.credentials", null, LocaleContextHolder.getLocale()));
+            logger.error("login failed. because username or password is invalid. username:{}, requestPassword:{}", request.getUsername(), request.getPassword());
+            throw new BizException(ErrorCode.MEMBER_PASSWORD_INCORRECT);
         }
 
         String token =jwtTokenUtil.generateToken(new User(user.getName(), user.getPassword(), new ArrayList<>()));
