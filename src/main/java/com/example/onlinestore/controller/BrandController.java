@@ -24,7 +24,7 @@ public class BrandController {
         options.setPageNum(pageNum);
         options.setPageSize(pageSize);
         options.setVisible(visible);
-        Page<Brand> brands = brandService.listBrands(null);
+        Page<Brand> brands = brandService.listBrands(options);
         return Response.success(brands);
     }
 
