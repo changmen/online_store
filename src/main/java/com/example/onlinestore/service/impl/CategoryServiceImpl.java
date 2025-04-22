@@ -80,6 +80,31 @@ public class CategoryServiceImpl implements CategoryService, InitializingBean, D
         return List.of();
     }
 
+    @Override
+    public String getCategoryPath(Long categoryId) {
+        if (categoryId == null) {
+            return "";
+        }
+        StringBuilder path = new StringBuilder();
+        
+        return buildPath(categoryId, path);
+    }
+
+    private String buildPath(Long categoryId, StringBuilder path) {
+        Category category = categoryMap.get(categoryId);
+        if (category == null) {
+            return path.toString();
+        }
+
+        if (category.getParentId() != null) {
+            buildPath(category.getParentId(), path);
+            path.append("->");
+        }
+
+        path.append(categoryId);
+        return path.toString();
+    }
+
     private void loadCategory() {
         LOGGER.info("Start to load category.");
         synchronized (LOAD_LOCKER) {

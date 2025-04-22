@@ -17,7 +17,10 @@ import java.io.Serializable;
 public class CartItemResponse implements Serializable {
     @Serial
     private static final long serialVersionUID = 1248301417057065756L;
-
+    /**
+     * 购物车商品ID。
+     */
+    private Long id;
     /**
      * 商品信息响应对象。
      */

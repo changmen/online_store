@@ -27,6 +27,7 @@
         <pagehelper.version>2.1.0</pagehelper.version>
         <mybatis.version>3.0.3</mybatis.version>
         <aliyun.oss.version>3.18.1</aliyun.oss.version>
+        <fastjson.version>1.2.60</fastjson.version>
         <mockito.version>5.17.0</mockito.version>
     </properties>
 
@@ -186,7 +187,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
-        
+
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -218,6 +219,12 @@
             <groupId>com.aliyun.oss</groupId>
             <artifactId>aliyun-sdk-oss</artifactId>
             <version>${aliyun.oss.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>${fastjson.version}</version>
         </dependency>
 
         <dependency>

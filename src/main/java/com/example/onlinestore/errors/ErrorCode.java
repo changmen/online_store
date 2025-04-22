@@ -25,7 +25,7 @@ public enum ErrorCode {
     SKU_CODE_EXISTS("ErrorCode.Sku.Code.Exists", "商品编码:{0}已存在"),
     SKU_NOT_FOUND("ErrorCode.Sku.NotFound", "商品SKU不存在"),
     SKU_STOCK_INSUFFICIENT("ErrorCode.Sku.Stock.Insufficient", "商品库存不足"),
-    CART_ITEM_NOT_FOUND("ErrorCode.Cart.Item.NotFound", "购物车项不存在"),
+    CART_ITEM_NOT_FOUND("ErrorCode.Cart.Item.NotFound", "购物车商品:{0}不存在"),
     ATTRIBUTE_IS_REFERENCE_BY_ITEM("ErrorCode.Attribute.Is.Reference.By.Item", "属性:{0}已被商品引用，不能删除"),
     SKU_WARNING_QUANTITY_EXCEEDS_STOCK_QUANTITY("ErrorCode.SKU.Warning.Quantity.Exceeds.Stock.Quantity", "SKU预警库存数量不能超过库存数量"),
     ATTRIBUTE_TYPE_NOT_SKU("ErrorCode.Attribute.Type.Not.SKU", "属性:{0}类型不是SKU类型"),
