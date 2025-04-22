@@ -48,5 +48,6 @@ public interface ItemMapper {
      * @return 查询到的项目实体列表
      */
     List<ItemEntity> queryItemsByOptions(@Param("options") ItemListQueryRequest options);
+
 }
 

@@ -73,5 +73,4 @@ public class CreateItemRequest implements Serializable {
     @Min(value = 1, message = "sortScore的值只能为正整数")
     private Integer sortScore;
 
-
 }

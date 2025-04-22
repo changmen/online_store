@@ -21,7 +21,7 @@
         `id`, `item_id`, `sku_code`, `name`, `description`, `price`, `default_sku`, `stock_quantity`, `sold_quantity`, `warning_quantity`, `image`,`created_at`, `updated_at`
     </sql>
 
-    <insert id="insert" parameterType="com.example.onlinestore.entity.SkuEntity">
+    <insert id="insert" useGeneratedKeys="true" parameterType="com.example.onlinestore.entity.SkuEntity">
         INSERT INTO `sku` (
             `item_id`, `sku_code`, `name`, `description`, `price`, `default_sku`,`stock_quantity`, `sold_quantity`, `warning_quantity`, `image`,`created_at`, `updated_at`
         )
@@ -30,7 +30,7 @@
         )
     </insert>
 
-    <insert id="batchInsert" parameterType="java.util.List">
+    <insert id="batchInsert" useGeneratedKeys="true" parameterType="java.util.List">
         INSERT INTO `sku` (
             `item_id`, `sku_code`, `name`, `description`, `price`, `default_sku`, `stock_quantity`, `sold_quantity`, `warning_quantity`, `image`,`created_at`, `updated_at`
         )
@@ -55,7 +55,7 @@
             <if test="soldQuantity != null">`sold_quantity` = #{soldQuantity},</if>
             <if test="warningQuantity != null">`warning_quantity` = #{warningQuantity},</if>
             <if test="image != null">`image` = #{image},</if>
-            <if test="updatedAt != null">`updated_at` = #{updatedAt}</if>
+            <if test="updatedAt != null">`updated_at` = #{updatedAt},</if>
         </set>
         WHERE `id` = #{id}
     </update>
@@ -95,6 +95,13 @@
     <update id="updateSoldQuantity">
         UPDATE `sku`
         SET `sold_quantity` = `sold_quantity` + #{quantity},
+            `updated_at` = NOW()
+        WHERE `id` = #{id}
+    </update>
+
+    <update id="updateStockQuantity">
+        UPDATE `sku`
+        SET `stock_quantity` =  #{stockQuantity},
             `updated_at` = NOW()
         WHERE `id` = #{id}
     </update>

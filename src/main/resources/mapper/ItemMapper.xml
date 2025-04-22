@@ -51,4 +51,23 @@
         WHERE id = #{id}
     </update>
 
+    <select id="queryItemsByOptions" parameterType="com.example.onlinestore.dto.ItemListQueryRequest" resultMap="itemResultMap">
+        SELECT
+        <include refid="Base_Column"/>
+        FROM `item`
+        WHERE
+        1=1
+        <if test="options != null and options.name != null">
+            AND `name` = #{options.name}
+        </if>
+        <if test="options != null and options.categoryId != null">
+            AND `category_id` = #{options.categoryId}
+        </if>
+        <if test="options != null and options.brandId != null">
+            AND `brand_id` = #{options.brandId}
+        </if>
+        <if test="options != null and options.nameLike != null">
+            AND `name` LIKE '%${options.nameLike}%'
+        </if>
+    </select>
 </mapper>

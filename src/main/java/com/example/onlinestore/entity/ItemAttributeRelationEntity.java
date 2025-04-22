@@ -28,6 +28,11 @@ public class ItemAttributeRelationEntity implements Serializable {
     private Long itemId;
 
     /**
+     * 关联SKU ID，对应sku表的主键
+     */
+    private Long skuId;
+
+    /**
      * 商品属性类型ID，对应attribute表的主键
      */
     private Long attributeId;
