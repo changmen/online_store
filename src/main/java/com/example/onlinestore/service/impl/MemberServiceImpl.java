@@ -246,7 +246,7 @@ public class MemberServiceImpl implements MemberService {
         AddressEntity address = addressMapper.findDefaultByMemberId(memberId);
         if (address == null) {
             logger.error("get default address failed. because address not found. memberId:{}", memberId);
-            throw new BizException(ErrorCode.ADDRESS_NOT_FOUND, memberId);
+            throw new BizException(ErrorCode.MEMBER_DEFAULT_ADDRESS_NOT_FOUND, memberId);
         }
         return convertToAddress(address);
     }
