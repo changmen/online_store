@@ -2,14 +2,20 @@ package com.example.onlinestore.service;
 
 import com.example.onlinestore.bean.Address;
 import com.example.onlinestore.bean.Member;
+import com.example.onlinestore.bean.PointRecord;
+import com.example.onlinestore.bean.PointRule;
 import com.example.onlinestore.dto.AddressRequest;
 import com.example.onlinestore.dto.LoginRequest;
 import com.example.onlinestore.dto.LoginResponse;
 import com.example.onlinestore.dto.MemberRegistryRequest;
+import com.example.onlinestore.enums.PointRuleStatus;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface MemberService {
@@ -125,5 +131,69 @@ public interface MemberService {
      * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者查询DB失败的时候
      */
     Address getAddressById(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long id);
+
+    //会员积分
+    /**
+     * 创建积分规则
+     *
+     * @param name        规则名称
+     * @param description 规则描述
+     * @param points      积分数量
+     * @return 创建的积分规则
+     * @throws com.example.onlinestore.exceptions.BizException 当操作DB失败的时候，抛出该异常
+     */
+    PointRule createRule(@NotNull @Size(max = 64, message = "规则名称长度不能超过64个字符") String name,
+                         @NotNull @Size(max = 128, message = "规则描述长度不能超过128个字符") String description,
+                         @NotNull @DecimalMin(value = "1", message = "积分数量必须大于0") BigDecimal points);
+
+    /**
+     * 更新积分规则状态
+     *
+     * @param ruleId 规则ID
+     * @param status 新状态
+     */
+    void updateRuleStatus(@NotNull @Min(value = 1, message = "规则ID必须大于0") Long ruleId, @NotNull PointRuleStatus status);
+
+    /**
+     * 获取会员积分余额
+     *
+     * @param memberId 会员ID
+     * @return 积分余额
+     */
+    BigDecimal getMemberPointBalance(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId);
+
+    /**
+     * 获取会员积分记录
+     *
+     * @param memberId 会员ID
+     * @return 积分记录列表
+     */
+    List<PointRecord> getMemberPointRecords(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId);
+
+    /**
+     * 增加积分
+     *
+     * @param memberId    会员ID
+     * @param orderId     订单ID
+     * @param points      积分数量
+     * @param description 描述
+     */
+    void earnPoints(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId,
+                    @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
+                    @NotNull @DecimalMin(value = "1", message = "积分数量必须大于0") BigDecimal points,
+                    @NotNull @Size(max = 128, message = "描述长度不能超过128个字符") String description);
+
+    /**
+     * 消费积分
+     *
+     * @param memberId    会员ID
+     * @param orderId     订单ID
+     * @param points      积分数量
+     * @param description 描述
+     */
+    void consumePoints(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId,
+                       @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
+                       @NotNull @DecimalMin(value = "1", message = "积分数量必须大于0") BigDecimal points,
+                       @NotNull @Size(max = 128, message = "描述长度不能超过128个字符") String description);
 
 }

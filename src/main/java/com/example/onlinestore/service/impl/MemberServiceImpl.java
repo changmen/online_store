@@ -2,26 +2,35 @@ package com.example.onlinestore.service.impl;
 
 import com.example.onlinestore.bean.Address;
 import com.example.onlinestore.bean.Member;
+import com.example.onlinestore.bean.PointRecord;
+import com.example.onlinestore.bean.PointRule;
 import com.example.onlinestore.dto.AddressRequest;
 import com.example.onlinestore.dto.LoginRequest;
 import com.example.onlinestore.dto.LoginResponse;
 import com.example.onlinestore.dto.MemberRegistryRequest;
 import com.example.onlinestore.entity.AddressEntity;
 import com.example.onlinestore.entity.MemberEntity;
+import com.example.onlinestore.entity.PointRecordEntity;
+import com.example.onlinestore.entity.PointRuleEntity;
+import com.example.onlinestore.enums.PointRecordType;
+import com.example.onlinestore.enums.PointRuleStatus;
 import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.AddressMapper;
 import com.example.onlinestore.mapper.MemberMapper;
+import com.example.onlinestore.mapper.PointRecordMapper;
+import com.example.onlinestore.mapper.PointRuleMapper;
 import com.example.onlinestore.security.JwtTokenUtil;
 import com.example.onlinestore.service.MemberService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,6 +39,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,9 +55,6 @@ public class MemberServiceImpl implements MemberService {
     private MemberMapper memberMapper;
 
     @Autowired
-    private MessageSource messageSource;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -55,6 +62,12 @@ public class MemberServiceImpl implements MemberService {
 
     @Autowired
     private AddressMapper addressMapper;
+
+    @Autowired
+    private PointRuleMapper pointRuleMapper;
+
+    @Autowired
+    private PointRecordMapper pointRecordMapper;
 
     @Override
     @Transactional
@@ -274,5 +287,119 @@ public class MemberServiceImpl implements MemberService {
         address.setDetailAddress(addressEntity.getDetailAddress());
         address.setIsDefault(addressEntity.getIsDefault());
         return address;
+    }
+
+    @Override
+    @Transactional
+    public PointRule createRule(@NotNull @Size(max = 64, message = "规则名称长度不能超过64个字符") String name,
+                                @NotNull @Size(max = 128, message = "规则描述长度不能超过128个字符") String description,
+                                @NotNull @DecimalMin(value = "1", message = "积分数量必须大于0") BigDecimal points) {
+        PointRuleEntity entity = new PointRuleEntity();
+        entity.setName(name);
+        entity.setDescription(description);
+        entity.setPoints(points);
+        entity.setStatus(PointRuleStatus.ENABLE.name());
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
+
+        int effectRows = pointRuleMapper.insert(entity);
+        if (effectRows != 1) {
+            logger.error("Failed to create point rule. Effect rows: {}", effectRows);
+            throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+        return convertToPointRule(entity);
+    }
+
+    @Override
+    @Transactional
+    public void updateRuleStatus(@NotNull @Min(value = 1, message = "规则ID必须大于0") Long ruleId, @NotNull PointRuleStatus status) {
+        PointRuleEntity ruleEntity = pointRuleMapper.findById(ruleId);
+        if (ruleEntity == null) {
+            logger.error("Point rule not found. Rule ID: {}", ruleId);
+            throw new BizException(ErrorCode.POINT_RULE_NOT_FOUND, ruleId);
+        }
+        pointRuleMapper.updateStatus(ruleId, status.ordinal());
+    }
+
+    @Override
+    public BigDecimal getMemberPointBalance(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId) {
+        return pointRecordMapper.getMemberPointBalance(memberId);
+    }
+
+    @Override
+    public List<PointRecord> getMemberPointRecords(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId) {
+        List<PointRecordEntity> entities = pointRecordMapper.findByMemberId(memberId);
+        return entities.stream()
+                .map(this::convertToPointRecord)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void earnPoints(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId,
+                           @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
+                           @NotNull @DecimalMin(value = "1", message = "积分数量必须大于0") BigDecimal points,
+                           @NotNull @Size(max = 128, message = "描述长度不能超过128个字符") String description) {
+        PointRecordEntity entity = new PointRecordEntity();
+        entity.setMemberId(memberId);
+        entity.setOrderId(orderId);
+        entity.setPoints(points);
+        entity.setType(PointRecordType.EARN.name());
+        entity.setDescription(description);
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
+
+        pointRecordMapper.insert(entity);
+    }
+
+    @Override
+    @Transactional
+    public void consumePoints(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId,
+                              @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
+                              @NotNull @DecimalMin(value = "1", message = "积分数量必须大于0") BigDecimal points,
+                              @NotNull @Size(max = 128, message = "描述长度不能超过128个字符") String description) {
+        // 检查积分余额是否足够
+        BigDecimal balance = getMemberPointBalance(memberId);
+        if (balance.compareTo(points) < 0) {
+            throw new RuntimeException("Insufficient points balance");
+        }
+
+        PointRecordEntity entity = new PointRecordEntity();
+        entity.setMemberId(memberId);
+        entity.setOrderId(orderId);
+        entity.setPoints(points);
+        entity.setType(PointRecordType.CONSUME.name());
+        entity.setDescription(description);
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
+
+        pointRecordMapper.insert(entity);
+    }
+
+    private PointRule convertToPointRule(PointRuleEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        PointRule pointRule = new PointRule();
+        pointRule.setId(entity.getId());
+        pointRule.setName(entity.getName());
+        pointRule.setDescription(entity.getDescription());
+        pointRule.setPoints(entity.getPoints());
+        pointRule.setStatus(PointRuleStatus.valueOf(entity.getStatus()));
+        return pointRule;
+    }
+
+    private PointRecord convertToPointRecord(PointRecordEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        PointRecord record = new PointRecord();
+        record.setId(entity.getId());
+        record.setMemberId(entity.getMemberId());
+        record.setOrderId(entity.getOrderId());
+        record.setPoints(entity.getPoints());
+        record.setType(PointRecordType.valueOf(entity.getType()));
+        record.setDescription(entity.getDescription());
+        return record;
     }
 }
