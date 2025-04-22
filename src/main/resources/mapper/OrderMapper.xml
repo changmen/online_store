@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.OrderMapper">
+    <resultMap id="orderResultMap" type="com.example.onlinestore.entity.OrderEntity">
+        <id property="id" column="id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="memberId" column="member_id"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="actualAmount" column="actual_amount"/>
+        <result property="discountAmount" column="discount_amount"/>
+        <result property="shippingFee" column="shipping_fee"/>
+        <result property="addressId" column="address_id"/>
+        <result property="status" column="status" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="paymentMethod" column="payment_method" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="paymentTime" column="payment_time"/>
+        <result property="shippingTime" column="shipping_time"/>
+        <result property="completionTime" column="completion_time"/>
+        <result property="cancelTime" column="cancel_time"/>
+        <result property="cancelReason" column="cancel_reason"/>
+        <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="orderColumns">
+        id, order_no, member_id, total_amount, actual_amount, discount_amount, shipping_fee,
+        address_id, status, payment_method, payment_time, shipping_time, completion_time,
+        cancel_time, cancel_reason, remark, created_at, updated_at
+    </sql>
+
+    <select id="findById" resultMap="orderResultMap">
+        SELECT <include refid="orderColumns"/>
+        FROM `order` WHERE id = #{id}
+    </select>
+
+    <select id="findByOrderNo" resultMap="orderResultMap">
+        SELECT <include refid="orderColumns"/>
+        FROM `order` WHERE order_no = #{orderNo}
+    </select>
+
+    <select id="findByMemberId" resultMap="orderResultMap">
+        SELECT <include refid="orderColumns"/>
+        FROM `order` WHERE member_id = #{memberId}
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.example.onlinestore.entity.OrderEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `order` (
+            order_no, member_id, total_amount, actual_amount, discount_amount, shipping_fee,
+            address_id, status, payment_method, payment_time, shipping_time, completion_time,
+            cancel_time, cancel_reason, remark, created_at, updated_at
+        ) VALUES (
+            #{orderNo}, #{memberId}, #{totalAmount}, #{actualAmount}, #{discountAmount}, #{shippingFee},
+            #{addressId}, #{status}, #{paymentMethod}, #{paymentTime}, #{shippingTime}, #{completionTime},
+            #{cancelTime}, #{cancelReason}, #{remark}, #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.example.onlinestore.entity.OrderEntity">
+        UPDATE `order` SET
+            total_amount = #{totalAmount},
+            actual_amount = #{actualAmount},
+            discount_amount = #{discountAmount},
+            shipping_fee = #{shippingFee},
+            address_id = #{addressId},
+            status = #{status},
+            payment_method = #{paymentMethod},
+            payment_time = #{paymentTime},
+            shipping_time = #{shippingTime},
+            completion_time = #{completionTime},
+            cancel_time = #{cancelTime},
+            cancel_reason = #{cancelReason},
+            remark = #{remark},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE `order` SET
+            status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="findByIdAndMemberId" resultMap="orderResultMap">
+        SELECT <include refid="orderColumns"/>
+        FROM `order` WHERE id = #{id} AND member_id = #{memberId}
+    </select>
+</mapper> 
