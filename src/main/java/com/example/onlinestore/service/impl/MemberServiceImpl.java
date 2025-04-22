@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 @Service
-public class MemberServiceImpl implements MemberService{
+public class MemberServiceImpl implements MemberService {
 
     private static final Logger logger = LoggerFactory.getLogger(MemberServiceImpl.class);
 
@@ -54,7 +54,7 @@ public class MemberServiceImpl implements MemberService{
             throw new BizException(ErrorCode.MEMBER_PASSWORD_INCORRECT);
         }
 
-        String token =jwtTokenUtil.generateToken(new User(user.getName(), user.getPassword(), new ArrayList<>()));
+        String token = jwtTokenUtil.generateToken(new User(user.getName(), user.getPassword(), new ArrayList<>()));
         return new LoginResponse(token);
     }
 
@@ -110,13 +110,17 @@ public class MemberServiceImpl implements MemberService{
         if (!(authentication instanceof AnonymousAuthenticationToken)) {
             String currentUserName = authentication.getName();
             if (StringUtils.isBlank(currentUserName)) {
-                return null;
+                throw new BizException(ErrorCode.MEMBER_NOT_LOGIN);
             }
 
-            return getMemberByName(currentUserName);
+            Member member = getMemberByName(currentUserName);
+            if (member == null) {
+                throw new BizException(ErrorCode.MEMBER_NOT_LOGIN);
+            }
+            return member;
         }
 
-        return null;
+        throw new BizException(ErrorCode.MEMBER_NOT_LOGIN);
 
     }
 }
