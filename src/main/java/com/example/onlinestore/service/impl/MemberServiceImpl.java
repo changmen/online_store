@@ -205,7 +205,7 @@ public class MemberServiceImpl implements MemberService {
         }
 
         int effectRow = addressMapper.update(address);
-        if (effectRow != 1) {
+        if (effectRow < 1) {
             logger.error("update address failed. because effect rows is 0. addressId:{}", id);
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
@@ -318,7 +318,7 @@ public class MemberServiceImpl implements MemberService {
             logger.error("Point rule not found. Rule ID: {}", ruleId);
             throw new BizException(ErrorCode.POINT_RULE_NOT_FOUND, ruleId);
         }
-        pointRuleMapper.updateStatus(ruleId, status.ordinal());
+        pointRuleMapper.updateStatus(ruleId, status.name());
     }
 
     @Override

@@ -45,6 +45,6 @@ public interface PointRuleMapper {
      * @param status 新状态值（如0-停用，1-启用）
      * @return 受影响的行数（1表示更新成功，0表示未找到对应记录）
      */
-    int updateStatus(Long id, Integer status);
+    int updateStatus(Long id, String status);
 
 } 

@@ -6,6 +6,9 @@ import com.example.onlinestore.bean.PointRule;
 import com.example.onlinestore.dto.Response;
 import com.example.onlinestore.enums.PointRuleStatus;
 import com.example.onlinestore.service.MemberService;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,17 +24,17 @@ public class PointController {
 
     @PostMapping("/rules")
     public Response<PointRule> createRule(
-            @RequestParam String name,
-            @RequestParam String description,
-            @RequestParam BigDecimal points) {
+            @RequestParam @NotNull(message = "规则名称不能为空") String name,
+            @RequestParam @NotNull(message = "规则描述不能为空") String description,
+            @RequestParam @NotNull(message = "积分数量不能为空") @DecimalMin(value = "1", message = "积分数量必须大于0") BigDecimal points) {
         PointRule rule = memberService.createRule(name, description, points);
         return Response.success(rule);
     }
 
     @PutMapping("/rules/{ruleId}/status")
     public Response<Void> updateRuleStatus(
-            @PathVariable Long ruleId,
-            @RequestParam PointRuleStatus status) {
+            @PathVariable @NotNull @Min(value = 1, message = "规则ID必须大于0") Long ruleId,
+            @RequestParam @NotNull PointRuleStatus status) {
         memberService.updateRuleStatus(ruleId, status);
         return Response.success();
     }
@@ -52,9 +55,9 @@ public class PointController {
 
     @PostMapping("/earn")
     public Response<Void> earnPoints(
-            @RequestParam Long orderId,
-            @RequestParam BigDecimal points,
-            @RequestParam String description) {
+            @RequestParam @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
+            @RequestParam @NotNull @DecimalMin(value = "1", message = "积分值要大于0") BigDecimal points,
+            @RequestParam @NotNull String description) {
         Member member = memberService.getLoginMember();
         memberService.earnPoints(member.getId(), orderId, points, description);
         return Response.success();
@@ -62,9 +65,9 @@ public class PointController {
 
     @PostMapping("/consume")
     public Response<Void> consumePoints(
-            @RequestParam Long orderId,
-            @RequestParam BigDecimal points,
-            @RequestParam String description) {
+            @RequestParam @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
+            @RequestParam @NotNull @DecimalMin(value = "1", message = "积分值要大于0") BigDecimal points,
+            @RequestParam @NotNull String description) {
         Member member = memberService.getLoginMember();
         memberService.consumePoints(member.getId(), orderId, points, description);
         return Response.success();

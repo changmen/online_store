@@ -41,9 +41,9 @@ public class AddressController {
 
     @DeleteMapping("/{id}")
     public Response<Void> deleteAddress(
-            @PathVariable Long id,
-            @RequestParam Long memberId) {
-        memberService.deleteAddress(id, memberId);
+            @PathVariable Long id) {
+        Member member = memberService.getLoginMember();
+        memberService.deleteAddress(id, member.getId());
         return Response.success();
     }
 

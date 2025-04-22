@@ -54,7 +54,7 @@ public interface OrderService {
      * @param reason 取消原因
      * @throws com.example.onlinestore.exceptions.BizException, 当订单不存在或者查询DB失败，则抛出该异常
      */
-    void cancelOrder(@NotNull @Min(value = 1, message = "订单ID要大于0") Long id, @NotNull@Min(value = 1, message = "会员ID要大于0") Long memberId, String reason);
+    void cancelOrder(@NotNull @Min(value = 1, message = "订单ID要大于0") Long id, @NotNull @Min(value = 1, message = "会员ID要大于0") Long memberId, String reason);
 
     /**
      * 支付订单

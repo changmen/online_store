@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -83,8 +84,8 @@ public class OrderServiceImpl implements OrderService {
         for (OrderItemRequest item : request.getItems()) {
             totalAmount = totalAmount.add(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
-        order.setTotalAmount(totalAmount);
-        order.setActualAmount(totalAmount); // 暂时没有优惠和运费
+        order.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
+        order.setActualAmount(totalAmount.setScale(2, RoundingMode.HALF_UP)); // 暂时没有优惠和运费
 
         // 保存订单
         int effectRows = orderMapper.insert(order);
