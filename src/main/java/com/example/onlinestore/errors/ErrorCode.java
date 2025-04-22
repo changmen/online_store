@@ -31,7 +31,17 @@ public enum ErrorCode {
     ATTRIBUTE_TYPE_NOT_SKU("ErrorCode.Attribute.Type.Not.SKU", "属性:{0}类型不是SKU类型"),
     SKU_ATTRIBUTE_INPUT_TYPE_INVALID("ErrorCode.SKU.Attribute.Input.Type.Invalid", "SKU属性:{0}输入类型只能是单选或多选"),
     SKU_ATTRIBUTE_VALUE_EMPTY("ErrorCode.SKU.Attribute.Value.Empty", "SKU属性值:{0}不能为空"),
+    ORDER_NOT_FOUND("ErrorCode.Order.NotFound", "订单:{0}不存在"),
+    ORDER_CANNOT_CANCEL("ErrorCode.Order.Cannot.Cancel", "订单不能取消"),
+    ORDER_CANNOT_PAY("ErrorCode.Order.Cannot.Pay", "订单不能支付"),
+    ORDER_CANNOT_REFUND("ErrorCode.Order.Cannot.Refund", "订单不能退款"),
+    PAYMENT_NOT_FOUND("ErrorCode.Payment.NotFound", "支付记录不存在"),
+    ADDRESS_NOT_FOUND("ErrorCode.Address.NotFound", "地址:{0}不存在"),
+    POINT_RULE_NOT_FOUND("ErrorCode.Point.Rule.NotFound", "积分规则:{}不存在"),
+    POINT_RECORD_NOT_FOUND("ErrorCode.Point.Record.NotFound", "积分记录:{0}不存在"),
+    SKU_OUT_OF_STOCK("ErrorCode.Sku.Out.Of.Stock", "商品:{0}库存不足"),
     ;
+
     ErrorCode(String code, String defaultMessage) {
         this.code = code;
         this.defaultMessage = defaultMessage;

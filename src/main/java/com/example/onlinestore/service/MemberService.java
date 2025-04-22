@@ -1,11 +1,16 @@
 package com.example.onlinestore.service;
 
+import com.example.onlinestore.bean.Address;
 import com.example.onlinestore.bean.Member;
+import com.example.onlinestore.dto.AddressRequest;
 import com.example.onlinestore.dto.LoginRequest;
 import com.example.onlinestore.dto.LoginResponse;
 import com.example.onlinestore.dto.MemberRegistryRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
+import java.util.List;
 
 public interface MemberService {
     /**
@@ -55,5 +60,70 @@ public interface MemberService {
      * @throws com.example.onlinestore.exceptions.BizException 如果未登录，抛出异常
      */
     Member getLoginMember();
+
+    // Address接口
+    /**
+     * 添加收货地址
+     *
+     * @param request 收货地址请求
+     * @return 添加后的收货地址
+     * @throws com.example.onlinestore.exceptions.BizException 或者操作DB失败的时候
+     */
+    Address addAddress(@NotNull @Valid AddressRequest request);
+
+    /**
+     * 更新收货地址
+     *
+     * @param id      地址ID
+     * @param request 收货地址请求
+     * @return 更新后的收货地址
+     * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者操作DB失败的时候
+     */
+    Address updateAddress(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long id, @NotNull @Valid AddressRequest request);
+
+    /**
+     * 删除收货地址
+     *
+     * @param id       收货地址ID
+     * @param memberId 会员ID
+     * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者操作DB失败的时候
+     */
+    void deleteAddress(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long id, @NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId);
+
+    /**
+     * 获取会员的所有收货地址
+     *
+     * @param memberId 会员ID
+     * @return 收货地址列表
+     * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者操作DB失败的时候
+     */
+    List<Address> getAddressesByMemberId(@NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId);
+
+    /**
+     * 获取会员的默认收货地址
+     *
+     * @param memberId 会员ID
+     * @return 默认收货地址
+     * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者操作DB失败的时候
+     */
+    Address getDefaultAddress(@NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId);
+
+    /**
+     * 设置默认收货地址
+     *
+     * @param addressId 收货地址ID
+     * @param memberId  会员ID
+     * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者操作DB失败的时候
+     */
+    void setDefaultAddress(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long addressId, @NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId);
+
+    /**
+     * 根据ID获取收货地址
+     *
+     * @param id 收货地址ID
+     * @return 收货地址
+     * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者查询DB失败的时候
+     */
+    Address getAddressById(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long id);
 
 }
