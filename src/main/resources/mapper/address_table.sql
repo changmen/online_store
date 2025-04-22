@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS `address` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '地址唯一标识ID',
+    `member_id` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '所属会员ID',
+    `receiver_name` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '收件人姓名',
+    `receiver_phone` VARCHAR(20) NOT NULL DEFAULT '' COMMENT '收件人联系电话',
+    `province` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '省份',
+    `city` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '城市',
+    `district` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '区/县',
+    `detail_address` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '详细地址',
+    `is_default` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否默认地址（0-否，1-是）',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
+    PRIMARY KEY (`id`),
+    INDEX `idx_member_id` (`member_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会员地址表'; 
