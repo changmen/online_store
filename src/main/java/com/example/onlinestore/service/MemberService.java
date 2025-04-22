@@ -51,7 +51,8 @@ public interface MemberService {
     /**
      * 获取当前登录用户
      *
-     * @return 当前登录用户，如果用户未登录，则返回null
+     * @return 当前登录用户
+     * @throws com.example.onlinestore.exceptions.BizException 如果未登录，抛出异常
      */
     Member getLoginMember();
 

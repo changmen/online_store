@@ -9,6 +9,7 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR("ErrorCode.Internal.Error", "系统内部错误"),
     MEMBER_NOT_FOUND("ErrorCode.Member.NotFound", "会员:{0}不存在"),
     MEMBER_EXISTED("ErrorCode.Member.Existed", "会员:{0}已存在"),
+    MEMBER_NOT_LOGIN("ErrorCode.Member.Not.Login", "会员未登录"),
     ITEM_NOT_FOUND("ErrorCode.Item.NotFound", "商品不存在"),
     BRAND_NOT_FOUND("ErrorCode.Brand.NotFound", "品牌不存在"),
     BRAND_NAME_DUPLICATED("ErrorCode.Brand.Name.Duplicated", "品牌名称:{0}已存在"),
