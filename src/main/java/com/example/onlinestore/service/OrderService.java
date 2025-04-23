@@ -18,7 +18,7 @@ public interface OrderService {
      * @return 订单
      * @throws com.example.onlinestore.exceptions.BizException, 当订单创建的时候校验失败，如SKU不存在，库存不足，或者操作DB失败，则抛出该异常
      */
-    Order createOrder(@Valid OrderRequest request);
+    Order createOrder(@NotNull @Valid OrderRequest request);
 
     /**
      * 根据订单ID获取订单

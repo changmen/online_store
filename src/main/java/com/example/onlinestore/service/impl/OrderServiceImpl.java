@@ -60,7 +60,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Order createOrder(@Valid OrderRequest request) {
+    public Order createOrder(@NotNull @Valid OrderRequest request) {
         //校验订单里的商品
         request.getItems().forEach(item -> {
             skuService.getSkuById(item.getSkuId());
@@ -153,9 +153,10 @@ public class OrderServiceImpl implements OrderService {
             throw new BizException(ErrorCode.ORDER_NOT_FOUND, id);
         }
 
-        if (!StringUtils.equals(order.getStatus(), OrderStatus.PENDING_PAYMENT.name())) {
+        if (OrderStatus.PENDING_PAYMENT != OrderStatus.valueOf(order.getStatus())) {
             throw new BizException(ErrorCode.ORDER_CANNOT_CANCEL);
         }
+
         order.setStatus(OrderStatus.CANCELLED.name());
         order.setCancelReason(reason);
         order.setCancelTime(LocalDateTime.now());
@@ -175,8 +176,7 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             throw new BizException(ErrorCode.ORDER_NOT_FOUND, request.getOrderId());
         }
-
-        if (!StringUtils.equals(order.getStatus(), OrderStatus.PENDING_PAYMENT.name())) {
+        if (OrderStatus.PENDING_PAYMENT != OrderStatus.valueOf(order.getStatus())) {
             throw new BizException(ErrorCode.ORDER_CANNOT_PAY);
         }
         // 创建支付记录
@@ -227,7 +227,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BizException(ErrorCode.ORDER_NOT_FOUND, request.getOrderId());
         }
 
-        if (!StringUtils.equals(order.getStatus(), OrderStatus.PAID.name())) {
+        if (OrderStatus.PAID != OrderStatus.valueOf(order.getStatus())) {
             throw new BizException(ErrorCode.ORDER_CANNOT_REFUND);
         }
 
