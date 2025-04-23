@@ -4,7 +4,7 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 @Getter
-public enum ErrorCode {
+public enum     ErrorCode {
     MEMBER_PASSWORD_INCORRECT("ErrorCode.Member.Password.Incorrect", "密码不正确"),
     INTERNAL_SERVER_ERROR("ErrorCode.Internal.Error", "系统内部错误"),
     MEMBER_NOT_FOUND("ErrorCode.Member.NotFound", "会员:{0}不存在"),
@@ -41,6 +41,7 @@ public enum ErrorCode {
     POINT_RULE_NOT_FOUND("ErrorCode.Point.Rule.NotFound", "积分规则:{0}不存在"),
     POINT_RECORD_NOT_FOUND("ErrorCode.Point.Record.NotFound", "积分记录:{0}不存在"),
     SKU_OUT_OF_STOCK("ErrorCode.Sku.Out.Of.Stock", "商品:{0}库存不足"),
+    POINT_BALANCE_INSUFFICIENT("ErrorCode.Point.Balance.Insufficient", "会员:{0}积分余额不足"),
     ;
 
     ErrorCode(String code, String defaultMessage) {

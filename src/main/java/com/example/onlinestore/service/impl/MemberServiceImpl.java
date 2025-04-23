@@ -318,7 +318,12 @@ public class MemberServiceImpl implements MemberService {
             logger.error("Point rule not found. Rule ID: {}", ruleId);
             throw new BizException(ErrorCode.POINT_RULE_NOT_FOUND, ruleId);
         }
-        pointRuleMapper.updateStatus(ruleId, status.name());
+        int effectRows = pointRuleMapper.updateStatus(ruleId, status.name());
+        if (effectRows != 1) {
+            logger.error("Failed to update point rule status. Effect rows: {}", effectRows);
+            throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+
     }
 
     @Override
@@ -349,7 +354,11 @@ public class MemberServiceImpl implements MemberService {
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
 
-        pointRecordMapper.insert(entity);
+        int effectRows = pointRecordMapper.insert(entity);
+        if (effectRows != 1) {
+            logger.error("Failed to earn points. Effect rows: {}", effectRows);
+            throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
@@ -361,7 +370,7 @@ public class MemberServiceImpl implements MemberService {
         // 检查积分余额是否足够
         BigDecimal balance = getMemberPointBalance(memberId);
         if (balance.compareTo(points) < 0) {
-            throw new RuntimeException("Insufficient points balance");
+            throw new BizException(ErrorCode.POINT_BALANCE_INSUFFICIENT, memberId);
         }
 
         PointRecordEntity entity = new PointRecordEntity();
@@ -373,7 +382,11 @@ public class MemberServiceImpl implements MemberService {
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
 
-        pointRecordMapper.insert(entity);
+       int effectRows = pointRecordMapper.insert(entity);
+        if (effectRows != 1) {
+            logger.error("Failed to consume points. Effect rows: {}", effectRows);
+            throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private PointRule convertToPointRule(PointRuleEntity entity) {

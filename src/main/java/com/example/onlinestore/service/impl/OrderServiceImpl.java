@@ -291,11 +291,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private String generatePaymentNo() {
-        return "P" + UUID.randomUUID().toString().replace("-", "").substring(0, 15);
+        return "P" + UUID.randomUUID().toString().replace("-", "").substring(0, 22);
     }
 
     private String generateRefundNo() {
-        return "R" + UUID.randomUUID().toString().replace("-", "").substring(0, 15);
+        return "R" + UUID.randomUUID().toString().replace("-", "").substring(0, 22);
     }
 
     private Order convertToOrder(OrderEntity entity) {
