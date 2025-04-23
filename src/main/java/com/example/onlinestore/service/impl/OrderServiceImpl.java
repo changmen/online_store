@@ -84,12 +84,13 @@ public class OrderServiceImpl implements OrderService {
         order.setRemark(request.getRemark());
 
         // 计算订单金额
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        for (OrderItemRequest item : request.getItems()) {
-            totalAmount = totalAmount.add(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
-        }
+        BigDecimal totalAmount = request.getItems().stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+
         order.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
-        order.setActualAmount(totalAmount.setScale(2, RoundingMode.HALF_UP)); // 暂时没有优惠和运费
+        order.setActualAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
 
         // 保存订单
         int effectRows = orderMapper.insert(order);
