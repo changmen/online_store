@@ -60,7 +60,7 @@ public class OrderRefundEntity implements Serializable {
     /**
      * 退款状态，参考{@link RefundStatus}
      */
-    private RefundStatus status;
+    private String status;
 
     /**
      * 退款时间，退款完成的时间
