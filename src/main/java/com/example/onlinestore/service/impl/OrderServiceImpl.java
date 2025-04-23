@@ -22,6 +22,8 @@ import com.example.onlinestore.mapper.OrderPaymentMapper;
 import com.example.onlinestore.mapper.OrderRefundMapper;
 import com.example.onlinestore.service.OrderService;
 import com.example.onlinestore.service.SkuService;
+import com.example.onlinestore.utils.OrderNoGenerator;
+import com.example.onlinestore.utils.TimestampOrderNoGenerator;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -42,6 +44,8 @@ import java.util.stream.Collectors;
 @Service
 public class OrderServiceImpl implements OrderService {
     private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
+
+    private final static OrderNoGenerator orderNoGenerator = new TimestampOrderNoGenerator();
 
     @Autowired
     private OrderMapper orderMapper;
@@ -71,7 +75,7 @@ public class OrderServiceImpl implements OrderService {
         });
         // 创建订单实体
         OrderEntity order = new OrderEntity();
-        order.setOrderNo(generateOrderNo());
+        order.setOrderNo(orderNoGenerator.generateOrderNo());
         order.setMemberId(request.getMemberId());
         order.setAddressId(request.getAddressId());
         order.setStatus(OrderStatus.PENDING_PAYMENT.name());
@@ -284,10 +288,6 @@ public class OrderServiceImpl implements OrderService {
             logger.error("Failed to update order status. Effect rows: {}", effectRows);
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private String generateOrderNo() {
-        return "O" + UUID.randomUUID().toString().replace("-", "").substring(0, 15);
     }
 
     private String generatePaymentNo() {
