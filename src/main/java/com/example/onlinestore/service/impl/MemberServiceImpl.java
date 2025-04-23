@@ -179,7 +179,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     @Transactional
-    public Address updateAddress(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long id, @NotNull @Valid AddressRequest request) {
+    public Address updateAddress(@NotNull @Min(value = 1, message = "地址ID必须大于0") Long id, @NotNull @Valid AddressRequest request) {
         AddressEntity address = addressMapper.findByIdAndMemberId(id, request.getMemberId());
         if (address == null) {
             logger.error("update address failed. because address not found. addressId:{}", id);
@@ -214,7 +214,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     @Transactional
-    public void deleteAddress(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long id, @NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId) {
+    public void deleteAddress(@NotNull @Min(value = 1, message = "地址ID必须大于0") Long id, @NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId) {
         AddressEntity address = addressMapper.findByIdAndMemberId(id, memberId);
         if (address == null) {
             logger.error("delete address failed. because address not found. addressId:{}", id);
@@ -233,16 +233,13 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public List<Address> getAddressesByMemberId(@NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId) {
+    public List<Address> getAddressesByMemberId(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId) {
         List<AddressEntity> addresses = addressMapper.findByMemberId(memberId);
-        if (addresses.isEmpty()) {
-            return Collections.emptyList();
-        }
         return addresses.stream().map(this::convertToAddress).collect(Collectors.toList());
     }
 
     @Override
-    public Address getDefaultAddress(@NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId) {
+    public Address getDefaultAddress(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId) {
         AddressEntity address = addressMapper.findDefaultByMemberId(memberId);
         if (address == null) {
             logger.error("get default address failed. because address not found. memberId:{}", memberId);
@@ -253,7 +250,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     @Transactional
-    public void setDefaultAddress(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long addressId, @NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId) {
+    public void setDefaultAddress(@NotNull @Min(value = 1, message = "地址ID必须大于0") Long addressId, @NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId) {
         AddressEntity address = addressMapper.findByIdAndMemberId(addressId, memberId);
         if (address == null) {
             logger.error("set default address failed. because address not found. addressId:{}, memberId:{}", addressId, memberId);
@@ -263,7 +260,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public Address getAddressById(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long id) {
+    public Address getAddressById(@NotNull @Min(value = 1, message = "地址ID必须大于0") Long id) {
         AddressEntity address = addressMapper.findById(id);
         if (address == null) {
             logger.error("get address failed. because address not found. addressId:{}", id);

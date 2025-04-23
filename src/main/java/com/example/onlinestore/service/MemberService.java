@@ -85,7 +85,7 @@ public interface MemberService {
      * @return 更新后的收货地址
      * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者操作DB失败的时候
      */
-    Address updateAddress(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long id, @NotNull @Valid AddressRequest request);
+    Address updateAddress(@NotNull @Min(value = 1, message = "地址ID必须大于0") Long id, @NotNull @Valid AddressRequest request);
 
     /**
      * 删除收货地址
@@ -94,7 +94,7 @@ public interface MemberService {
      * @param memberId 会员ID
      * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者操作DB失败的时候
      */
-    void deleteAddress(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long id, @NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId);
+    void deleteAddress(@NotNull @Min(value = 1, message = "地址ID必须大于0") Long id, @NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId);
 
     /**
      * 获取会员的所有收货地址
@@ -103,7 +103,7 @@ public interface MemberService {
      * @return 收货地址列表
      * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者操作DB失败的时候
      */
-    List<Address> getAddressesByMemberId(@NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId);
+    List<Address> getAddressesByMemberId(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId);
 
     /**
      * 获取会员的默认收货地址
@@ -112,7 +112,7 @@ public interface MemberService {
      * @return 默认收货地址
      * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者操作DB失败的时候
      */
-    Address getDefaultAddress(@NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId);
+    Address getDefaultAddress(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId);
 
     /**
      * 设置默认收货地址
@@ -121,7 +121,7 @@ public interface MemberService {
      * @param memberId  会员ID
      * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者操作DB失败的时候
      */
-    void setDefaultAddress(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long addressId, @NotNull @Min(value = 1, message = "会员ID不能小于1") Long memberId);
+    void setDefaultAddress(@NotNull @Min(value = 1, message = "地址ID必须大于0") Long addressId, @NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId);
 
     /**
      * 根据ID获取收货地址
@@ -130,7 +130,7 @@ public interface MemberService {
      * @return 收货地址
      * @throws com.example.onlinestore.exceptions.BizException 收货地址不存在,或者查询DB失败的时候
      */
-    Address getAddressById(@NotNull @Min(value = 1, message = "地址ID不能小于1") Long id);
+    Address getAddressById(@NotNull @Min(value = 1, message = "地址ID必须大于0") Long id);
 
     //会员积分
     /**
