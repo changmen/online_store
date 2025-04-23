@@ -248,7 +248,7 @@ public class OrderServiceImpl implements OrderService {
         refund.setRefundNo(generateRefundNo());
         refund.setAmount(order.getActualAmount());
         refund.setReason(request.getReason());
-        refund.setStatus(RefundStatus.PENDING);
+        refund.setStatus(RefundStatus.PENDING.name());
         refund.setCreatedAt(LocalDateTime.now());
         refund.setUpdatedAt(LocalDateTime.now());
 
@@ -269,7 +269,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // 更新退款状态
-        refund.setStatus(RefundStatus.SUCCESS);
+        refund.setStatus(RefundStatus.SUCCESS.name());
         refund.setRefundTime(LocalDateTime.now());
         refund.setUpdatedAt(LocalDateTime.now());
 
