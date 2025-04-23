@@ -37,8 +37,8 @@ public enum ErrorCode {
     ORDER_CANNOT_REFUND("ErrorCode.Order.Cannot.Refund", "订单不能退款"),
     PAYMENT_NOT_FOUND("ErrorCode.Payment.NotFound", "支付记录不存在"),
     ADDRESS_NOT_FOUND("ErrorCode.Address.NotFound", "地址:{0}不存在"),
-    MEMBER_DEFAULT_ADDRESS_NOT_FOUND("ErrorCode.Member.Default.Address.NotFound", "会员:{} 默认地址不存在"),
-    POINT_RULE_NOT_FOUND("ErrorCode.Point.Rule.NotFound", "积分规则:{}不存在"),
+    MEMBER_DEFAULT_ADDRESS_NOT_FOUND("ErrorCode.Member.Default.Address.NotFound", "会员:{0} 默认地址不存在"),
+    POINT_RULE_NOT_FOUND("ErrorCode.Point.Rule.NotFound", "积分规则:{0}不存在"),
     POINT_RECORD_NOT_FOUND("ErrorCode.Point.Record.NotFound", "积分记录:{0}不存在"),
     SKU_OUT_OF_STOCK("ErrorCode.Sku.Out.Of.Stock", "商品:{0}库存不足"),
     ;
