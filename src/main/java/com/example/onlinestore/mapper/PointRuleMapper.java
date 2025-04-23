@@ -42,7 +42,7 @@ public interface PointRuleMapper {
      * 更新积分规则状态
      *
      * @param id 需要更新状态的规则ID
-     * @param status 新状态值（如0-停用，1-启用）
+     * @param status 新状态值(ACTIVE/INACTIVE/PENDING)
      * @return 受影响的行数（1表示更新成功，0表示未找到对应记录）
      */
     int updateStatus(Long id, String status);
