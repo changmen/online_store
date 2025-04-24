@@ -52,24 +52,4 @@ public class PointController {
         List<PointRecord> records = memberService.getMemberPointRecords(member.getId());
         return Response.success(records);
     }
-
-    @PostMapping("/earn")
-    public Response<Void> earnPoints(
-            @RequestParam @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
-            @RequestParam @NotNull @DecimalMin(value = "1", message = "积分值要大于0") BigDecimal points,
-            @RequestParam @NotNull String description) {
-        Member member = memberService.getLoginMember();
-        memberService.earnPoints(member.getId(), orderId, points, description);
-        return Response.success();
-    }
-
-    @PostMapping("/consume")
-    public Response<Void> consumePoints(
-            @RequestParam @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
-            @RequestParam @NotNull @DecimalMin(value = "1", message = "积分值要大于0") BigDecimal points,
-            @RequestParam @NotNull String description) {
-        Member member = memberService.getLoginMember();
-        memberService.consumePoints(member.getId(), orderId, points, description);
-        return Response.success();
-    }
 } 

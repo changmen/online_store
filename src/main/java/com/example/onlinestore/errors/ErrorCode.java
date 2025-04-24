@@ -42,6 +42,7 @@ public enum ErrorCode {
     POINT_RECORD_NOT_FOUND("ErrorCode.Point.Record.NotFound", "积分记录:{0}不存在"),
     SKU_OUT_OF_STOCK("ErrorCode.Sku.Out.Of.Stock", "商品:{0}库存不足"),
     POINT_BALANCE_INSUFFICIENT("ErrorCode.Point.Balance.Insufficient", "会员:{0}积分余额不足"),
+    PAY_METHOD_NOT_SUPPORTED("ErrorCode.Pay.Method.Not.Supported", "不支持的支付方式"),
     ;
 
     ErrorCode(String code, String defaultMessage) {

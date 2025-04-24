@@ -4,6 +4,7 @@ import com.example.onlinestore.bean.Order;
 import com.example.onlinestore.dto.OrderRequest;
 import com.example.onlinestore.dto.PaymentRequest;
 import com.example.onlinestore.dto.RefundRequest;
+import com.example.onlinestore.enums.PaymentMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -35,10 +36,10 @@ public interface OrderService {
      * 根据订单号获取订单
      *
      * @param orderNo 订单号
-     * @return 订单
+     * @return 订单Order
      * @throws com.example.onlinestore.exceptions.BizException 当订单不存在或者查询DB失败，则抛出该异常
      */
-    Order getOrderByNo(@NotBlank @NotBlank(message = "订单号不能为空") @Size(max = 32, message = "订单号长度不能超过32个字符") String orderNo);
+    Order getOrderByNo(@NotBlank(message = "订单号不能为空") @Size(max = 32, message = "订单号长度不能超过32个字符") String orderNo);
 
     /**
      * 获取会员的订单列表
@@ -63,16 +64,20 @@ public interface OrderService {
     /**
      * 支付订单
      *
-     * @param request 支付请求
+     * @param id            订单ID
+     * @param memberId      会员ID
+     * @param paymentMethod 支付方式
      * @throws com.example.onlinestore.exceptions.BizException 当订单不存在或者查询DB失败，则抛出该异常
      */
-    void payOrder(@NotNull @Valid PaymentRequest request);
+    void payOrder(@NotNull @Min(value = 1, message = "订单ID要大于0") Long id, @NotNull @Min(value = 1, message = "会员ID要大于0") Long memberId, @NotNull PaymentMethod paymentMethod);
 
     /**
      * 申请退款
      *
-     * @param request 退款请求
+     * @param id       订单ID
+     * @param memberId 会员ID
+     * @param reason   退款原因
      * @throws com.example.onlinestore.exceptions.BizException 当订单不存在或者查询DB失败，则抛出该异常
      */
-    void refundOrder(@NotNull @Valid RefundRequest request);
+    void refundOrder(@NotNull @Min(value = 1, message = "订单ID要大于0") Long id, @NotNull @Min(value = 1, message = "会员ID要大于0") Long memberId, @NotBlank @Size(max = 255, message = "退款原因长度不能超过255个字符") String reason);
 } 

@@ -10,10 +10,7 @@ import com.example.onlinestore.dto.LoginResponse;
 import com.example.onlinestore.dto.MemberRegistryRequest;
 import com.example.onlinestore.enums.PointRuleStatus;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -179,8 +176,8 @@ public interface MemberService {
      * @param description 描述
      */
     void earnPoints(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId,
-                    @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
-                    @NotNull @DecimalMin(value = "1", message = "积分数量必须大于0") BigDecimal points,
+                    @NotBlank(message = "订单号不能为空") @Size(max = 32, message = "订单号长度不能超过32个字符") String orderNo,
+                    @NotNull @DecimalMin(value = "0", inclusive = false, message = "积分必须大于0") BigDecimal points,
                     @NotNull @Size(max = 128, message = "描述长度不能超过128个字符") String description);
 
     /**
@@ -192,8 +189,8 @@ public interface MemberService {
      * @param description 描述
      */
     void consumePoints(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId,
-                       @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
-                       @NotNull @DecimalMin(value = "1", message = "积分数量必须大于0") BigDecimal points,
+                       @NotBlank(message = "订单号不能为空") @Size(max = 32, message = "订单号长度不能超过32个字符") String orderNo,
+                       @NotNull @DecimalMin(value = "0", inclusive = false, message = "积分必须大于0") BigDecimal points,
                        @NotNull @Size(max = 128, message = "描述长度不能超过128个字符") String description);
 
 }

@@ -27,7 +27,9 @@ import com.example.onlinestore.utils.OrderNoGenerator;
 import com.example.onlinestore.utils.TimestampOrderNoGenerator;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,7 +99,7 @@ public class OrderServiceImpl implements OrderService {
                 .setScale(2, RoundingMode.HALF_UP);
 
         order.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
-        order.setActualAmount(calculateOrderActualAmount(totalAmount, member).setScale(2, RoundingMode.HALF_UP));
+        order.setActualAmount(calculateOrderActualAmount(order.getOrderNo(), totalAmount, member).setScale(2, RoundingMode.HALF_UP));
 
         // 保存订单
         int effectRows = orderMapper.insert(order);
@@ -127,6 +129,7 @@ public class OrderServiceImpl implements OrderService {
             logger.error("Failed to create order items. Effect rows: {}, expected: {}", effectRows, items.size());
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
+
 
         return convertToOrder(order);
     }
@@ -165,7 +168,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BizException(ErrorCode.ORDER_NOT_FOUND, id);
         }
 
-        if (OrderStatus.PENDING_PAYMENT != OrderStatus.valueOf(order.getStatus())) {
+        if (!OrderStatus.PENDING_PAYMENT.name().equals(order.getStatus())) {
             throw new BizException(ErrorCode.ORDER_CANNOT_CANCEL);
         }
 
@@ -183,19 +186,20 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void payOrder(@NotNull @Valid PaymentRequest request) {
-        OrderEntity order = orderMapper.findByIdAndMemberId(request.getOrderId(), request.getMemberId());
+    public void payOrder(@NotNull @Min(value = 1, message = "订单ID要大于0") Long id, @NotNull @Min(value = 1, message = "会员ID要大于0") Long memberId, @NotNull PaymentMethod paymentMethod) {
+        OrderEntity order = orderMapper.findByIdAndMemberId(id, memberId);
         if (order == null) {
-            throw new BizException(ErrorCode.ORDER_NOT_FOUND, request.getOrderId());
+            logger.error("Failed to pay order. Order not found. OrderId: {}, memberId:{}", id, memberId);
+            throw new BizException(ErrorCode.ORDER_NOT_FOUND, id);
         }
-        if (OrderStatus.PENDING_PAYMENT != OrderStatus.valueOf(order.getStatus())) {
+        if (!OrderStatus.PENDING_PAYMENT.name().equals(order.getStatus())) {
             throw new BizException(ErrorCode.ORDER_CANNOT_PAY);
         }
         // 创建支付记录
         OrderPaymentEntity payment = new OrderPaymentEntity();
         payment.setOrderId(order.getId());
         payment.setPaymentNo(generatePaymentNo());
-        payment.setPaymentMethod(request.getPaymentMethod().name());
+        payment.setPaymentMethod(paymentMethod.name());
         payment.setAmount(order.getActualAmount());
         payment.setStatus(PaymentStatus.PENDING.name());
         payment.setCreatedAt(LocalDateTime.now());
@@ -209,7 +213,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 更新订单状态
         order.setStatus(OrderStatus.PAID.name());
-        order.setPaymentMethod(request.getPaymentMethod().name());
+        order.setPaymentMethod(paymentMethod.name());
         order.setPaymentTime(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
 
@@ -233,13 +237,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void refundOrder(@NotNull @Valid RefundRequest request) {
-        OrderEntity order = orderMapper.findByIdAndMemberId(request.getOrderId(), request.getMemberId());
+    public void refundOrder(@NotNull @Min(value = 1, message = "订单ID要大于0") Long id, @NotNull @Min(value = 1, message = "会员ID要大于0") Long memberId, @NotBlank @Size(max = 255, message = "退款原因长度不能超过255个字符") String reason) {
+        OrderEntity order = orderMapper.findByIdAndMemberId(id, memberId);
         if (order == null) {
-            throw new BizException(ErrorCode.ORDER_NOT_FOUND, request.getOrderId());
+            throw new BizException(ErrorCode.ORDER_NOT_FOUND, memberId);
         }
 
-        if (OrderStatus.PAID != OrderStatus.valueOf(order.getStatus())) {
+        if (!OrderStatus.PAID.name().equals(order.getStatus())) {
             throw new BizException(ErrorCode.ORDER_CANNOT_REFUND);
         }
 
@@ -255,7 +259,7 @@ public class OrderServiceImpl implements OrderService {
         refund.setPaymentId(payment.getId());
         refund.setRefundNo(generateRefundNo());
         refund.setAmount(order.getActualAmount());
-        refund.setReason(request.getReason());
+        refund.setReason(reason);
         refund.setStatus(RefundStatus.PENDING.name());
         refund.setCreatedAt(LocalDateTime.now());
         refund.setUpdatedAt(LocalDateTime.now());
@@ -349,7 +353,7 @@ public class OrderServiceImpl implements OrderService {
         return order;
     }
 
-    private BigDecimal calculateOrderActualAmount(BigDecimal totalAmount, Member member) {
+    private BigDecimal calculateOrderActualAmount(String orderNo, BigDecimal totalAmount, Member member) {
         //
         BigDecimal discountAmount = totalAmount;
         if (orderDiscountRate < 1 && orderDiscountRate > 0) {
@@ -362,7 +366,7 @@ public class OrderServiceImpl implements OrderService {
             BigDecimal pointsToUse = points.min(discountAmount);
             discountAmount = discountAmount.subtract(pointsToUse);
 
-            memberService.consumePoints(member.getId(), member.getId(), pointsToUse, "订单使用");
+            memberService.consumePoints(member.getId(), orderNo, pointsToUse, "订单使用");
         }
 
         // 如果优惠金额小于等于0，则直接返回0

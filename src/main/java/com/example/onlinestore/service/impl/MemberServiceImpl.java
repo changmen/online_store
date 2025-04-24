@@ -23,10 +23,7 @@ import com.example.onlinestore.mapper.PointRuleMapper;
 import com.example.onlinestore.security.JwtTokenUtil;
 import com.example.onlinestore.service.MemberService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -339,12 +336,12 @@ public class MemberServiceImpl implements MemberService {
     @Override
     @Transactional
     public void earnPoints(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId,
-                           @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
-                           @NotNull @DecimalMin(value = "1", message = "积分数量必须大于0") BigDecimal points,
+                           @NotBlank(message = "订单号不能为空") @Size(max = 32, message = "订单号长度不能超过32个字符") String orderNo,
+                           @NotNull @DecimalMin(value = "1",inclusive = false, message = "积分数量必须大于0") BigDecimal points,
                            @NotNull @Size(max = 128, message = "描述长度不能超过128个字符") String description) {
         PointRecordEntity entity = new PointRecordEntity();
         entity.setMemberId(memberId);
-        entity.setOrderId(orderId);
+        entity.setOrderNo(orderNo);
         entity.setPoints(points);
         entity.setType(PointRecordType.EARN.name());
         entity.setDescription(description);
@@ -361,7 +358,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     @Transactional
     public void consumePoints(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId,
-                              @NotNull @Min(value = 1, message = "订单ID必须大于0") Long orderId,
+                              @NotBlank(message = "订单号不能为空") @Size(max = 32, message = "订单号长度不能超过32个字符") String orderNo,
                               @NotNull @DecimalMin(value = "1", message = "积分数量必须大于0") BigDecimal points,
                               @NotNull @Size(max = 128, message = "描述长度不能超过128个字符") String description) {
         // 检查积分余额是否足够
@@ -372,7 +369,7 @@ public class MemberServiceImpl implements MemberService {
 
         PointRecordEntity entity = new PointRecordEntity();
         entity.setMemberId(memberId);
-        entity.setOrderId(orderId);
+        entity.setOrderNo(orderNo);
         entity.setPoints(points);
         entity.setType(PointRecordType.CONSUME.name());
         entity.setDescription(description);
@@ -406,7 +403,7 @@ public class MemberServiceImpl implements MemberService {
         PointRecord record = new PointRecord();
         record.setId(entity.getId());
         record.setMemberId(entity.getMemberId());
-        record.setOrderId(entity.getOrderId());
+        record.setOrderNo(entity.getOrderNo());
         record.setPoints(entity.getPoints());
         record.setType(PointRecordType.valueOf(entity.getType()));
         record.setDescription(entity.getDescription());

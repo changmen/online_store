@@ -17,7 +17,7 @@ public class TimestampOrderNoGenerator implements OrderNoGenerator {
         long seqValue = sequence.getAndUpdate(prev -> (prev >= MAX_SEQUENCE) ? 0 : prev + 1);
 
         String timestampPart = Instant.ofEpochMilli(currentTimestamp)
-                .atZone(ZoneId.of("UTC+8"))
+                .atZone(ZoneId.of("Asia/Shanghai"))
                 .format(formatter);
 
         return String.format("%s%04d",
