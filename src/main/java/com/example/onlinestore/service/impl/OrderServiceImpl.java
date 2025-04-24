@@ -15,6 +15,7 @@ import com.example.onlinestore.enums.PaymentStatus;
 import com.example.onlinestore.enums.RefundStatus;
 import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.event.OrderRefundCompletedEvent;
+import com.example.onlinestore.event.RefundCompletedEventData;
 import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.OrderItemMapper;
 import com.example.onlinestore.mapper.OrderMapper;
@@ -43,9 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -369,22 +368,23 @@ public class OrderServiceImpl implements OrderService {
 
             // 10. 发送退款完成事件
             try {
-                Map<String, Object> eventData = new HashMap<>();
-                eventData.put("orderId", order.getId());
-                eventData.put("orderNo", order.getOrderNo());
-                eventData.put("memberId", order.getMemberId());
-                eventData.put("refundId", refund.getId());
-                eventData.put("refundNo", refund.getRefundNo());
-                eventData.put("amount", refund.getAmount());
-                eventData.put("reason", refund.getReason());
-                eventData.put("refundTime", refund.getRefundTime());
-                eventData.put("eventType", REFUND_EVENT_TYPE);
-                eventData.put("eventTime", LocalDateTime.now());
+                RefundCompletedEventData eventData = RefundCompletedEventData.builder()
+                    .orderId(order.getId())
+                    .orderNo(order.getOrderNo())
+                    .memberId(order.getMemberId())
+                    .refundId(refund.getId())
+                    .refundNo(refund.getRefundNo())
+                    .amount(refund.getAmount())
+                    .reason(refund.getReason())
+                    .refundTime(refund.getRefundTime())
+                    .eventType(REFUND_EVENT_TYPE)
+                    .eventTime(LocalDateTime.now())
+                    .build();
 
                 eventPublisher.publishEvent(new OrderRefundCompletedEvent(eventData));
                 logger.info("退款完成事件发送成功，订单ID：{}，退款ID：{}", id, refund.getId());
             } catch (Exception e) {
-                logger.error("发送退款完成事件失败，订单ID：{}，退款ID：{}", id, refund.getId(), e);
+                logger.error("发送退款完成事件失败，订单ID：{}，退款ID：{}，错误：{}", id, refund.getId(), e.getMessage());
                 // 事件发送失败不影响主流程
             }
 
