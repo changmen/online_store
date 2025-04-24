@@ -22,9 +22,9 @@ public interface MemberService {
      * @param request 包含登录凭证的请求对象，需通过参数校验（@Valid）
      *                应包含username和password字段
      * @return 登录响应对象，包含：
-     *         - 登录成功状态
-     *         - JWT令牌（成功时）
-     *         - 错误信息（失败时）
+     * - 登录成功状态
+     * - JWT令牌（成功时）
+     * - 错误信息（失败时）
      */
     LoginResponse login(@Valid LoginRequest request);
 
@@ -65,6 +65,7 @@ public interface MemberService {
     Member getLoginMember();
 
     // Address接口
+
     /**
      * 添加收货地址
      *
@@ -130,6 +131,7 @@ public interface MemberService {
     Address getAddressById(@NotNull @Min(value = 1, message = "地址ID必须大于0") Long id);
 
     //会员积分
+
     /**
      * 创建积分规则
      *
@@ -171,7 +173,7 @@ public interface MemberService {
      * 增加积分
      *
      * @param memberId    会员ID
-     * @param orderId     订单ID
+     * @param orderNo     订单号
      * @param points      积分数量
      * @param description 描述
      */
@@ -184,7 +186,7 @@ public interface MemberService {
      * 消费积分
      *
      * @param memberId    会员ID
-     * @param orderId     订单ID
+     * @param orderNo     订单号
      * @param points      积分数量
      * @param description 描述
      */

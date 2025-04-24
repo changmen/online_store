@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -191,13 +192,14 @@ public class MemberServiceImpl implements MemberService {
         address.setDetailAddress(request.getDetailAddress());
         address.setUpdatedAt(LocalDateTime.now());
 
-        if (request.getIsDefault()) {
+        if (Boolean.TRUE.equals(request.getIsDefault())) {
             // 如果设置为默认地址，需要更新其他地址为非默认
             int effectRow = addressMapper.updateDefaultStatus(request.getMemberId(), id);
             if (effectRow != 1) {
                 logger.error("update address failed. because effect rows is 0. addressId:{}", id);
                 throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
+            address.setIsDefault(true);
         }
 
         int effectRow = addressMapper.update(address);
@@ -219,10 +221,12 @@ public class MemberServiceImpl implements MemberService {
         addressMapper.delete(id);
 
         // 如果删除的是默认地址，则设置最新添加的地址为默认地址
-        if (address.getIsDefault()) {
+        if (Boolean.TRUE.equals(address.getIsDefault())) {
             List<AddressEntity> addresses = addressMapper.findByMemberId(memberId);
             if (!addresses.isEmpty()) {
-                AddressEntity newDefault = addresses.get(0);
+                // 选取最新创建的地址作为新的默认地址
+                AddressEntity newDefault = addresses.stream().max(Comparator.comparing(AddressEntity::getCreatedAt))
+                        .orElse(null);
                 addressMapper.updateDefaultStatus(memberId, newDefault.getId());
             }
         }
@@ -321,7 +325,8 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public BigDecimal getMemberPointBalance(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId) {
-        return pointRecordMapper.getMemberPointBalance(memberId);
+        BigDecimal balance = pointRecordMapper.getMemberPointBalance(memberId);
+        return balance == null ? BigDecimal.ZERO : balance;
     }
 
     @Override
