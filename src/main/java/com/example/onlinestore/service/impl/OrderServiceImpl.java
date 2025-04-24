@@ -97,7 +97,7 @@ public class OrderServiceImpl implements OrderService {
                 .setScale(2, RoundingMode.HALF_UP);
 
         order.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
-        order.setActualAmount(calculateOrderActualPrice(totalAmount, member).setScale(2, RoundingMode.HALF_UP));
+        order.setActualAmount(calculateOrderActualAmount(totalAmount, member).setScale(2, RoundingMode.HALF_UP));
 
         // 保存订单
         int effectRows = orderMapper.insert(order);
@@ -349,7 +349,7 @@ public class OrderServiceImpl implements OrderService {
         return order;
     }
 
-    private BigDecimal calculateOrderActualPrice(BigDecimal totalAmount, Member member) {
+    private BigDecimal calculateOrderActualAmount(BigDecimal totalAmount, Member member) {
         //
         BigDecimal discountAmount = totalAmount;
         if (orderDiscountRate < 1 && orderDiscountRate > 0) {
@@ -359,7 +359,10 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal points = memberService.getMemberPointBalance(member.getId());
         // 积分抵扣， 一个积分抵用1元
         if (points.compareTo(BigDecimal.ZERO) > 0) {
-            discountAmount = discountAmount.subtract(points);
+            BigDecimal pointsToUse = points.min(discountAmount);
+            discountAmount = discountAmount.subtract(pointsToUse);
+
+            memberService.consumePoints(member.getId(), member.getId(), pointsToUse, "订单使用");
         }
 
         // 如果优惠金额小于等于0，则直接返回0
