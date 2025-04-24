@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.OrderPaymentMapper">
+    <resultMap id="BaseResultMap" type="com.example.onlinestore.entity.OrderPaymentEntity">
+        <id column="id" property="id"/>
+        <result column="order_id" property="orderId"/>
+        <result column="payment_no" property="paymentNo"/>
+        <result column="payment_method" property="paymentMethod"/>
+        <result column="amount" property="amount"/>
+        <result column="status" property="status"/>
+        <result column="payment_time" property="paymentTime"/>
+        <result column="third_party_payment_no" property="thirdPartyPaymentNo"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, order_id, payment_no, payment_method, amount, status, payment_time, third_party_payment_no, created_at, updated_at
+    </sql>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM order_payment
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByPaymentNo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM order_payment
+        WHERE payment_no = #{paymentNo}
+    </select>
+
+    <select id="findByOrderId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM order_payment
+        WHERE order_id = #{orderId}
+    </select>
+
+    <insert id="insert" parameterType="com.example.onlinestore.entity.OrderPaymentEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO order_payment (
+            order_id, payment_no, payment_method, amount, status, payment_time, third_party_payment_no, created_at, updated_at
+        ) VALUES (
+            #{orderId}, #{paymentNo}, #{paymentMethod}, #{amount}, #{status}, #{paymentTime}, #{thirdPartyPaymentNo}, #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.example.onlinestore.entity.OrderPaymentEntity">
+        UPDATE order_payment
+        SET order_id = #{orderId},
+            payment_no = #{paymentNo},
+            payment_method = #{paymentMethod},
+            amount = #{amount},
+            status = #{status},
+            payment_time = #{paymentTime},
+            third_party_payment_no = #{thirdPartyPaymentNo},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE order_payment
+        SET status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+</mapper> 
