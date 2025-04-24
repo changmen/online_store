@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.onlinestore.mapper.OrderRefundMapper">
+    <resultMap id="BaseResultMap" type="com.example.onlinestore.entity.OrderRefundEntity">
+        <id column="id" property="id"/>
+        <result column="order_id" property="orderId"/>
+        <result column="refund_no" property="refundNo"/>
+        <result column="payment_id" property="paymentId"/>
+        <result column="amount" property="amount"/>
+        <result column="reason" property="reason"/>
+        <result column="status" property="status"/>
+        <result column="refund_time" property="refundTime"/>
+        <result column="third_party_refund_no" property="thirdPartyRefundNo"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, order_id, refund_no, payment_id, amount, reason, status, refund_time, third_party_refund_no, created_at, updated_at
+    </sql>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM order_refund
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByRefundNo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM order_refund
+        WHERE refund_no = #{refundNo}
+    </select>
+
+    <select id="findByOrderId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM order_refund
+        WHERE order_id = #{orderId}
+    </select>
+
+    <select id="findByMemberIdAndCreatedAtAfter" resultMap="BaseResultMap">
+        SELECT r.*
+        FROM order_refund r
+        INNER JOIN `order` o ON r.order_id = o.id
+        WHERE o.member_id = #{memberId}
+        AND r.created_at >= #{createdAt}
+        ORDER BY r.created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.example.onlinestore.entity.OrderRefundEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO order_refund (
+            order_id, refund_no, payment_id, amount, reason, status, refund_time, third_party_refund_no, created_at, updated_at
+        ) VALUES (
+            #{orderId}, #{refundNo}, #{paymentId}, #{amount}, #{reason}, #{status}, #{refundTime}, #{thirdPartyRefundNo}, #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.example.onlinestore.entity.OrderRefundEntity">
+        UPDATE order_refund
+        SET order_id = #{orderId},
+            refund_no = #{refundNo},
+            payment_id = #{paymentId},
+            amount = #{amount},
+            reason = #{reason},
+            status = #{status},
+            refund_time = #{refundTime},
+            third_party_refund_no = #{thirdPartyRefundNo},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE order_refund
+        SET status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+</mapper> 
