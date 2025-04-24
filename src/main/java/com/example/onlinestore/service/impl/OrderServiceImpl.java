@@ -105,6 +105,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
         order.setActualAmount(calculateOrderActualAmount(order.getOrderNo(), totalAmount, member).setScale(2, RoundingMode.HALF_UP));
+        order.setDiscountAmount(totalAmount.subtract(order.getActualAmount()).setScale(2, RoundingMode.HALF_UP));
 
         // 保存订单
         int effectRows = orderMapper.insert(order);
