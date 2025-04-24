@@ -86,4 +86,12 @@
         SELECT <include refid="orderColumns"/>
         FROM `order` WHERE id = #{id} AND member_id = #{memberId}
     </select>
+
+    <select id="findByMemberIdAndStatus" resultMap="orderResultMap">
+        SELECT <include refid="orderColumns"/>
+        FROM `order` WHERE member_id = #{memberId}
+        <if test="status != null and status != ''">
+            AND `status` = #{status}
+        </if>
+    </select>
 </mapper> 

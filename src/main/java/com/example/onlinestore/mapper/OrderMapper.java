@@ -59,4 +59,12 @@ public interface OrderMapper {
      */
     OrderEntity findByIdAndMemberId(@Param("id") Long id, @Param("memberId") Long memberId);
 
+    /**
+     * 通过会员主键ID和订单状态查询订单实体列表
+     * @param memberId 会员主键ID（非空）
+     * @param status 订单状态（非空）
+     * @return 订单实体列表（始终返回非null集合，无结果时返回空集合）
+     */
+    List<OrderEntity> findByMemberIdAndStatus(@Param("memberId") Long memberId, @Param("status") String status);
+
 } 

@@ -31,11 +31,29 @@ public enum ErrorCode {
     ATTRIBUTE_TYPE_NOT_SKU("ErrorCode.Attribute.Type.Not.SKU", "属性:{0}类型不是SKU类型"),
     SKU_ATTRIBUTE_INPUT_TYPE_INVALID("ErrorCode.SKU.Attribute.Input.Type.Invalid", "SKU属性:{0}输入类型只能是单选或多选"),
     SKU_ATTRIBUTE_VALUE_EMPTY("ErrorCode.SKU.Attribute.Value.Empty", "SKU属性值:{0}不能为空"),
+    ORDER_NOT_FOUND("ErrorCode.Order.NotFound", "订单:{0}不存在"),
+    ORDER_CANNOT_CANCEL("ErrorCode.Order.Cannot.Cancel", "订单不能取消"),
+    ORDER_CANNOT_PAY("ErrorCode.Order.Cannot.Pay", "订单不能支付"),
+    ORDER_CANNOT_REFUND("ErrorCode.Order.Cannot.Refund", "订单不能退款"),
+    PAYMENT_NOT_FOUND("ErrorCode.Payment.NotFound", "支付记录不存在"),
+    ADDRESS_NOT_FOUND("ErrorCode.Address.NotFound", "地址:{0}不存在"),
+    MEMBER_DEFAULT_ADDRESS_NOT_FOUND("ErrorCode.Member.Default.Address.NotFound", "会员:{0} 默认地址不存在"),
+    POINT_RULE_NOT_FOUND("ErrorCode.Point.Rule.NotFound", "积分规则:{0}不存在"),
+    POINT_RECORD_NOT_FOUND("ErrorCode.Point.Record.NotFound", "积分记录:{0}不存在"),
+    SKU_OUT_OF_STOCK("ErrorCode.Sku.Out.Of.Stock", "商品:{0}库存不足"),
+    POINT_BALANCE_INSUFFICIENT("ErrorCode.Point.Balance.Insufficient", "会员:{0}积分余额不足"),
+    PAY_METHOD_NOT_SUPPORTED("ErrorCode.Pay.Method.Not.Supported", "不支持的支付方式"),
+    ORDER_STATUS_NOT_SUPPORTED("ErrorCode.Order.Status.Not.Supported", "不支持的订单状态"),
+    INVALID_PARAMETER("ErrorCode.Invalid.Parameter", "参数错误"),
+    REFUND_LIMIT_EXCEEDED("ErrorCode.Refund.Limit.Exceeded", "退款次数超过限制"),
+    POINT_RULE_STATUS_NOT_SUPPORTED("ErrorCode.Point.Rule.Status.Not.Supported", "积分规则状态不支持"),
     ;
+
     ErrorCode(String code, String defaultMessage) {
         this.code = code;
         this.defaultMessage = defaultMessage;
     }
+
     // 错误码
     private final String code;
 
