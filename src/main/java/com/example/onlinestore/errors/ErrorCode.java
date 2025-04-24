@@ -44,6 +44,8 @@ public enum ErrorCode {
     POINT_BALANCE_INSUFFICIENT("ErrorCode.Point.Balance.Insufficient", "会员:{0}积分余额不足"),
     PAY_METHOD_NOT_SUPPORTED("ErrorCode.Pay.Method.Not.Supported", "不支持的支付方式"),
     ORDER_STATUS_NOT_SUPPORTED("ErrorCode.Order.Status.Not.Supported", "不支持的订单状态"),
+    INVALID_PARAMETER("ErrorCode.Invalid.Parameter", "参数错误"),
+    REFUND_LIMIT_EXCEEDED("ErrorCode.Refund.Limit.Exceeded", "退款次数超过限制"),
     ;
 
     ErrorCode(String code, String defaultMessage) {

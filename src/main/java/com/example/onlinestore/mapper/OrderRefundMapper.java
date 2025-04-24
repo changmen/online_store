@@ -4,6 +4,9 @@ import com.example.onlinestore.entity.OrderRefundEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Mapper
 public interface OrderRefundMapper {
     /**
@@ -54,5 +57,14 @@ public interface OrderRefundMapper {
      * @return 受影响的行数，返回0表示记录不存在
      */
     int updateStatus(@Param("id") Long id, @Param("status") String status);
+
+    /**
+     * 根据会员ID和创建时间查询退款记录
+     *
+     * @param memberId 会员ID
+     * @param createdAt 创建时间
+     * @return 符合条件的退款记录列表
+     */
+    List<OrderRefundEntity> findByMemberIdAndCreatedAtAfter(@Param("memberId") Long memberId, @Param("createdAt") LocalDateTime createdAt);
 
 } 
