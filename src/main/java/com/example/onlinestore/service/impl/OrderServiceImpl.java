@@ -3,7 +3,6 @@ package com.example.onlinestore.service.impl;
 import com.example.onlinestore.bean.Member;
 import com.example.onlinestore.bean.Order;
 import com.example.onlinestore.bean.OrderItem;
-import com.example.onlinestore.dto.OrderItemRequest;
 import com.example.onlinestore.dto.OrderRequest;
 import com.example.onlinestore.dto.PaymentRequest;
 import com.example.onlinestore.dto.RefundRequest;
@@ -29,7 +28,6 @@ import com.example.onlinestore.utils.TimestampOrderNoGenerator;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,7 +97,7 @@ public class OrderServiceImpl implements OrderService {
                 .setScale(2, RoundingMode.HALF_UP);
 
         order.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
-        order.setActualAmount(calculateOrderDiscountPrice(totalAmount, member).setScale(2, RoundingMode.HALF_UP));
+        order.setActualAmount(calculateOrderActualPrice(totalAmount, member).setScale(2, RoundingMode.HALF_UP));
 
         // 保存订单
         int effectRows = orderMapper.insert(order);
@@ -351,7 +349,7 @@ public class OrderServiceImpl implements OrderService {
         return order;
     }
 
-    private BigDecimal calculateOrderDiscountPrice(BigDecimal totalAmount, Member member) {
+    private BigDecimal calculateOrderActualPrice(BigDecimal totalAmount, Member member) {
         //
         BigDecimal discountAmount = totalAmount;
         if (orderDiscountRate < 1 && orderDiscountRate > 0) {
@@ -360,10 +358,11 @@ public class OrderServiceImpl implements OrderService {
         //
         BigDecimal points = memberService.getMemberPointBalance(member.getId());
         // 积分抵扣， 一个积分抵用1元
-        if (points.compareTo(BigDecimal.ZERO) > 0 && points.compareTo(discountAmount) <= 0) {
+        if (points.compareTo(BigDecimal.ZERO) > 0) {
             discountAmount = discountAmount.subtract(points);
         }
 
+        // 如果优惠金额小于等于0，则直接返回0
         if (discountAmount.compareTo(BigDecimal.ZERO) <= 0) {
             return BigDecimal.ZERO;
         }
