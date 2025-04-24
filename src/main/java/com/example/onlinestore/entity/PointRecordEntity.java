@@ -22,9 +22,9 @@ public class PointRecordEntity implements Serializable {
      */
     private Long memberId;
     /**
-     * 关联订单ID，记录积分产生来源的订单
+     * 关联订单号，记录积分产生来源的订单
      */
-    private Long orderId;
+    private String orderNo;
     /**
      * 积分数值（高精度），使用BigDecimal保证计算精度
      */
