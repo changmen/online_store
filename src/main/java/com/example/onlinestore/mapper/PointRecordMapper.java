@@ -25,12 +25,12 @@ public interface PointRecordMapper {
     List<PointRecordEntity> findByMemberId(Long memberId);
 
     /**
-     * 根据订单ID查询关联的积分记录列表
+     * 根据orderNo查询关联的积分记录列表
      *
-     * @param orderId 订单唯一标识ID
+     * @param orderNo 订单号
      * @return 该订单关联的积分记录（可能为空列表）
      */
-    List<PointRecordEntity> findByOrderId(Long orderId);
+    List<PointRecordEntity> findByOrderNo(String orderNo);
 
     /**
      * 插入新的积分记录

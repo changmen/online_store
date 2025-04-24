@@ -25,10 +25,9 @@ public class PointRecord implements Serializable {
     private Long memberId;
 
     /**
-     * 关联的订单ID
-     * 标识触发积分变更的源订单（可为空）
+     * 关联的订单, 积分和订单关联（奖励或消耗）记录
      */
-    private Long orderId;
+    private String orderNo;
 
     /**
      * 积分变动数值

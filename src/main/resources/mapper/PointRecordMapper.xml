@@ -4,7 +4,7 @@
     <resultMap id="pointRecordResultMap" type="com.example.onlinestore.entity.PointRecordEntity">
         <id column="id" property="id"/>
         <result column="member_id" property="memberId"/>
-        <result column="order_id" property="orderId"/>
+        <result column="order_no" property="orderNo"/>
         <result column="points" property="points"/>
         <result column="type" property="type"/>
         <result column="description" property="description"/>
@@ -13,34 +13,34 @@
     </resultMap>
 
     <sql id="pointRecordColumns">
-        id, member_id, order_id, points, type, description, created_at, updated_at
+        `id`, `member_id`, `order_no`, `points`, `type`, `description`, `created_at`, `updated_at`
     </sql>
 
     <select id="findById" resultMap="pointRecordResultMap">
         SELECT
         <include refid="pointRecordColumns"/>
-        FROM point_record
+        FROM `point_record`
         WHERE id = #{id}
     </select>
 
     <select id="findByMemberId" resultMap="pointRecordResultMap">
         SELECT
         <include refid="pointRecordColumns"/>
-        FROM point_record
-        WHERE member_id = #{memberId}
-        ORDER BY created_at DESC
+        FROM `point_record`
+        WHERE `member_id` = #{memberId}
+        ORDER BY `created_at` DESC
     </select>
 
-    <select id="findByOrderId" resultMap="pointRecordResultMap">
+    <select id="findByOrderNo" resultMap="pointRecordResultMap">
         SELECT
         <include refid="pointRecordColumns"/>
-        FROM point_record
-        WHERE order_id = #{orderId}
+        FROM `point_record`
+        WHERE `order_no` = #{orderNo}
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO point_record (
-            member_id, order_id, points, type, description, created_at, updated_at
+        INSERT INTO `point_record` (
+            `member_id`, `order_no`, `points`, `type`, `description`, `created_at`, `updated_at`
         ) VALUES (
             #{memberId}, #{orderId}, #{points}, #{type}, #{description}, NOW(), NOW()
         )
@@ -49,12 +49,12 @@
     <select id="getMemberPointBalance" resultType="java.math.BigDecimal">
         SELECT COALESCE(SUM(
             CASE 
-                WHEN type = 1 THEN points
-                WHEN type = 2 THEN -points
+                WHEN `type` = 1 THEN `points`
+                WHEN `type` = 2 THEN -`points`
                 ELSE 0
             END
         ), 0)
-        FROM point_record
-        WHERE member_id = #{memberId}
+        FROM `point_record`
+        WHERE `member_id` = #{memberId}
     </select>
 </mapper> 
