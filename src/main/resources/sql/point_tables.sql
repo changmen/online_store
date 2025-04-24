@@ -15,14 +15,14 @@ CREATE TABLE point_rule (
 CREATE TABLE point_record (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
     member_id BIGINT NOT NULL COMMENT '会员ID',
-    order_id BIGINT COMMENT '订单ID',
+    order_no  VARCHAR(32) COMMENT '订单编号',
     points DECIMAL(10,2) NOT NULL COMMENT '积分数量',
     type VARCHAR(10) NOT NULL COMMENT '类型：EARN-获得积分，CONSUME-消费积分',
     description VARCHAR(128) COMMENT '描述',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_member_id (member_id),
-    INDEX idx_order_id (order_id),
+    INDEX idx_order_no (order_no),
     INDEX idx_created_at (created_at),
     INDEX idx_member_created (member_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分记录表'; 
