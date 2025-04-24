@@ -39,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -337,7 +336,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void earnPoints(@NotNull @Min(value = 1, message = "会员ID必须大于0") Long memberId,
                            @NotBlank(message = "订单号不能为空") @Size(max = 32, message = "订单号长度不能超过32个字符") String orderNo,
-                           @NotNull @DecimalMin(value = "1",inclusive = false, message = "积分数量必须大于0") BigDecimal points,
+                           @NotNull @DecimalMin(value = "1", inclusive = false, message = "积分数量必须大于0") BigDecimal points,
                            @NotNull @Size(max = 128, message = "描述长度不能超过128个字符") String description) {
         PointRecordEntity entity = new PointRecordEntity();
         entity.setMemberId(memberId);
@@ -376,7 +375,7 @@ public class MemberServiceImpl implements MemberService {
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
 
-       int effectRows = pointRecordMapper.insert(entity);
+        int effectRows = pointRecordMapper.insert(entity);
         if (effectRows != 1) {
             logger.error("Failed to consume points. Effect rows: {}", effectRows);
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);

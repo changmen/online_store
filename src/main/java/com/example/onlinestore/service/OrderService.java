@@ -2,8 +2,10 @@ package com.example.onlinestore.service;
 
 import com.example.onlinestore.bean.Order;
 import com.example.onlinestore.dto.OrderRequest;
+import com.example.onlinestore.dto.Page;
 import com.example.onlinestore.dto.PaymentRequest;
 import com.example.onlinestore.dto.RefundRequest;
+import com.example.onlinestore.enums.OrderStatus;
 import com.example.onlinestore.enums.PaymentMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -48,7 +50,10 @@ public interface OrderService {
      * @return 订单列表
      * @throws com.example.onlinestore.exceptions.BizException 当查询DB失败，则抛出该异常
      */
-    List<Order> getOrdersByMemberId(@NotNull @Min(value = 1, message = "会员ID要大于0") Long memberId);
+    Page<Order> getOrdersByMemberId(@NotNull @Min(value = 1, message = "会员ID要大于0") Long memberId,
+                                    @NotNull @Min(value = 1, message = "页码最小为1") Integer page,
+                                    @NotNull @Min(value = 1, message = "每页大小最小为1") Integer size,
+                                    OrderStatus status);
 
     /**
      * 取消订单

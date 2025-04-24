@@ -3,6 +3,7 @@ package com.example.onlinestore.controller;
 import com.example.onlinestore.bean.Member;
 import com.example.onlinestore.bean.Order;
 import com.example.onlinestore.dto.*;
+import com.example.onlinestore.enums.OrderStatus;
 import com.example.onlinestore.enums.PaymentMethod;
 import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
@@ -52,13 +53,19 @@ public class OrderController {
     }
 
     @GetMapping("/member")
-    public Response<List<OrderResponse>> getOrdersByMemberId() {
+    public Response<Page<OrderResponse>> getOrdersByMemberId(@RequestParam @NotNull @Min(value = 1, message = "页码最小为1") Integer page,
+                                                             @RequestParam @NotNull @Min(value = 1, message = "每页大小最小为1") Integer size,
+                                                             @RequestParam(required = false) String orderStatus) {
         Member member = memberService.getLoginMember();
-        List<Order> orders = orderService.getOrdersByMemberId(member.getId());
-        List<OrderResponse> orderResponses = orders.stream()
-                .map(OrderResponse::of)
-                .collect(Collectors.toList());
-        return Response.success(orderResponses);
+        OrderStatus status = null;
+        try {
+            status = OrderStatus.valueOf(orderStatus);
+        } catch (IllegalArgumentException e) {
+            logger.error("不支持的订单状态: {}", orderStatus, e);
+            throw new BizException(ErrorCode.ORDER_STATUS_NOT_SUPPORTED);
+        }
+        Page<Order> orders = orderService.getOrdersByMemberId(member.getId(), page, size, status);
+        return Response.success(Page.of(orders.getItems().stream().map(OrderResponse::of).collect(Collectors.toList()), orders.getTotalCount(), orders.getPageNum(), orders.getPageSize()));
     }
 
     @PostMapping("/{id}/cancel")

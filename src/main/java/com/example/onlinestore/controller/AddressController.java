@@ -43,7 +43,7 @@ public class AddressController {
 
     @DeleteMapping("/{id}")
     public Response<Void> deleteAddress(
-            @PathVariable Long id) {
+            @PathVariable @NotNull(message = "地址ID不能为空") @Min(value = 1, message = "地址ID必须大于0") Long id) {
         Member member = memberService.getLoginMember();
         memberService.deleteAddress(id, member.getId());
         return Response.success();

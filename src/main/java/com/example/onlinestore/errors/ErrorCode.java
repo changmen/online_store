@@ -43,6 +43,7 @@ public enum ErrorCode {
     SKU_OUT_OF_STOCK("ErrorCode.Sku.Out.Of.Stock", "商品:{0}库存不足"),
     POINT_BALANCE_INSUFFICIENT("ErrorCode.Point.Balance.Insufficient", "会员:{0}积分余额不足"),
     PAY_METHOD_NOT_SUPPORTED("ErrorCode.Pay.Method.Not.Supported", "不支持的支付方式"),
+    ORDER_STATUS_NOT_SUPPORTED("ErrorCode.Order.Status.Not.Supported", "不支持的订单状态"),
     ;
 
     ErrorCode(String code, String defaultMessage) {

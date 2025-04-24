@@ -4,6 +4,7 @@ import com.example.onlinestore.bean.Member;
 import com.example.onlinestore.bean.Order;
 import com.example.onlinestore.bean.OrderItem;
 import com.example.onlinestore.dto.OrderRequest;
+import com.example.onlinestore.dto.Page;
 import com.example.onlinestore.dto.PaymentRequest;
 import com.example.onlinestore.dto.RefundRequest;
 import com.example.onlinestore.entity.OrderEntity;
@@ -25,6 +26,9 @@ import com.example.onlinestore.service.OrderService;
 import com.example.onlinestore.service.SkuService;
 import com.example.onlinestore.utils.OrderNoGenerator;
 import com.example.onlinestore.utils.TimestampOrderNoGenerator;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -48,10 +52,12 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService {
     private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
 
+    private static final String DEFAULT_ORDER_LIST_QUERY_ORDER = "id DESC";
+
     private final static OrderNoGenerator orderNoGenerator = new TimestampOrderNoGenerator();
 
     @Value("${order.discount-rate:0.9}")
-    private double orderDiscountRate;
+    private BigDecimal orderDiscountRate;
 
     @Autowired
     private OrderMapper orderMapper;
@@ -70,7 +76,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private MemberService memberService;
-
     @Override
     @Transactional
     public Order createOrder(@NotNull @Valid OrderRequest request) {
@@ -153,11 +158,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<Order> getOrdersByMemberId(@NotNull @Min(value = 1, message = "会员ID要大于0") Long memberId) {
-        List<OrderEntity> orders = orderMapper.findByMemberId(memberId);
-        return orders.stream()
-                .map(this::convertToOrder)
-                .collect(Collectors.toList());
+    public Page<Order> getOrdersByMemberId(@NotNull @Min(value = 1, message = "会员ID要大于0") Long memberId,
+                                           @NotNull @Min(value = 1, message = "页码最小为1") Integer page,
+                                           @NotNull @Min(value = 1, message = "每页大小最小为1") Integer size,
+                                           OrderStatus status){
+        PageHelper.startPage(page, size, DEFAULT_ORDER_LIST_QUERY_ORDER);
+        List<OrderEntity> orders = orderMapper.findByMemberIdAndStatus(memberId, status != null ? status.name() : null);
+        PageInfo <OrderEntity> pageInfo = new PageInfo<>(orders);
+        return Page.of(orders.stream().map(this::convertToOrder).collect(Collectors.toList()), pageInfo.getTotal(), page, size);
     }
 
     @Override
@@ -355,26 +363,26 @@ public class OrderServiceImpl implements OrderService {
 
     private BigDecimal calculateOrderActualAmount(String orderNo, BigDecimal totalAmount, Member member) {
         //
-        BigDecimal discountAmount = totalAmount;
-        if (orderDiscountRate < 1 && orderDiscountRate > 0) {
-            discountAmount = discountAmount.multiply(BigDecimal.valueOf(orderDiscountRate));
+        BigDecimal actualAmount = totalAmount;
+        if (orderDiscountRate.compareTo(BigDecimal.ONE) < 0 && orderDiscountRate.compareTo(BigDecimal.ZERO) > 0) {
+            actualAmount = actualAmount.multiply(orderDiscountRate);
         }
         //
         BigDecimal points = memberService.getMemberPointBalance(member.getId());
         // 积分抵扣， 一个积分抵用1元
         if (points.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal pointsToUse = points.min(discountAmount);
-            discountAmount = discountAmount.subtract(pointsToUse);
+            BigDecimal pointsToUse = points.min(actualAmount);
+            actualAmount = actualAmount.subtract(pointsToUse);
 
             memberService.consumePoints(member.getId(), orderNo, pointsToUse, "订单使用");
         }
 
         // 如果优惠金额小于等于0，则直接返回0
-        if (discountAmount.compareTo(BigDecimal.ZERO) <= 0) {
+        if (actualAmount.compareTo(BigDecimal.ZERO) <= 0) {
             return BigDecimal.ZERO;
         }
 
-        return discountAmount;
+        return actualAmount;
 
     }
 } 
