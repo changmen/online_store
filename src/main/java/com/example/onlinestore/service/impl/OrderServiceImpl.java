@@ -99,7 +99,7 @@ public class OrderServiceImpl implements OrderService {
                 .setScale(2, RoundingMode.HALF_UP);
 
         order.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
-        order.setActualAmount(calculateOrderDiscountPrice(totalAmount,member).setScale(2, RoundingMode.HALF_UP));
+        order.setActualAmount(calculateOrderDiscountPrice(totalAmount, member).setScale(2, RoundingMode.HALF_UP));
 
         // 保存订单
         int effectRows = orderMapper.insert(order);
@@ -185,7 +185,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void payOrder(@Valid PaymentRequest request) {
+    public void payOrder(@NotNull @Valid PaymentRequest request) {
         OrderEntity order = orderMapper.findByIdAndMemberId(request.getOrderId(), request.getMemberId());
         if (order == null) {
             throw new BizException(ErrorCode.ORDER_NOT_FOUND, request.getOrderId());
@@ -235,7 +235,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void refundOrder(@Valid RefundRequest request) {
+    public void refundOrder(@NotNull @Valid RefundRequest request) {
         OrderEntity order = orderMapper.findByIdAndMemberId(request.getOrderId(), request.getMemberId());
         if (order == null) {
             throw new BizException(ErrorCode.ORDER_NOT_FOUND, request.getOrderId());

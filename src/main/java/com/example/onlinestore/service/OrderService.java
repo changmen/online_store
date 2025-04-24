@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
@@ -37,7 +38,7 @@ public interface OrderService {
      * @return 订单
      * @throws com.example.onlinestore.exceptions.BizException 当订单不存在或者查询DB失败，则抛出该异常
      */
-    Order getOrderByNo(@NotBlank String orderNo);
+    Order getOrderByNo(@NotBlank @NotBlank(message = "订单号不能为空") @Size(max = 32, message = "订单号长度不能超过32个字符") String orderNo);
 
     /**
      * 获取会员的订单列表
@@ -51,12 +52,13 @@ public interface OrderService {
     /**
      * 取消订单
      *
-     * @param id     订单ID
+     * @param id       订单ID
      * @param memberId 会员ID
-     * @param reason 取消原因
+     * @param reason   取消原因
      * @throws com.example.onlinestore.exceptions.BizException 当订单不存在或者查询DB失败，则抛出该异常
      */
-    void cancelOrder(@NotNull @Min(value = 1, message = "订单ID要大于0") Long id, @NotNull @Min(value = 1, message = "会员ID要大于0") Long memberId, String reason);
+    void cancelOrder(@NotNull @Min(value = 1, message = "订单ID要大于0") Long id, @NotNull @Min(value = 1, message = "会员ID要大于0") Long memberId,
+                     @Size(max = 128, message = "取消原因长度不能超过255个字符") String reason);
 
     /**
      * 支付订单
@@ -64,7 +66,7 @@ public interface OrderService {
      * @param request 支付请求
      * @throws com.example.onlinestore.exceptions.BizException 当订单不存在或者查询DB失败，则抛出该异常
      */
-    void payOrder(@Valid PaymentRequest request);
+    void payOrder(@NotNull @Valid PaymentRequest request);
 
     /**
      * 申请退款
@@ -72,5 +74,5 @@ public interface OrderService {
      * @param request 退款请求
      * @throws com.example.onlinestore.exceptions.BizException 当订单不存在或者查询DB失败，则抛出该异常
      */
-    void refundOrder(@Valid RefundRequest request);
+    void refundOrder(@NotNull @Valid RefundRequest request);
 } 

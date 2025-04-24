@@ -4,7 +4,7 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 @Getter
-public enum     ErrorCode {
+public enum ErrorCode {
     MEMBER_PASSWORD_INCORRECT("ErrorCode.Member.Password.Incorrect", "密码不正确"),
     INTERNAL_SERVER_ERROR("ErrorCode.Internal.Error", "系统内部错误"),
     MEMBER_NOT_FOUND("ErrorCode.Member.NotFound", "会员:{0}不存在"),
@@ -48,6 +48,7 @@ public enum     ErrorCode {
         this.code = code;
         this.defaultMessage = defaultMessage;
     }
+
     // 错误码
     private final String code;
 

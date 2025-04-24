@@ -6,6 +6,10 @@ import com.example.onlinestore.dto.*;
 import com.example.onlinestore.service.MemberService;
 import com.example.onlinestore.service.OrderService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +27,7 @@ public class OrderController {
     private MemberService memberService;
 
     @PostMapping
-    public Response<OrderResponse> createOrder(@Valid @RequestBody OrderRequest request) {
+    public Response<OrderResponse> createOrder(@NotNull @Valid @RequestBody OrderRequest request) {
         Member member = memberService.getLoginMember();
         request.setMemberId(member.getId());
         Order order = orderService.createOrder(request);
@@ -31,13 +35,13 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public Response<OrderResponse> getOrderById(@PathVariable Long id) {
+    public Response<OrderResponse> getOrderById(@PathVariable @NotNull(message = "订单ID不能为空") @Min(value = 1, message = "订单ID不能小于1") Long id) {
         Order order = orderService.getOrderById(id);
         return Response.success(OrderResponse.of(order));
     }
 
     @GetMapping("/no/{orderNo}")
-    public Response<OrderResponse> getOrderByNo(@PathVariable String orderNo) {
+    public Response<OrderResponse> getOrderByNo(@PathVariable @NotBlank(message = "订单号不能为空") @Size(max = 32, message = "订单号长度不能超过32个字符") String orderNo) {
         Order order = orderService.getOrderByNo(orderNo);
         return Response.success(OrderResponse.of(order));
     }
@@ -54,8 +58,8 @@ public class OrderController {
 
     @PostMapping("/{id}/cancel")
     public Response<Void> cancelOrder(
-            @PathVariable Long id,
-            @RequestParam(required = false) String reason) {
+            @PathVariable @NotNull(message = "订单ID不能为空") @Min(value = 1, message = "订单ID不能小于1") Long id,
+            @RequestParam(required = false) @Size(max = 255, message = "取消原因长度不能超过255个字符") String reason) {
         Member member = memberService.getLoginMember();
         orderService.cancelOrder(id, member.getId(), reason);
         return Response.success();
