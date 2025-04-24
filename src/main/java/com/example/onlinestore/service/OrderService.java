@@ -3,8 +3,6 @@ package com.example.onlinestore.service;
 import com.example.onlinestore.bean.Order;
 import com.example.onlinestore.dto.OrderRequest;
 import com.example.onlinestore.dto.Page;
-import com.example.onlinestore.dto.PaymentRequest;
-import com.example.onlinestore.dto.RefundRequest;
 import com.example.onlinestore.enums.OrderStatus;
 import com.example.onlinestore.enums.PaymentMethod;
 import jakarta.validation.Valid;
@@ -12,8 +10,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-
-import java.util.List;
 
 public interface OrderService {
     /**
