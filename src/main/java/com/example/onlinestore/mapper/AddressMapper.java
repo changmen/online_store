@@ -28,8 +28,7 @@ public interface AddressMapper {
      * 根据会员ID查找默认地址实体。
      *
      * @param memberId 会员ID
-     * @return 该会员的默认地址实体
-     * @throws com.example.onlinestore.exceptions.BizException 如果未找到默认地址，则抛出异常
+     * @return 该会员的默认地址实体，未找到时返回null
      */
     AddressEntity findDefaultByMemberId(Long memberId);
 
