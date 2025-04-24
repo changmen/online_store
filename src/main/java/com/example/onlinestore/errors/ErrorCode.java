@@ -46,6 +46,7 @@ public enum ErrorCode {
     ORDER_STATUS_NOT_SUPPORTED("ErrorCode.Order.Status.Not.Supported", "不支持的订单状态"),
     INVALID_PARAMETER("ErrorCode.Invalid.Parameter", "参数错误"),
     REFUND_LIMIT_EXCEEDED("ErrorCode.Refund.Limit.Exceeded", "退款次数超过限制"),
+    POINT_RULE_STATUS_NOT_SUPPORTED("ErrorCode.Point.Rule.Status.Not.Supported", "积分规则状态不支持"),
     ;
 
     ErrorCode(String code, String defaultMessage) {

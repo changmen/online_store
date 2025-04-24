@@ -63,10 +63,7 @@ public class OrderServiceImpl implements OrderService {
     private static final String REFUND_INVALID_REASON_LENGTH_MESSAGE = "退款原因长度不能超过255个字符";
     private static final String REFUND_INVALID_REASON_CONTENT_MESSAGE = "退款原因包含非法字符";
     private static final String REFUND_INVALID_REASON_FORMAT_MESSAGE = "退款原因格式不正确";
-    private static final String REFUND_INVALID_REASON_BLACKLIST_MESSAGE = "退款原因包含敏感词";
-    private static final String REFUND_INVALID_REASON_PATTERN_MESSAGE = "退款原因不符合规则";
     private static final String REFUND_INVALID_REASON_LENGTH_MIN_MESSAGE = "退款原因长度不能小于5个字符";
-    private static final String REFUND_INVALID_REASON_LENGTH_MAX_MESSAGE = "退款原因长度不能超过255个字符";
 
     @Value("${order.discount-rate:0.9}")
     private BigDecimal orderDiscountRate;
@@ -369,17 +366,17 @@ public class OrderServiceImpl implements OrderService {
             // 10. 发送退款完成事件
             try {
                 RefundCompletedEventData eventData = RefundCompletedEventData.builder()
-                    .orderId(order.getId())
-                    .orderNo(order.getOrderNo())
-                    .memberId(order.getMemberId())
-                    .refundId(refund.getId())
-                    .refundNo(refund.getRefundNo())
-                    .amount(refund.getAmount())
-                    .reason(refund.getReason())
-                    .refundTime(refund.getRefundTime())
-                    .eventType(REFUND_EVENT_TYPE)
-                    .eventTime(LocalDateTime.now())
-                    .build();
+                        .orderId(order.getId())
+                        .orderNo(order.getOrderNo())
+                        .memberId(order.getMemberId())
+                        .refundId(refund.getId())
+                        .refundNo(refund.getRefundNo())
+                        .amount(refund.getAmount())
+                        .reason(refund.getReason())
+                        .refundTime(refund.getRefundTime())
+                        .eventType(REFUND_EVENT_TYPE)
+                        .eventTime(LocalDateTime.now())
+                        .build();
 
                 eventPublisher.publishEvent(new OrderRefundCompletedEvent(eventData));
                 logger.info("退款完成事件发送成功，订单ID：{}，退款ID：{}", id, refund.getId());
@@ -417,8 +414,8 @@ public class OrderServiceImpl implements OrderService {
         order.setDiscountAmount(entity.getDiscountAmount());
         order.setShippingFee(entity.getShippingFee());
         order.setAddressId(entity.getAddressId());
-        order.setStatus(OrderStatus.valueOf(entity.getStatus()));
-        order.setPaymentMethod(PaymentMethod.valueOf(entity.getPaymentMethod()));
+        order.setStatus(entity.getStatus() == null ? null : OrderStatus.valueOf(entity.getStatus()));
+        order.setPaymentMethod(entity.getPaymentMethod() == null ? null : PaymentMethod.valueOf(entity.getPaymentMethod()));
         order.setPaymentTime(entity.getPaymentTime());
         order.setShippingTime(entity.getShippingTime());
         order.setCompletionTime(entity.getCompletionTime());

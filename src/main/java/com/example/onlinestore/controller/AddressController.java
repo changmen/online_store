@@ -53,9 +53,6 @@ public class AddressController {
     public Response<List<AddressResponse>> getAddressesByMemberId() {
         Member member = memberService.getLoginMember();
         List<Address> addresses = memberService.getAddressesByMemberId(member.getId());
-        if (addresses.isEmpty()) {
-            return Response.success(Collections.emptyList());
-        }
         List<AddressResponse> addressResponses = addresses.stream()
                 .map(AddressResponse::of)
                 .collect(Collectors.toList());

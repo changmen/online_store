@@ -5,10 +5,14 @@ import com.example.onlinestore.bean.PointRecord;
 import com.example.onlinestore.bean.PointRule;
 import com.example.onlinestore.dto.Response;
 import com.example.onlinestore.enums.PointRuleStatus;
+import com.example.onlinestore.errors.ErrorCode;
+import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.service.MemberService;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,8 +20,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/points")
+@RequestMapping("/api/v1/points")
 public class PointController {
+    private static final Logger logger = LoggerFactory.getLogger(PointController.class);
 
     @Autowired
     private MemberService memberService;
@@ -34,8 +39,16 @@ public class PointController {
     @PutMapping("/rules/{ruleId}/status")
     public Response<Void> updateRuleStatus(
             @PathVariable @NotNull @Min(value = 1, message = "规则ID必须大于0") Long ruleId,
-            @RequestParam @NotNull PointRuleStatus status) {
-        memberService.updateRuleStatus(ruleId, status);
+            @RequestParam @NotNull String status) {
+        PointRuleStatus ruleStatus;
+        try {
+            ruleStatus = PointRuleStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            logger.error("不支持的规则状态: {}", status, e);
+            throw new BizException(ErrorCode.POINT_RULE_STATUS_NOT_SUPPORTED);
+        }
+
+        memberService.updateRuleStatus(ruleId, ruleStatus);
         return Response.success();
     }
 

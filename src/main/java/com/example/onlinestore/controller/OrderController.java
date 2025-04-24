@@ -17,6 +17,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,12 +61,15 @@ public class OrderController {
                                                              @RequestParam(required = false) String orderStatus) {
         Member member = memberService.getLoginMember();
         OrderStatus status = null;
-        try {
-            status = OrderStatus.valueOf(orderStatus);
-        } catch (IllegalArgumentException e) {
-            logger.error("不支持的订单状态: {}", orderStatus, e);
-            throw new BizException(ErrorCode.ORDER_STATUS_NOT_SUPPORTED);
+        if (StringUtils.isNotBlank(orderStatus)) {
+            try {
+                status = OrderStatus.valueOf(orderStatus);
+            } catch (IllegalArgumentException e) {
+                logger.error("不支持的订单状态: {}", orderStatus, e);
+                throw new BizException(ErrorCode.ORDER_STATUS_NOT_SUPPORTED);
+            }
         }
+
         Page<Order> orders = orderService.getOrdersByMemberId(member.getId(), page, size, status);
         return Response.success(Page.of(orders.getItems().stream().map(OrderResponse::of).collect(Collectors.toList()), orders.getTotalCount(), orders.getPageNum(), orders.getPageSize()));
     }
