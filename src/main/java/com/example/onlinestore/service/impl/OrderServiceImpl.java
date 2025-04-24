@@ -1,5 +1,6 @@
 package com.example.onlinestore.service.impl;
 
+import com.example.onlinestore.bean.Member;
 import com.example.onlinestore.bean.Order;
 import com.example.onlinestore.bean.OrderItem;
 import com.example.onlinestore.dto.OrderItemRequest;
@@ -20,6 +21,7 @@ import com.example.onlinestore.mapper.OrderItemMapper;
 import com.example.onlinestore.mapper.OrderMapper;
 import com.example.onlinestore.mapper.OrderPaymentMapper;
 import com.example.onlinestore.mapper.OrderRefundMapper;
+import com.example.onlinestore.service.MemberService;
 import com.example.onlinestore.service.OrderService;
 import com.example.onlinestore.service.SkuService;
 import com.example.onlinestore.utils.OrderNoGenerator;
@@ -31,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +50,9 @@ public class OrderServiceImpl implements OrderService {
 
     private final static OrderNoGenerator orderNoGenerator = new TimestampOrderNoGenerator();
 
+    @Value("${order.discount-rate:0.9}")
+    private double orderDiscountRate;
+
     @Autowired
     private OrderMapper orderMapper;
 
@@ -62,16 +68,19 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private SkuService skuService;
 
+    @Autowired
+    private MemberService memberService;
+
     @Override
     @Transactional
     public Order createOrder(@NotNull @Valid OrderRequest request) {
+        Member member = memberService.getMemberById(request.getMemberId());
         //校验订单里的商品
         request.getItems().forEach(item -> {
             skuService.getSkuById(item.getSkuId());
             if (!skuService.checkStock(item.getSkuId(), item.getQuantity())) {
                 throw new BizException(ErrorCode.SKU_OUT_OF_STOCK, item.getSkuId());
             }
-
         });
         // 创建订单实体
         OrderEntity order = new OrderEntity();
@@ -90,7 +99,7 @@ public class OrderServiceImpl implements OrderService {
                 .setScale(2, RoundingMode.HALF_UP);
 
         order.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
-        order.setActualAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
+        order.setActualAmount(calculateOrderDiscountPrice(totalAmount,member).setScale(2, RoundingMode.HALF_UP));
 
         // 保存订单
         int effectRows = orderMapper.insert(order);
@@ -340,5 +349,26 @@ public class OrderServiceImpl implements OrderService {
         order.setItems(items);
 
         return order;
+    }
+
+    private BigDecimal calculateOrderDiscountPrice(BigDecimal totalAmount, Member member) {
+        //
+        BigDecimal discountAmount = totalAmount;
+        if (orderDiscountRate < 1 && orderDiscountRate > 0) {
+            discountAmount = discountAmount.multiply(BigDecimal.valueOf(orderDiscountRate));
+        }
+        //
+        BigDecimal points = memberService.getMemberPointBalance(member.getId());
+        // 积分抵扣， 一个积分抵用1元
+        if (points.compareTo(BigDecimal.ZERO) > 0 && points.compareTo(discountAmount) <= 0) {
+            discountAmount = discountAmount.subtract(points);
+        }
+
+        if (discountAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        return discountAmount;
+
     }
 } 
