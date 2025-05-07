@@ -42,9 +42,20 @@ public class Page<T> implements Serializable {
      */
     private int pageSize;
 
+    /**
+     * Creates an empty Page instance with default values.
+     */
     public Page() {
     }
 
+    /**
+     * Constructs a Page instance with the specified items and pagination metadata.
+     *
+     * @param items      the list of items for the current page
+     * @param total      the total number of records available
+     * @param pageNum    the current page number, starting from 1
+     * @param pageSize   the maximum number of records per page
+     */
     public Page(List<T> items, long total, int pageNum, int pageSize) {
         this.items = items;
         this.totalCount = total;
@@ -52,6 +63,17 @@ public class Page<T> implements Serializable {
         this.pageSize = pageSize;
     }
 
+    /**
+     * Creates a new {@code Page} instance with the specified items and pagination details.
+     * <p>
+     * If the provided items list is {@code null}, it is replaced with an empty list.
+     *
+     * @param items    the list of items for the current page, or {@code null} for an empty page
+     * @param total    the total number of records available
+     * @param pageNum  the current page number (starting from 1)
+     * @param pageSize the maximum number of records per page
+     * @return a new {@code Page} containing the specified items and pagination metadata
+     */
     public static <T> Page<T> of(List<T> items, long total, int pageNum, int pageSize) {
         if (items == null) {
             items = Collections.emptyList();

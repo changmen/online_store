@@ -40,6 +40,13 @@ public class MemberServiceImpl implements MemberService{
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
+    /**
+     * Authenticates a user with the provided login credentials and returns a JWT token upon successful authentication.
+     *
+     * @param request the login credentials containing username and password
+     * @return a LoginResponse containing the generated JWT token
+     * @throws BizException if the username does not exist or the password is incorrect
+     */
     @Override
     @Transactional
     public LoginResponse login(LoginRequest request) {

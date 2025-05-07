@@ -8,40 +8,43 @@ import jakarta.validation.constraints.NotNull;
 
 public interface BrandService {
     /**
-     * 根据品牌ID获取品牌信息
-     * @param id 品牌唯一标识符，不能为null
-     * @return 对应的品牌实体对象，如果不存在则返回null
-     */
+ * Retrieves a brand entity by its unique identifier.
+ *
+ * @param id the unique identifier of the brand; must not be null
+ * @return the corresponding Brand object, or null if no brand with the given id exists
+ */
     Brand getBrandById(@NotNull Long id);
 
-    /**
-     * 分页查询品牌列表，支持条件过滤和排序
-     * @param options 包含分页参数、过滤条件和排序规则的查询选项，必须有效且不为null
-     * @return 分页结果对象，包含品牌数据列表及分页信息
-     */
+    /****
+ * Returns a paginated list of brands based on the specified query options.
+ *
+ * @param options query options including pagination, filtering, and sorting criteria; must not be null
+ * @return a page containing the list of brands and pagination details
+ */
     Page<Brand> listBrands(@NotNull @Valid BrandListQueryOptions options);
 
     /**
-     * 新增品牌信息
-     * @param brand 待添加的品牌实体对象，必须有效且不为null（需包含品牌名称等必要属性）
-     * @return 新增成功的品牌实体对象（包含系统生成的ID等字段）
-     */
+ * Adds a new brand entity to the system.
+ *
+ * @param brand the brand entity to add; must be valid and not null
+ * @return the created brand entity, including system-generated fields such as the ID
+ */
     Brand tianJiaPingPai(@NotNull @Valid Brand brand);
 
     /**
-     * 根据品牌ID删除指定品牌
-     * @param id 品牌唯一标识符，不能为null
-     */
+ * Deletes the brand identified by the given ID.
+ *
+ * @param id the unique identifier of the brand to delete; must not be null
+ */
     void delteBrand(@NotNull  Long id);
 
     /**
-     * 更新指定ID的品牌信息
-     *
-     * @param id    品牌的唯一标识符，不能为null
-     * @param brand 包含新品牌信息的对象，需要满足校验规则（通过@Valid注解触发校验），不能为null
-     * @throws com.example.onlinestore.exceptions.BizException 当根据id找不到对应品牌记录，或者品牌名称重复时抛出业务异常
-     *
-     */
+ * Updates the brand information for the specified ID using the provided brand data.
+ *
+ * @param id the unique identifier of the brand to update; must not be null
+ * @param brand the new brand data; must be valid and not null
+ * @throws com.example.onlinestore.exceptions.BizException if the brand with the given ID does not exist or if the brand name duplicates an existing one
+ */
     void updateBrand(@NotNull Long id, @NotNull @Valid Brand brand);
 
 

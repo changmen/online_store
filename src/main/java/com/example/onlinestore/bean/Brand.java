@@ -82,9 +82,22 @@ public class Brand implements Serializable {
     @Range(min = 0, max = 1, message = "显示状态标识必须为0或1")
     private Integer visible;
 
+    /**
+     * Creates a new Brand instance with default values.
+     */
     public Brand() {
     }
 
+    /**
+     * Constructs a new Brand instance with the specified details, excluding the unique identifier.
+     *
+     * @param name the brand name
+     * @param description the brand description
+     * @param logo the brand logo URL or identifier
+     * @param story the brand story or details
+     * @param sortScore the numeric weight for sorting
+     * @param visible the display status flag (0 or 1)
+     */
     public Brand(String name, String description, String logo, String story,
                  Integer sortScore, Integer visible) {
         this.name = name;

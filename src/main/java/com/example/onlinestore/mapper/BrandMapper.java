@@ -11,55 +11,53 @@ import java.util.List;
 public interface BrandMapper {
 
     /**
-     * 插入品牌实体数据
-     *
-     * @param brandEntity 需要插入的品牌实体对象，包含品牌属性信息
-     * @return 受影响的数据行数，通常1表示成功，0表示失败
-     */
+ * Inserts a new brand record into the database.
+ *
+ * @param brandEntity the brand entity containing the details to insert
+ * @return the number of rows affected (1 if successful, 0 if insertion failed)
+ */
     int insert(BrandEntity brandEntity);
 
     /**
-     * 根据品牌ID查询品牌实体
-     *
-     * @param id 品牌唯一标识符，对应数据库主键
-     * @return 匹配的品牌实体对象，未找到时返回null
-     */
+ * Retrieves a brand entity by its unique identifier.
+ *
+ * @param id the unique identifier of the brand
+ * @return the matching BrandEntity, or null if no brand with the given ID exists
+ */
     BrandEntity findById(Long id);
 
     /**
-     * 根据品牌名称查询品牌实体
-     *
-     * @param name 需要精确匹配的品牌名称
-     * @return 匹配的品牌实体对象，未找到时返回null
-     */
+ * Retrieves a brand entity by its exact name.
+ *
+ * @param name the exact name of the brand to search for
+ * @return the matching BrandEntity, or null if no brand with the given name exists
+ */
     BrandEntity findByName(String name);
 
     /**
-     * 获取符合查询条件的所有品牌列表
-     *
-     * @param options 品牌查询选项对象，包含分页参数、排序规则、过滤条件等
-     * @return 品牌实体集合，当无符合条件数据时返回空集合
-     */
+ * Retrieves a list of brand entities matching the specified query options.
+ *
+ * @param options query options for filtering, sorting, and pagination
+ * @return a list of matching brand entities, or an empty list if none are found
+ */
     List<BrandEntity> findAllBrands(@Param("options") BrandListQueryOptions options);
 
     /**
-     * 根据品牌ID删除品牌记录
-     *
-     * @param id 品牌ID
-     * @return 受影响的数据行数，通常1表示成功，0表示未找到对应记录
-     */
+ * Deletes a brand record by its unique ID.
+ *
+ * @param id the unique identifier of the brand to delete
+ * @return the number of rows affected; 1 if the record was deleted, 0 if no matching record was found
+ */
     int deleteById(Long id);
 
     /**
-     * 更新品牌信息
-     *
-     * @param brandEntity 品牌实体对象，包含需要更新的品牌字段信息。
-     *                    必须包含有效的品牌ID作为更新条件，
-     *                    其他非空字段将被更新到数据库对应记录中
-     *
-     * @return 受影响的数据库记录行数。返回1表示更新成功，
-     *         返回0表示没有记录被更新（可能由于ID不存在或数据未变化）
-     */
+ * Updates an existing brand record with the non-null fields from the provided entity.
+ *
+ * The brand entity must include a valid ID to identify the record to update. Only fields that are not null will be updated in the database.
+ *
+ * @param brandEntity the brand entity containing the ID and fields to update
+ * @return the number of affected rows; 1 if the update was successful, or 0 if no record was updated (due to non-existent ID or unchanged data)
+ */
     int update(BrandEntity brandEntity);
 
 

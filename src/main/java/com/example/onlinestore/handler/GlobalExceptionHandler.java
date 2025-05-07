@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
     @Autowired
     private MessageSource messageSource;
 
+    /**
+     * Handles uncaught exceptions and returns a generic internal server error response.
+     *
+     * @return a failure response indicating an internal server error
+     */
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler({Exception.class, RuntimeException.class})
     public Response<String> handleException(Exception e) {
@@ -37,6 +42,12 @@ public class GlobalExceptionHandler {
         return Response.failWithInternalError();
     }
 
+    /**
+     * Handles validation exceptions for invalid method arguments and returns a failure response with details about the first invalid parameter.
+     *
+     * @param e the exception thrown when method argument validation fails
+     * @return a failure response containing the invalid parameter and error message, or a generic invalid request message if no specific errors are found
+     */
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Response<String> handleException(MethodArgumentNotValidException e) {
@@ -55,6 +66,17 @@ public class GlobalExceptionHandler {
         return Response.fail("Invalid request");
     }
 
+    /**
+     * Handles BizException by returning a failure response with a localized or default error message.
+     *
+     * If the exception contains an error code, attempts to resolve a localized message using the code.
+     * Falls back to the default message if localization fails or is unavailable.
+     * Formats the message with parameters if provided.
+     * Responds with HTTP 409 (Conflict).
+     *
+     * @param e the business exception to handle
+     * @return a failure response containing the resolved error message
+     */
     @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(BizException.class)
     public Response<String> handleException(BizException e) {
@@ -84,6 +106,12 @@ public class GlobalExceptionHandler {
         return Response.fail(message);
     }
 
+    /**
+     * Handles validation errors caused by constraint violations and returns a detailed failure response.
+     *
+     * @param e the exception containing constraint violation details
+     * @return a failure response with a message listing all invalid parameters and their error messages
+     */
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ConstraintViolationException.class)
     public Response<String> handleException(ConstraintViolationException e) {
