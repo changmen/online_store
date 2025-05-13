@@ -33,7 +33,7 @@ public class Brand implements Serializable {
      * - 非空约束
      */
     @NotNull(message = "名称字段不能为空")
-    @Size(max = 64, message = "名称字段最大长度不能超过64")
+    @Size(max = 30, message = "名称字段最大长度不能超过30")
     private String name;
 
     /**
