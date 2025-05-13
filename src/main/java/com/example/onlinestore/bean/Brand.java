@@ -29,7 +29,7 @@ public class Brand implements Serializable {
 
     /**
      * 名称字段
-     * - 最大长度限制：64字符
+     * - 最大长度限制：30字符
      * - 非空约束
      */
     @NotNull(message = "名称字段不能为空")
