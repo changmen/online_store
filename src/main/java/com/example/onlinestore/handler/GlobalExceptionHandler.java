@@ -2,6 +2,7 @@ package com.example.onlinestore.handler;
 
 import com.example.onlinestore.dto.Response;
 import com.example.onlinestore.exceptions.BizException;
+import jakarta.validation.ConstraintViolationException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -33,7 +34,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({Exception.class, RuntimeException.class})
     public Response<String> handleException(Exception e) {
         logger.error("Internal server error", e);
-        return Response.fail("INTERNAL ERROR");
+        return Response.failWithInternalError();
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -81,5 +82,18 @@ public class GlobalExceptionHandler {
             message = MessageFormat.format(message, e.getParams());
         }
         return Response.fail(message);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ConstraintViolationException.class)
+    public Response<String> handleException(ConstraintViolationException e) {
+        logger.error("ConstraintViolationException", e);
+        StringBuilder message = new StringBuilder("参数验证失败: ");
+        e.getConstraintViolations().forEach(violation ->
+                message.append(violation.getPropertyPath())
+                        .append(": ")
+                        .append(violation.getMessage())
+                        .append("; "));
+        return Response.fail(message.toString());
     }
 }
