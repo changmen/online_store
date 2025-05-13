@@ -40,6 +40,13 @@ public class BrandServiceImpl implements BrandService {
     @Autowired
     private BrandMapper brandMapper;
 
+    /**
+     * Retrieves a brand by its unique ID.
+     *
+     * @param id the unique identifier of the brand
+     * @return the corresponding Brand object
+     * @throws BizException if the brand is not found
+     */
     @Override
     public Brand getBrandById(@NotNull Long id) {
         BrandEntity brandEntity = brandMapper.findById(id);
@@ -51,6 +58,19 @@ public class BrandServiceImpl implements BrandService {
         return convertToBrand(brandEntity);
     }
 
+    /**
+     * Updates the details of an existing brand, except for its name.
+     *
+     * <p>
+     * The brand name is case-insensitively enforced to remain unchanged; attempting to modify it results in a forbidden operation exception.
+     * Only fields that differ from the current values (description, logo, story, sort score, visibility) are updated.
+     * If no fields are changed, the method returns without performing an update.
+     * Throws a business exception if the update fails or if the brand name is modified.
+     * </p>
+     *
+     * @param id the ID of the brand to update
+     * @param brand the new brand data (name must match existing brand)
+     */
     @Override
     public void updateBrand(@NotNull Long id, @NotNull @Valid Brand brand) {
         synchronized (BRAND_NAME_MODIFICATION_LOCK) {
@@ -85,6 +105,14 @@ public class BrandServiceImpl implements BrandService {
         }
     }
 
+    /**
+     * Returns a paginated list of brands based on the provided query options.
+     *
+     * The results can be sorted according to the specified order, or by a default order if none is provided.
+     *
+     * @param options query options including pagination and sorting preferences
+     * @return a page containing the list of brands and pagination metadata
+     */
     @Override
     public Page<Brand> listBrands(@NotNull @Valid BrandListQueryOptions options) {
         if (StringUtils.isNotBlank(options.getOrderBy())) {
@@ -98,6 +126,17 @@ public class BrandServiceImpl implements BrandService {
         return Page.of(brandEntities.stream().map(this::convertToBrand).toList(), pageInfo.getTotal(), options.getPageNum(), options.getPageSize());
     }
 
+    /**
+     * Adds a new brand to the system after validating the brand name for uniqueness and prohibited substrings.
+     *
+     * <p>
+     * The brand name must not contain the substring "假货" and is stored in uppercase. If a brand with the same name already exists, or if the name contains prohibited content, a business exception is thrown. Default values are assigned to sort score and visibility if not provided.
+     * </p>
+     *
+     * @param brand the brand information to add
+     * @return the added brand with generated fields populated
+     * @throws BizException if the brand name contains prohibited content, is duplicated, or if the insertion fails
+     */
     @Override
     public Brand tianJiaPingPai(@NotNull @Valid Brand brand) {
         // 品牌名称应该唯一
@@ -133,6 +172,12 @@ public class BrandServiceImpl implements BrandService {
         }
     }
 
+    /**
+     * Deletes a brand by its ID after verifying its existence.
+     *
+     * @param id the ID of the brand to delete
+     * @throws BizException if the brand does not exist or the deletion fails
+     */
     @Override
     public void delteBrand(@NotNull Long id) {
         // 校验品牌是否存在
@@ -148,7 +193,12 @@ public class BrandServiceImpl implements BrandService {
 
     }
 
-    // 将品牌实体转换为品牌对象
+    /**
+     * Converts a BrandEntity to a Brand DTO, applying default values for sort score and visibility if they are null.
+     *
+     * @param brandEntity the brand entity to convert
+     * @return the corresponding Brand DTO
+     */
     private Brand convertToBrand( @NotNull BrandEntity brandEntity) {
         Brand brand = new Brand();
         brand.setId(brandEntity.getId());

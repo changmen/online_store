@@ -15,6 +15,12 @@ public enum ErrorCode {
     BRAND_NAME_MODIFY_FORBIDDEN("ErrorCode.Brand.Name.Modify.Forbidden", "品牌名称不能修改"),
     BRAND_NAME_CONTAIN_SPECIAL_CHARACTER("ErrorCode.Brand.Name.Contain.Special.Character", "品牌名称不能包含特殊字符"),
     ;
+    /**
+     * Constructs an ErrorCode enum constant with the specified code and default message.
+     *
+     * @param code the unique identifier for the error code
+     * @param defaultMessage the default error message associated with the error code
+     */
     ErrorCode(String code, String defaultMessage) {
         this.code = code;
         this.defaultMessage = defaultMessage;

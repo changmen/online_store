@@ -5,15 +5,15 @@ import java.util.function.Consumer;
 
 public class CommonUtils {
     /**
-     * 更新字段值如果发生变更
+     * Updates a field using the provided setter if the new value is non-null and different from the old value.
      *
-     * 比较新旧值，当新值非空且与旧值不同时，调用setter方法更新字段值并返回更新状态
+     * Compares the new value to the old value using null-safe equality. If the new value is not null and not equal to the old value, the setter is invoked with the new value and the method returns {@code true}. Otherwise, no update occurs and {@code false} is returned.
      *
-     * @param <T> 值类型
-     * @param newValue 要设置的新值, 不允许为null，如果是null表示不更新
-     * @param oldValue 当前存储的旧值（用于比较）
-     * @param setter 实际执行字段更新的方法引用或lambda表达式
-     * @return true表示执行了字段更新，false表示未执行更新
+     * @param <T> the type of the value being compared and set
+     * @param newValue the new value to set; if {@code null}, no update is performed
+     * @param oldValue the current value to compare against
+     * @param setter a function that sets the field to the new value
+     * @return {@code true} if the field was updated; {@code false} otherwise
      */
     public static <T> boolean updateFieldIfChanged(T newValue, T oldValue, Consumer<T> setter) {
         // 当新值有效且与旧值不同时执行更新
