@@ -23,7 +23,7 @@
         <mvn.compiler.plugin.version>3.14.0</mvn.compiler.plugin.version>
         <common.collections.version>3.2.2</common.collections.version>
         <jjwt.version>0.11.5</jjwt.version>
-        <lombok.version>1.18.30</lombok.version>
+        <lombok.version>1.18.36</lombok.version>
         <pagehelper.version>2.1.0</pagehelper.version>
         <mybatis.version>3.0.3</mybatis.version>
     </properties>
