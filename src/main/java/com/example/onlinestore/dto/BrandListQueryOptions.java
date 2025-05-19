@@ -33,7 +33,6 @@ public class BrandListQueryOptions extends PageRequest {
      * - 1: 显示状态
      */
     @Range(min = 0, max = 1, message = "显示状态标识必须为0或1")
-    @NotNull(message = "显示状态标识不能为空")
     private Integer visible;
 
     /**
