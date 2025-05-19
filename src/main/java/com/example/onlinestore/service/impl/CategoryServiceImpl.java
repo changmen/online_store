@@ -128,7 +128,7 @@ public class CategoryServiceImpl implements CategoryService, InitializingBean, D
 
                 rootCategories = newRoots;
             } catch (Throwable t) {
-                LOGGER.error("Load category failed", t);
+                LOGGER.error("Load category failed。 cause:", t);
             }
         }
 
