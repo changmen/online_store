@@ -28,11 +28,12 @@ public class BrandListQueryOptions extends PageRequest {
     private static final long serialVersionUID = 1406567832771578631L;
 
     /**
-     * 显示状态标识
+     * 显示状态标识, 当为空的时候，表示不进行显示状态过滤
      * - 0: 隐藏状态
      * - 1: 显示状态
      */
     @Range(min = 0, max = 1, message = "显示状态标识必须为0或1")
+    @NotNull(message = "显示状态标识不能为空")
     private Integer visible;
 
     /**
