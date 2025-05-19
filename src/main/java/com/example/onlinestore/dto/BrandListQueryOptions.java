@@ -47,9 +47,9 @@ public class BrandListQueryOptions extends PageRequest {
      * - 用于存储需要过滤的品牌标识列表
      * - 空列表表示不进行品牌过滤
      * - 包含非空元素时表示需要匹配指定品牌,
-     * - 不能超过100 id的查询， 超过后需要通过分页参数进行查询
+     * - 不能超过80 id的查询， 超过后需要通过分页参数进行查询
      */
-    @Size(max = 100)
+    @Size(max = 80)
     private List<Long> brandIds;
 
 }
