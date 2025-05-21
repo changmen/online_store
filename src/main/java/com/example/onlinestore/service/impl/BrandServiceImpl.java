@@ -78,7 +78,7 @@ public class BrandServiceImpl implements BrandService {
 
             updatingBrandEntity.setUpdatedAt(LocalDateTime.now());
             int effectRows = brandMapper.update(updatingBrandEntity);
-            if (effectRows != 1) {
+            if (effectRows == 0) {
                 logger.error("update brand failed. because effect rows is 0. brandName:{}", brand.getName());
                 throw new BizException(ErrorCode.INTERNAL_ERROR);
             }
