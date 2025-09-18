@@ -1,6 +1,14 @@
-# Online Store
+# 🛒 智慧商城 (Online Store)
 
-这是一个基于Spring Cloud的在线商店项目。
+> 基于 Spring Cloud 微服务架构的现代化电商平台
+
+[![Java](https://img.shields.io/badge/Java-17-orange)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1.5-brightgreen)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2022.0.4-blue)](https://spring.io/projects/spring-cloud)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue)](https://www.mysql.com/)
+[![Redis](https://img.shields.io/badge/Redis-6.0+-red)](https://redis.io/)
+
+这是一个功能完整的在线商店项目，采用微服务架构设计，提供用户管理、商品展示、购物车、订单处理等核心电商功能。
 
 ## 技术栈
 
