@@ -14,7 +14,11 @@ public class SkuEntity implements Serializable {
 
     private Long id;
     private Long itemId;
+    private String skuCode;
     private String title;
+    private BigDecimal price;
+    private Integer stock;
+    private String attributes; // JSON格式的SKU属性
     // SKU图片，JSON格式
     private String images;
     private LocalDateTime createdAt;
@@ -35,6 +39,38 @@ public class SkuEntity implements Serializable {
 
     public void setItemId(Long itemId) {
         this.itemId = itemId;
+    }
+
+    public String getSkuCode() {
+        return skuCode;
+    }
+
+    public void setSkuCode(String skuCode) {
+        this.skuCode = skuCode;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+
+    public String getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(String attributes) {
+        this.attributes = attributes;
     }
 
     public String getTitle() {

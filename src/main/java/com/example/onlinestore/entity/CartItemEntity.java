@@ -13,7 +13,6 @@ public class CartItemEntity implements Serializable {
     private Long itemId;
     private Long skuId;
     private Integer quantity;
-    private Boolean selected;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -55,14 +54,6 @@ public class CartItemEntity implements Serializable {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
-    }
-
-    public Boolean getSelected() {
-        return selected;
-    }
-
-    public void setSelected(Boolean selected) {
-        this.selected = selected;
     }
 
     public LocalDateTime getCreatedAt() {

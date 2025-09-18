@@ -35,6 +35,10 @@ public class Response<T> implements Serializable {
         return new Response<>(false, message, null);
     }
     
+    public static <T> Response<T> fail(String message, T data) {
+        return new Response<>(false, message, data);
+    }
+    
     public boolean isSuccess() {
         return success;
     }
