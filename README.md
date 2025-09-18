@@ -1,4 +1,12 @@
-# Online Store
+# 🛒 Online Store - 企业级在线商城系统
+
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2022.0.4-blue.svg)](https://spring.io/projects/spring-cloud)
+[![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://openjdk.java.net/projects/jdk/17/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg)](https://www.mysql.com/)
+[![Redis](https://img.shields.io/badge/Redis-6.0+-red.svg)](https://redis.io/)
+
+> 一个功能完善、架构清晰的企业级在线商城系统，基于Spring Cloud微服务架构，支持商品管理、用户管理、订单管理、评论系统等核心电商功能。
 
 这是一个基于Spring Cloud的在线商店项目。
 
