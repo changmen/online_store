@@ -31,6 +31,11 @@ public enum ErrorCode {
     ATTRIBUTE_TYPE_NOT_SKU("ErrorCode.Attribute.Type.Not.SKU", "属性:{0}类型不是SKU类型"),
     SKU_ATTRIBUTE_INPUT_TYPE_INVALID("ErrorCode.SKU.Attribute.Input.Type.Invalid", "SKU属性:{0}输入类型只能是单选或多选"),
     SKU_ATTRIBUTE_VALUE_EMPTY("ErrorCode.SKU.Attribute.Value.Empty", "SKU属性值:{0}不能为空"),
+    
+    // 地址相关错误码
+    ADDRESS_NOT_FOUND("ErrorCode.Address.NotFound", "地址不存在"),
+    ADDRESS_LIMIT_EXCEEDED("ErrorCode.Address.Limit.Exceeded", "地址数量已达上限"),
+    ADDRESS_PERMISSION_DENIED("ErrorCode.Address.Permission.Denied", "无权限访问此地址"),
     ;
     ErrorCode(String code, String defaultMessage) {
         this.code = code;
