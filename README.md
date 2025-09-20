@@ -1,6 +1,21 @@
-# Online Store
+# 🛒 Online Store - 微服务电商平台
 
-这是一个基于Spring Cloud的在线商店项目。
+一个基于 Spring Cloud 微服务架构的现代化电商平台，提供完整的在线购物解决方案。
+
+[![Java](https://img.shields.io/badge/Java-17+-orange.svg)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2022.0.4-blue.svg)](https://spring.io/projects/spring-cloud)
+[![MyBatis](https://img.shields.io/badge/MyBatis-3.0.2-red.svg)](https://mybatis.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+## ✨ 项目特色
+
+- 🏗️ **微服务架构**: 基于 Spring Cloud 构建的分布式系统
+- 🔐 **安全认证**: JWT Token 认证机制
+- 📊 **数据持久化**: MyBatis + MySQL 8.0 数据库方案
+- ⚡ **缓存优化**: Redis 缓存提升系统性能
+- 🌐 **国际化支持**: 多语言界面支持
+- 📝 **完善日志**: 用户行为日志记录
 
 ## 技术栈
 
