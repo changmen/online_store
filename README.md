@@ -1,6 +1,6 @@
-# Online Store
+# 🛒 在线商店系统 (Online Store System)
 
-这是一个基于Spring Cloud的在线商店项目。
+基于Spring Boot 3.1.5 + Spring Cloud的现代化电商平台，提供商品管理、用户认证、购物车等完整功能。
 
 ## 技术栈
 
