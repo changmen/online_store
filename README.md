@@ -1,6 +1,6 @@
-# Online Store
+# 🛒 Online Store - 企业级在线商城系统
 
-这是一个基于Spring Cloud的在线商店项目。
+> 基于 Spring Cloud 微服务架构的现代化电商平台，提供完整的商品管理、用户管理和订单处理功能。
 
 ## 技术栈
 
