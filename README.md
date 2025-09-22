@@ -1,6 +1,15 @@
-# Online Store
+# 🛒 在线商店系统 (Online Store System)
 
-这是一个基于Spring Cloud的在线商店项目。
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg)](https://www.mysql.com/)
+[![Redis](https://img.shields.io/badge/Redis-6.0+-red.svg)](https://redis.io/)
+
+> 🚀 一个现代化的、高性能的在线商店系统，基于Spring Cloud微服务架构构建
+
+## 📋 项目简介
+
+这是一个功能完整的在线商店系统，采用前后端分离架构设计，支持商品管理、用户管理、订单处理等核心电商功能。项目使用最新的Spring Boot 3.x技术栈，具有高可扩展性和高性能特点。
 
 ## 技术栈
 
