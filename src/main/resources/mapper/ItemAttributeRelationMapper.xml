@@ -4,6 +4,7 @@
     <resultMap id="itemAttributeRelationResultMap" type="com.example.onlinestore.entity.ItemAttributeRelationEntity">
         <id property="id" column="id"/>
         <result property="itemId" column="item_id"/>
+        <result property="skuId" column="sku_id"/>
         <result property="attributeId" column="attribute_id"/>
         <result property="valueId" column="value_id"/>
         <result property="inputValue" column="input_value"/>
@@ -12,34 +13,34 @@
     </resultMap>
     <!-- 基础字段映射 -->
     <sql id="Base_Column_List">
-        `id`, `item_id`, `attribute_id`, `value_id`, `input_value`, `created_at`, `updated_at`
+        `id`, `item_id`, `sku_id`, `attribute_id`, `value_id`, `input_value`, `created_at`, `updated_at`
     </sql>
 
     <!-- 单条插入 -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="id"
             parameterType="com.example.onlinestore.entity.ItemAttributeRelationEntity">
         INSERT INTO `item_attribute_relation`
-            (`item_id`, `attribute_id`, `value_id`, `input_value`)
+            (`item_id`, `sku_id`, `attribute_id`, `value_id`, `input_value`, `created_at`, `updated_at`)
         VALUES
-            (#{itemId}, #{attributeId}, #{valueId}, #{inputValue})
+            (#{itemId}, #{skuId}, #{attributeId}, #{valueId}, #{inputValue}, #{createdAt}, #{updatedAt})
     </insert>
 
     <!-- 批量插入 -->
     <insert id="batchInsert" parameterType="java.util.List">
         INSERT INTO `item_attribute_relation`
-        (`item_id`, `attribute_id`, `value_id`, `input_value`)
+        (`item_id`, `sku_id`, `attribute_id`, `value_id`, `input_value`, `created_at`, `updated_at`)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.itemId}, #{item.attributeId}, #{item.valueId}, #{item.inputValue})
+            (#{item.itemId}, #{item.skuId}, #{item.attributeId}, #{item.valueId}, #{item.inputValue}, #{item.createdAt}, #{item.updatedAt})
         </foreach>
     </insert>
 
     <!-- 根据物品ID查询 -->
-    <select id="findByItemId" resultType="com.example.onlinestore.entity.ItemAttributeRelationEntity">
+    <select id="findByItemIdAndSkuId" resultType="com.example.onlinestore.entity.ItemAttributeRelationEntity">
         SELECT
         <include refid="Base_Column_List"/>
         FROM `item_attribute_relation`
-        WHERE `item_id` = #{itemId}
+        WHERE `item_id` = #{itemId} AND `sku_id` = #{skuId}
     </select>
 
     <!-- 复合条件删除 -->
@@ -57,4 +58,12 @@
             #{attributeId}
         </foreach>
     </delete>
+
+    <select id="findByAttributeId" resultMap="itemAttributeRelationResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `item_attribute_relation`
+        WHERE `attribute_id` = #{attributeId}
+        LIMIT #{offset}, #{limit}
+    </select>
 </mapper>

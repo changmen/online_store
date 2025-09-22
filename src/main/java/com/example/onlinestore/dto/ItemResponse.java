@@ -1,5 +1,6 @@
 package com.example.onlinestore.dto;
 
+import com.example.onlinestore.bean.ItemAttributeAndValue;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -51,7 +52,7 @@ public class ItemResponse implements Serializable {
      * 扩展属性集合
      * 每个元素对应一个业务维度特征
      */
-    private List<AttributeResponse> attributes;
+    private List<ItemAttributeAndValue> attributes;
 
     /**
      * 所属分类的唯一标识

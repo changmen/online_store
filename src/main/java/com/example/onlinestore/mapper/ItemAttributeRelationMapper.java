@@ -28,9 +28,10 @@ public interface ItemAttributeRelationMapper {
      * 根据物品ID查询关联属性列表
      *
      * @param itemId 需要查询关联属性的物品ID
+     * @param skuId 需要查询的sku ID
      * @return 匹配的关联属性实体列表（可能为空列表）
      */
-    List<ItemAttributeRelationEntity> findByItemId(Long itemId);
+    List<ItemAttributeRelationEntity> findByItemIdAndSkuId(@Param("itemId") Long itemId, @Param("skuId") Long skuId);
 
     /**
      * 根据复合条件删除关联关系
@@ -44,10 +45,10 @@ public interface ItemAttributeRelationMapper {
     /**
      * 根据条目ID和属性ID列表删除关联记录
      *
-     * @param itemId 要删除的关联条目ID，非空
+     * @param itemId       要删除的关联条目ID，非空
      * @param attributeIds 要删除的属性ID列表，非空列表
      * @return 返回被删除的记录数量。当返回值大于0时表示成功删除指定数量的记录，
-     *         返回0表示没有符合条件的记录被删除
+     * 返回0表示没有符合条件的记录被删除
      */
     int deleteByItemIdAndAttributeIds(@Param("itemId") Long itemId, @Param("attributeIds") List<Long> attributeIds);
 
@@ -56,11 +57,11 @@ public interface ItemAttributeRelationMapper {
      * 分页查询指定属性和商品的关联关系
      *
      * @param attributeId 属性唯一标识，不能为null
-     * @param offset 分页起始位置偏移量（从0开始计数）
-     * @param limit 每页最大返回记录数
+     * @param offset      分页起始位置偏移量（从0开始计数）
+     * @param limit       每页最大返回记录数
      * @return 符合查询条件的商品属性关联实体列表，当无结果时返回空列表
      */
-    List<ItemAttributeRelationEntity> findByItemIdAndAttributeId(@Param("attributeId") Long attributeId, @Param("offset") int offset, @Param("limit") int limit);
+    List<ItemAttributeRelationEntity> findByAttributeId(@Param("attributeId") Long attributeId, @Param("offset") int offset, @Param("limit") int limit);
 
 
 }

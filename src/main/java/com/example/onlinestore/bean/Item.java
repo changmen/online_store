@@ -66,7 +66,7 @@ public class Item implements Serializable {
     /**
      * 商品属性集合，用于描述商品的各种属性信息
      */
-    private List<Attribute> attributes;
+    private List<ItemAttributeAndValue> attributes;
 
 
 

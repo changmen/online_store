@@ -1,7 +1,9 @@
 package com.example.onlinestore.entity;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -12,6 +14,8 @@ import java.time.LocalDateTime;
  */
 @Setter
 @Getter
+@EqualsAndHashCode
+@ToString
 public class ItemAccessLogEntity implements Serializable {
 
     @Serial

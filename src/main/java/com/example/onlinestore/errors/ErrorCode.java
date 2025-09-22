@@ -9,6 +9,7 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR("ErrorCode.Internal.Error", "系统内部错误"),
     MEMBER_NOT_FOUND("ErrorCode.Member.NotFound", "会员:{0}不存在"),
     MEMBER_EXISTED("ErrorCode.Member.Existed", "会员:{0}已存在"),
+    MEMBER_NOT_LOGIN("ErrorCode.Member.Not.Login", "会员未登录"),
     ITEM_NOT_FOUND("ErrorCode.Item.NotFound", "商品不存在"),
     BRAND_NOT_FOUND("ErrorCode.Brand.NotFound", "品牌不存在"),
     BRAND_NAME_DUPLICATED("ErrorCode.Brand.Name.Duplicated", "品牌名称:{0}已存在"),
@@ -25,7 +26,11 @@ public enum ErrorCode {
     SKU_NOT_FOUND("ErrorCode.Sku.NotFound", "商品SKU不存在"),
     SKU_STOCK_INSUFFICIENT("ErrorCode.Sku.Stock.Insufficient", "商品库存不足"),
     CART_ITEM_NOT_FOUND("ErrorCode.Cart.Item.NotFound", "购物车项不存在"),
-    ATTRIBUTE_IS_REFERENCE_BY_ITEM("ErrorCode.Attribute.Is.Reference.By.Item", "属性:{0}已被商品引用，不能删除")
+    ATTRIBUTE_IS_REFERENCE_BY_ITEM("ErrorCode.Attribute.Is.Reference.By.Item", "属性:{0}已被商品引用，不能删除"),
+    SKU_WARNING_QUANTITY_EXCEEDS_STOCK_QUANTITY("ErrorCode.SKU.Warning.Quantity.Exceeds.Stock.Quantity", "SKU预警库存数量不能超过库存数量"),
+    ATTRIBUTE_TYPE_NOT_SKU("ErrorCode.Attribute.Type.Not.SKU", "属性:{0}类型不是SKU类型"),
+    SKU_ATTRIBUTE_INPUT_TYPE_INVALID("ErrorCode.SKU.Attribute.Input.Type.Invalid", "SKU属性:{0}输入类型只能是单选或多选"),
+    SKU_ATTRIBUTE_VALUE_EMPTY("ErrorCode.SKU.Attribute.Value.Empty", "SKU属性值:{0}不能为空"),
     ;
     ErrorCode(String code, String defaultMessage) {
         this.code = code;

@@ -48,7 +48,7 @@ public class Sku implements Serializable {
     private BigDecimal price;
 
     /**
-     * 是否为默认规格（true：默认展示规格）
+     * 是否为默认规格（1：默认展示规格）
      */
     private Integer defaultSku;
 
@@ -75,6 +75,6 @@ public class Sku implements Serializable {
     /**
      * 规格参数
      */
-    private List<SkuSpec> specs;
+    private List<ItemAttributeAndValue> attributes;
 
 } 
