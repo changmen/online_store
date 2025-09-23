@@ -1,6 +1,11 @@
-# Online Store
+# 🛒 Online Store - 现代化在线商城系统
 
-这是一个基于Spring Cloud的在线商店项目。
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2022.0.4-blue.svg)](https://spring.io/projects/spring-cloud)
+[![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> 🚀 一个功能完整、高性能的在线商城系统，基于Spring Cloud微服务架构构建，提供现代化的电商解决方案。
 
 ## 技术栈
 
