@@ -17,6 +17,37 @@
 - 📦 **数据存储**: MySQL + Redis缓存优化
 - 🔌 **服务治理**: Nacos注册中心与配置中心
 
+## 📚 文档导航
+
+- 📚 [API 接口文档](docs/API.md) - 详细的 API 接口说明和示例
+- ⚙️ [环境配置指南](docs/SETUP.md) - 开发环境搭建和配置说明
+- 📊 [数据库设计](src/main/resources/sql/init.sql) - 完整的数据库表结构和初始化数据
+
+## 🏢 项目架构
+
+```
+src/main/java/com/example/onlinestore/
+├── bean/          # 业务对象定义
+├── config/        # 配置类（Security、Redis、MyBatis等）
+├── controller/    # REST API 控制器
+├── dto/           # 数据传输对象（请求/响应）
+├── entity/        # 数据库实体类
+├── enums/         # 枚举类定义
+├── exceptions/    # 自定义异常
+├── handler/       # 全局异常处理器
+├── mapper/        # MyBatis 数据访问层
+├── security/      # 安全配置（JWT、过滤器）
+├── service/       # 业务逻辑层
+└── utils/         # 工具类
+```
+
+### 核心模块
+
+- **用户管理**: 会员注册、登录认证、JWT令牌管理
+- **商品管理**: 商品CRUD、分类管理、品牌管理、SKU管理
+- **属性管理**: 商品属性定义、属性值管理、关联关系
+- **数据统计**: 商品访问日志、用户行为分析
+
 ## 🛠️ 技术栈
 
 | 类别 | 技术 | 版本 |
