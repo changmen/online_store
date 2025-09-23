@@ -98,8 +98,24 @@ online-store/
    ```
 
 3. **初始化数据库**
+   ```bash
+   # 创建数据库
+   mysql -u root -p
+   ```
    ```sql
    CREATE DATABASE online_store DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   USE online_store;
+   
+   # 执行数据库脚本（按顺序执行）
+   SOURCE src/main/resources/sql/category_table.sql;
+   SOURCE src/main/resources/sql/brand_table.sql;
+   SOURCE src/main/resources/sql/attribute_table.sql;
+   SOURCE src/main/resources/sql/attribute_value_table.sql;
+   SOURCE src/main/resources/sql/item_table_table.sql;
+   SOURCE src/main/resources/sql/sku_table.sql;
+   SOURCE src/main/resources/sql/item_attribute_relation_table.sql;
+   SOURCE src/main/resources/sql/member_table.sql;
+   SOURCE src/main/resources/sql/item_access_log_table.sql;
    ```
 
 4. **配置环境变量**
@@ -154,7 +170,10 @@ online-store/
 | `SPRING_PROFILES_ACTIVE` | Spring 配置文件 | `local` | ❌ |
 | `ADMIN_USERNAME` | 管理员用户名 | `admin` | ❌ |
 | `ADMIN_PASSWORD` | 管理员密码 | `admin123` | ❌ |
+| `MYSQL_PASSWORD` | MySQL 数据库密码 | `123456` | ❌ |
 | `NACOS_ENABLED` | 是否启用 Nacos | `false` | ❌ |
+| `NACOS_SERVER_ADDR` | Nacos 服务器地址 | `localhost:8848` | ❌ |
+| `NACOS_NAMESPACE` | Nacos 命名空间 | - | ❌ |
 
 #### 数据库配置
 
@@ -166,6 +185,22 @@ online-store/
 
 如需修改，请编辑 `application.yaml` 文件。
 
+#### 数据库架构
+
+系统包含以下主要数据表：
+
+- `category` - 商品分类表
+- `brand` - 品牌表
+- `attribute` - 属性表
+- `attribute_value` - 属性值表
+- `item` - 商品主表
+- `sku` - SKU表（库存单位）
+- `item_attribute_relation` - 商品属性关联表
+- `member` - 用户表
+- `item_access_log` - 商品访问日志表
+
+所有数据表创建脚本位于 `src/main/resources/sql/` 目录下。
+
 ## 🔍 API 文档
 
 启动应用后，访问以下地址查看 API 文档：
@@ -176,12 +211,29 @@ online-store/
 
 ### 主要 API 端点
 
-- `POST /api/auth/login` - 用户登录
-- `POST /api/auth/register` - 用户注册
-- `GET /api/products` - 获取商品列表
-- `POST /api/products` - 创建商品
-- `GET /api/orders` - 获取订单列表
-- `POST /api/orders` - 创建订单
+#### 用户管理 API
+- `POST /api/members/register` - 用户注册
+- `POST /api/members/login` - 用户登录
+- `GET /api/members/profile` - 获取用户信息
+
+#### 商品管理 API
+- `GET /api/items` - 获取商品列表
+- `POST /api/items` - 创建商品
+- `GET /api/items/{id}` - 获取商品详情
+- `PUT /api/items/{id}` - 更新商品信息
+- `DELETE /api/items/{id}` - 删除商品
+
+#### 分类品牌 API
+- `GET /api/categories` - 获取商品分类
+- `POST /api/categories` - 创建分类
+- `GET /api/brands` - 获取品牌列表
+- `POST /api/brands` - 创建品牌
+
+#### 属性管理 API
+- `GET /api/attributes` - 获取属性列表
+- `POST /api/attributes` - 创建属性
+- `PUT /api/attributes/{id}` - 更新属性
+- `DELETE /api/attributes/{id}` - 删除属性
 
 ## 🧪 测试
 
@@ -190,10 +242,26 @@ online-store/
 mvn test
 
 # 运行特定测试类
-mvn test -Dtest=UserServiceTest
+mvn test -Dtest=MessageSourceTest
+
+# 跳过测试构建
+mvn clean package -DskipTests
 
 # 生成测试报告
 mvn surefire-report:report
+
+# 运行集成测试
+mvn verify
+```
+
+### 测试覆盖率
+
+```bash
+# 生成测试覆盖率报告
+mvn jacoco:report
+
+# 查看覆盖率报告
+open target/site/jacoco/index.html
 ```
 
 ## 📦 部署
@@ -241,6 +309,22 @@ mvn surefire-report:report
 - 提交信息使用 [Conventional Commits](https://www.conventionalcommits.org/) 规范
 - 所有 API 都需要有对应的单元测试
 - 新功能需要更新相应的文档
+- 数据库表结构变更需要提供对应的 SQL 脚本
+- 国际化文本放在 `src/main/resources/i18n/` 目录下
+- 所有业务异常使用 `BizException` 统一处理
+
+### 代码结构说明
+
+- `bean/` - 业务对象和数据传输对象
+- `config/` - 配置类（Redis、MyBatis、Security等）
+- `controller/` - REST API 控制器
+- `dto/` - 数据传输对象和请求响应类
+- `entity/` - 数据库实体类
+- `enums/` - 枚举类型定义
+- `mapper/` - MyBatis 数据访问层
+- `service/` - 业务逻辑层
+- `security/` - 安全相关类（JWT等）
+- `utils/` - 工具类
 
 ## ❓ 常见问题
 
