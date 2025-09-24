@@ -1,6 +1,6 @@
-# 🛒 Enterprise Online Store Platform | 企业级在线商城系统
+# 🛒 企业级在线商城系统 | Enterprise Online Store Platform
 
-> A modern e-commerce solution based on Spring Cloud microservices architecture, integrating product management, user system, security authentication and other core functions
+> 基于 Spring Cloud 微服务架构的现代电商解决方案，集成商品管理、用户系统、安全认证等核心功能
 
 ## ✨ Features
 
