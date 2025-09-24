@@ -205,4 +205,20 @@ spring:
 
 ---
 
-⭐ 如果这个项目对你有帮助，请给我们一个星标！ 
+⭐ 如果这个项目对你有帮助，请给我们一个星标！
+
+## 📄 English Summary
+
+This is an **Enterprise Online Store Platform** built with modern Java technologies including Spring Boot 3.4.3, Spring Cloud 2024.0.0, and Spring Security. The system features a complete microservices architecture with:
+
+- **Product Management**: Categories, brands, attributes, and SKU management
+- **User System**: Member registration, authentication with JWT tokens
+- **Security**: Spring Security integration with role-based access control
+- **Database**: MySQL 8.0 with MyBatis ORM and Redis caching
+- **Cloud Native**: Nacos service discovery and configuration management
+- **Storage**: Alibaba Cloud OSS integration for file storage
+- **DevOps**: Docker containerization and Docker Compose orchestration
+
+The project follows enterprise-level development standards with comprehensive API documentation, health monitoring, and scalable architecture design. Perfect for learning modern Java enterprise development or as a foundation for building production e-commerce systems.
+
+**Tech Stack**: Java 17, Spring Boot, Spring Cloud, Spring Security, MySQL, Redis, Docker, Nacos 
