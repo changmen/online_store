@@ -8,7 +8,7 @@
 
 基于Spring Boot + Spring Cloud的现代化在线商店系统，提供完整的电商业务功能，包括商品管理、品牌管理、用户管理、属性管理等核心模块。
 
-## ✨ 核心功能
+## ✨ Core Features
 
 ### 🛍️ 商品管理
 - 商品CRUD操作
@@ -37,7 +37,7 @@
 - 商品访问记录
 - 用户行为追踪
 
-## 🛠️ 技术栈
+## 🛠️ Technology Stack
 
 ### 后端框架
 - **Spring Boot**: 3.4.3
@@ -64,7 +64,7 @@
 - **Aliyun OSS**: 3.18.1 - 对象存储
 - **Jackson**: JSON处理
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 online-store/
@@ -116,7 +116,7 @@ online-store/
 └── pom.xml                          # Maven配置
 ```
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
 ### 环境要求
 - **JDK**: 17或更高版本
@@ -222,7 +222,7 @@ curl http://localhost:8080/actuator/health
 curl http://localhost:8080/api/v1/categories/1
 ```
 
-## 📡 API接口
+## 📡 API Endpoints
 
 ### 用户管理
 - `POST /api/v1/members/registry` - 用户注册
@@ -251,7 +251,7 @@ curl http://localhost:8080/api/v1/categories/1
 
 > 📖 详细API文档请查看各Controller类中的接口定义
 
-## 🔧 配置说明
+## 🔧 Configuration
 
 ### 多环境配置
 - `application.yaml` - 基础配置
@@ -292,7 +292,7 @@ jwt:
   expiration: 86400  # 24小时
 ```
 
-## 🧪 测试
+## 🧪 Testing
 
 ```bash
 # 运行单元测试
@@ -305,7 +305,7 @@ mvn verify
 mvn surefire-report:report
 ```
 
-## 📦 部署
+## 📦 Deployment
 
 ### Docker部署
 ```bash
@@ -329,7 +329,7 @@ docker run -d \
 4. **日志**: 配置ELK日志收集
 5. **安全**: 配置HTTPS和防火墙规则
 
-## 🔍 监控与运维
+## 🔍 Monitoring & Operations
 
 ### 健康检查
 - 应用健康状态: `http://localhost:8080/actuator/health`
@@ -343,7 +343,7 @@ export LOGGING_LEVEL_ROOT=INFO
 export LOGGING_LEVEL_COM_EXAMPLE_ONLINESTORE=DEBUG
 ```
 
-## 🤝 贡献指南
+## 🤝 Contributing
 
 1. Fork 项目
 2. 创建功能分支: `git checkout -b feature/AmazingFeature`
@@ -357,11 +357,11 @@ export LOGGING_LEVEL_COM_EXAMPLE_ONLINESTORE=DEBUG
 - 添加必要的注释和文档
 - 确保测试覆盖率
 
-## 📄 许可证
+## 📄 License
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
 
-## 🔗 相关链接
+## 🔗 Related Links
 
 - [Spring Boot 官方文档](https://spring.io/projects/spring-boot)
 - [Spring Cloud 官方文档](https://spring.io/projects/spring-cloud)
