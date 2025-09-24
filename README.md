@@ -2,16 +2,16 @@
 
 > A modern e-commerce solution based on Spring Cloud microservices architecture, integrating product management, user system, security authentication and other core functions
 
-## ✨ 项目特色
+## ✨ Features
 
-- 🏗️ **微服务架构**：采用Spring Cloud生态构建分布式系统
-- 🔐 **安全认证**：集成Spring Security + JWT认证体系
-- 📦 **商品管理**：完整的商品分类、品牌、属性管理系统
-- 👤 **用户体系**：会员注册、登录、权限管理
-- 🚀 **容器化部署**：支持Docker和Docker Compose一键部署
-- ☁️ **云原生**：集成Nacos服务发现与配置中心
-- 📊 **监控运维**：Spring Boot Actuator健康检查
-- 🗃️ **对象存储**：集成阿里云OSS文件存储服务
+- 🏗️ **Microservices Architecture**: Built with Spring Cloud ecosystem for distributed systems
+- 🔐 **Security Authentication**: Integrated Spring Security + JWT authentication system
+- 📦 **Product Management**: Complete product categorization, brand, and attribute management system
+- 👤 **User System**: Member registration, login, and permission management
+- 🚀 **Containerized Deployment**: Support Docker and Docker Compose one-click deployment
+- ☁️ **Cloud Native**: Integrated Nacos service discovery and configuration center
+- 📊 **Monitoring & Operations**: Spring Boot Actuator health checks
+- 🗃️ **Object Storage**: Integrated Alibaba Cloud OSS file storage service
 
 ## 🛠️ 技术栈
 
