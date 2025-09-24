@@ -1,4 +1,6 @@
-# Online Store
+# 🛒 企业级在线商城系统 | Enterprise Online Store Platform
+
+> 基于 Spring Cloud 微服务架构的现代电商解决方案，集成商品管理、用户系统、安全认证等核心功能
 
 这是一个基于Spring Cloud的在线商店项目。
 
