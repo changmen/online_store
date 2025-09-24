@@ -1,4 +1,4 @@
-# 🛍️ Online Store - Spring Cloud 微服务电商平台
+# 🛍️ Online Store - Spring Cloud Microservices E-commerce Platform
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2022.0.4-blue.svg)](https://spring.io/projects/spring-cloud)
@@ -6,7 +6,7 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg)](https://www.mysql.com/)
 [![Redis](https://img.shields.io/badge/Redis-6.0+-red.svg)](https://redis.io/)
 
-> 一个基于 Spring Cloud 微服务架构的现代化在线商店平台，采用最新的 Java 17 和 Spring Boot 3.x 技术栈构建。
+> A modern online store platform based on Spring Cloud microservices architecture, built with the latest Java 17 and Spring Boot 3.x technology stack.
 
 ## 技术栈
 
