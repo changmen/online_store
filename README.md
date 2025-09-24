@@ -8,7 +8,7 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.2.0-blue.svg)](https://www.mysql.com/)
 [![Redis](https://img.shields.io/badge/Redis-Latest-red.svg)](https://redis.io/)
 
-## ✨ 功能特性
+## ✨ Features
 
 - 🛍️ **商品管理**：商品信息管理、SKU管理、商品属性配置
 - 🏷️ **品牌管理**：品牌信息维护、品牌与商品关联
@@ -19,31 +19,31 @@
 - 🚀 **云原生**：支持Docker容器化部署
 - 📈 **监控健康检查**：Spring Boot Actuator集成
 
-## 🛠️ 技术栈
+## 🛠️ Tech Stack
 
-### 核心框架
+### Core Framework
 - **Java 17** - 现代化的Java开发平台
 - **Spring Boot 3.4.3** - 简化Spring应用开发
 - **Spring Cloud 2024.0.0** - 微服务架构支持
 - **Spring Security** - 安全认证框架
 
-### 数据存储
+### Data Storage
 - **MySQL 8.2.0** - 关系型数据库
 - **Redis (Jedis 5.2.0)** - 缓存和会话存储
 - **MyBatis 3.0.3** - 持久层框架
 - **PageHelper 2.1.0** - 分页插件
 
-### 服务发现与配置
+### Service Discovery & Configuration
 - **Nacos 2.2.0** - 服务注册发现和配置管理
 - **Spring Cloud Alibaba** - 阿里云生态集成
 
-### 工具库
+### Utilities
 - **Lombok** - 简化Java代码
 - **JWT (jjwt 0.11.5)** - JSON Web Token认证
 - **Apache Commons Lang3** - 通用工具类
 - **Aliyun OSS** - 阿里云对象存储
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 online-store/
@@ -79,9 +79,9 @@ online-store/
 └── README.md                                  # 项目说明文档
 ```
 
-## ⚡ 快速开始
+## ⚡ Quick Start
 
-### 环境要求
+### Prerequisites
 
 - ☕ **JDK 17** 或更高版本
 - 📦 **Maven 3.6+** 或 **Gradle 7.0+**
@@ -89,9 +89,9 @@ online-store/
 - 🚀 **Redis 6.0+**
 - 🐳 **Docker & Docker Compose** (可选)
 
-### 本地开发环境搭建
+### Local Development Setup
 
-#### 方式一：使用 Docker Compose (推荐)
+#### Option 1: Using Docker Compose (Recommended)
 
 1. **启动基础服务**
    ```bash
@@ -121,7 +121,7 @@ online-store/
    java --add-opens java.base/java.lang=ALL-UNNAMED -jar target/online-store-1.0-SNAPSHOT.jar
    ```
 
-#### 方式二：手动安装依赖服务
+#### Option 2: Manual Installation
 
 1. **安装并启动 MySQL**
    ```bash
@@ -143,7 +143,7 @@ online-store/
 
 3. **配置和启动应用**（同上述步骤3-4）
 
-### 🔧 配置说明
+### 🔧 Configuration
 
 主要配置项位于 `src/main/resources/application.yml`：
 
@@ -170,9 +170,9 @@ spring:
         server-addr: localhost:8848
 ```
 
-## 🚀 部署
+## 🚀 Deployment
 
-### Docker 部署
+### Docker Deployment
 
 1. **构建镜像**
    ```bash
@@ -188,7 +188,7 @@ spring:
      online-store:latest
    ```
 
-## 📖 API 文档
+## 📖 API Documentation
 
 应用启动后，可以通过以下方式访问：
 
@@ -196,7 +196,7 @@ spring:
 - **健康检查**: http://localhost:8080/actuator/health
 - **API接口**: 详见各Controller类的接口定义
 
-### 主要接口
+### Main APIs
 
 | 模块 | 接口路径 | 说明 |
 |------|----------|------|
@@ -206,7 +206,7 @@ spring:
 | 会员管理 | `/api/members/*` | 用户信息管理 |
 | 属性管理 | `/api/attributes/*` | 商品属性配置 |
 
-## 🧪 测试
+## 🧪 Testing
 
 ```bash
 # 运行所有测试
@@ -219,17 +219,17 @@ mvn test -Dtest=ItemControllerTest
 mvn surefire-report:report
 ```
 
-## 🔍 监控和运维
+## 🔍 Monitoring & Operations
 
-### 健康检查
+### Health Check
 - **端点**: `/actuator/health`
 - **详细信息**: `/actuator/info`
 - **指标监控**: `/actuator/metrics`
 
-### 日志配置
+### Logging Configuration
 项目使用 Logback 进行日志管理，日志级别可在配置文件中调整。
 
-## 🤝 贡献指南
+## 🤝 Contributing
 
 1. Fork 本仓库
 2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
@@ -237,15 +237,15 @@ mvn surefire-report:report
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 开启 Pull Request
 
-## 📝 更新日志
+## 📝 Changelog
 
 详见 [CHANGELOG.md](CHANGELOG.md)
 
-## 📄 许可证
+## 📄 License
 
 本项目采用 [MIT License](LICENSE) 许可证。
 
-## 📞 联系方式
+## 📞 Contact
 
 如有问题或建议，请通过以下方式联系：
 
