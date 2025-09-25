@@ -1,6 +1,6 @@
-# Online Store
+# 🛒 在线商店系统 (Online Store)
 
-这是一个基于Spring Cloud的在线商店项目。
+一个基于Spring Cloud微服务架构的现代化电商平台，提供完整的在线购物解决方案。
 
 ## 技术栈
 
