@@ -1,10 +1,10 @@
-# AttributeServiceImpl 单元测试说明
+# AttributeServiceImpl Unit Test Documentation
 
-## 概述
+## Overview
 
 本文档描述了为 `AttributeServiceImpl` 类生成的单元测试，包含了完整的测试覆盖和测试说明。
 
-## 测试文件
+## Test Files
 
 ### 1. AttributeServiceImplTest.java
 完整的单元测试文件，包含所有方法的详细测试用例。
@@ -12,9 +12,9 @@
 ### 2. AttributeServiceImplSimpleTest.java  
 简化版本的单元测试，主要用于快速验证核心功能。
 
-## 测试覆盖范围
+## Test Coverage
 
-### 已测试的方法
+### Tested Methods
 
 1. **createAttribute** - 创建属性
    - ✅ 成功创建属性
@@ -58,20 +58,20 @@
    - ✅ 插入新关系失败时抛出异常
    - ✅ 没有新关系需要插入时正常返回
 
-## 测试框架和工具
+## Test Framework and Tools
 
 - **JUnit 5** - 主要测试框架
 - **Mockito** - Mock 对象框架
 - **Spring Boot Test** - Spring Boot 测试支持
 
-## Mock 对象
+## Mock Objects
 
 测试中使用以下 Mock 对象：
 - `AttributeMapper` - 属性数据访问层
 - `AttributeValueMapper` - 属性值数据访问层  
 - `ItemAttributeRelationMapper` - 商品属性关系数据访问层
 
-## 测试数据
+## Test Data
 
 测试使用的示例数据：
 - 属性名称：颜色、尺寸
@@ -79,9 +79,9 @@
 - 输入类型：INPUT、SINGLE_SELECT、MULTI_SELECT
 - 属性值：红色、蓝色等
 
-## 运行测试
+## Running Tests
 
-### 使用 Maven 运行
+### Using Maven
 ```bash
 # 运行所有测试
 mvn test
@@ -93,10 +93,10 @@ mvn test -Dtest=AttributeServiceImplTest
 mvn test -Dtest=AttributeServiceImplSimpleTest
 ```
 
-### 使用 IDE 运行
+### Using IDE
 在 IDE 中可以直接右键点击测试类或测试方法运行。
 
-## 测试结果预期
+## Expected Test Results
 
 所有测试用例都应该通过，验证了以下内容：
 1. 正常业务流程的正确性
@@ -104,11 +104,11 @@ mvn test -Dtest=AttributeServiceImplSimpleTest
 3. 数据库操作的正确调用
 4. 业务逻辑的准确性
 
-## 代码覆盖率
+## Code Coverage
 
 测试覆盖了 `AttributeServiceImpl` 类的所有公共方法和主要业务逻辑分支，预期代码覆盖率应该达到 90% 以上。
 
-## 注意事项
+## Notes
 
 1. 测试使用了 Mock 对象，不会实际操作数据库
 2. 测试数据是预设的，确保测试的可重复性
