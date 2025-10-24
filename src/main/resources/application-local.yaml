@@ -7,9 +7,9 @@ spring:
     default-property-inclusion: non_null
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/online_store?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
-    password: ${MYSQL_PASSWORD:123456}
+    password: ${MYSQL_PASSWORD:}
   data:
     redis:
       host: localhost
@@ -30,5 +30,5 @@ mybatis:
     map-underscore-to-camel-case: true
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:mySecretKey2024ForOnlineStoreApplication}
   expiration: 86400 # 24 hours in seconds
