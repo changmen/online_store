@@ -1,8 +1,8 @@
-# Online Store - 在线商店系统
+# Online Store
 
 一个基于Spring Boot + MyBatis的现代化在线商店系统，支持商品管理、用户管理、订单处理等核心电商功能。
 
-## ✨ 核心功能
+## ✨ Core Features
 
 - 🔐 **用户管理** - 用户注册、登录、JWT认证
 - 🛍️ **商品管理** - 商品CRUD、商品详情、商品搜索
@@ -14,33 +14,33 @@
 - 🔧 **配置中心** - 支持Nacos配置管理
 - 🐳 **容器化** - Docker支持
 
-## 🛠️ 技术栈
+## 🛠️ Tech Stack
 
-### 后端框架
+### Backend Framework
 - **JDK 17** - Java运行环境
 - **Spring Boot 3.4.3** - 主框架
 - **Spring Cloud 2024.0.0** - 微服务框架
 - **Spring Security** - 安全认证
 - **Spring Data Redis** - Redis集成
 
-### 数据层
+### Data Layer
 - **MyBatis 3.0.3** - ORM框架
 - **PageHelper 2.1.0** - 分页插件
 - **MySQL 8.2.0** - 关系型数据库
 - **Redis (Jedis 5.2.0)** - 缓存数据库
 
-### 工具库
+### Utilities
 - **JWT 0.11.5** - Token认证
 - **Lombok 1.18.36** - 代码简化
 - **Apache Commons** - 工具类库
 - **Jackson** - JSON处理
 - **Aliyun OSS 3.18.1** - 对象存储
 
-### 服务治理
+### Service Governance
 - **Nacos 2.2.0** - 配置中心和服务发现
 - **Spring Cloud Alibaba** - 阿里云生态集成
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 online-store/
@@ -79,9 +79,9 @@ online-store/
 └── pom.xml                                    # Maven配置
 ```
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 环境要求
+### Prerequisites
 
 - **JDK 17+** - Java开发环境
 - **Maven 3.6+** - 构建工具
@@ -89,7 +89,7 @@ online-store/
 - **Redis 6.0+** - 缓存服务
 - **Docker** (可选) - 容器化部署
 
-### 方式一：本地开发运行
+### Option 1: Local Development
 
 1. **克隆项目**
 ```bash
@@ -132,7 +132,7 @@ mvn clean package
 java --add-opens java.base/java.lang=ALL-UNNAMED -jar target/online-store-1.0-SNAPSHOT.jar
 ```
 
-### 方式二：Docker部署
+### Option 2: Docker Deployment
 
 ```bash
 # 构建镜像
@@ -142,7 +142,7 @@ docker build -t online-store .
 docker-compose --profile all up -d
 ```
 
-## 📋 API文档
+## 📋 API Documentation
 
 应用启动后，可通过以下地址访问：
 
@@ -150,7 +150,7 @@ docker-compose --profile all up -d
 - **健康检查**: http://localhost:8080/actuator/health
 - **应用信息**: http://localhost:8080/actuator/info
 
-### 主要API端点
+### Main API Endpoints
 
 | 模块 | 端点 | 描述 |
 |------|------|------|
@@ -162,9 +162,9 @@ docker-compose --profile all up -d
 | 属性管理 | `POST /api/v1/attributes` | 创建属性 |
 | 属性管理 | `GET /api/v1/attributes/{attributeId}` | 获取属性详情 |
 
-## ⚙️ 配置说明
+## ⚙️ Configuration
 
-### 数据库配置
+### Database Configuration
 
 修改 `src/main/resources/application-local.yaml`：
 
@@ -176,7 +176,7 @@ spring:
     password: ${MYSQL_PASSWORD:123456}
 ```
 
-### Redis配置
+### Redis Configuration
 
 ```yaml
 spring:
@@ -188,7 +188,7 @@ spring:
       database: 0
 ```
 
-### JWT配置
+### JWT Configuration
 
 ```yaml
 jwt:
@@ -196,9 +196,9 @@ jwt:
   expiration: 86400  # 24小时
 ```
 
-## 🔧 开发指南
+## 🔧 Development Guide
 
-### 代码规范
+### Code Standards
 
 - 使用 **Lombok** 简化实体类代码
 - 遵循 **RESTful API** 设计规范
@@ -206,20 +206,20 @@ jwt:
 - 使用 **@Transactional** 管理事务
 - 统一异常处理和响应格式
 
-### 数据库设计
+### Database Design
 
 - 统一使用 `created_at` 和 `updated_at` 字段
 - 主键使用自增 `BIGINT` 类型
 - 字符编码统一使用 `utf8mb4`
 - 合理建立索引提升查询性能
 
-### 缓存策略
+### Caching Strategy
 
 - 商品详情使用Redis缓存，TTL为30分钟
 - 分层缓存架构，支持缓存穿透保护
 - 使用JSON序列化存储复杂对象
 
-## 🧪 测试
+## 🧪 Testing
 
 ```bash
 # 运行单元测试
@@ -232,7 +232,7 @@ mvn integration-test
 mvn test jacoco:report
 ```
 
-## 📦 构建部署
+## 📦 Build & Deployment
 
 ```bash
 # 本地构建
@@ -245,14 +245,14 @@ mvn clean package -DskipTests
 docker build -t online-store:latest .
 ```
 
-## 🔍 监控运维
+## 🔍 Monitoring & Operations
 
 - **应用监控**: Spring Boot Actuator
 - **日志管理**: 支持分级日志输出
 - **配置管理**: 支持Nacos动态配置
 - **服务发现**: 支持Nacos服务注册发现
 
-## 🤝 贡献指南
+## 🤝 Contributing
 
 1. Fork 本仓库
 2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
@@ -260,11 +260,11 @@ docker build -t online-store:latest .
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 开启 Pull Request
 
-## 📄 许可证
+## 📄 License
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
-## 📞 联系方式
+## 📞 Contact
 
 如有问题或建议，请通过以下方式联系：
 
