@@ -1,111 +1,111 @@
-# 📦 Online Store - 在线商店系统
+# 📦 Online Store
 
-这是一个基于 Spring Cloud 和 Spring Boot 的现代化在线商店后端系统，采用微服务架构设计，支持商品管理、用户管理、订单处理等核心电商功能。
+A modern e-commerce backend system based on Spring Cloud and Spring Boot, featuring microservices architecture with support for product management, user management, order processing, and other core e-commerce functionalities.
 
-## ✨ 特性
+## ✨ Features
 
-- 🔐 基于 JWT 的安全认证和授权
-- 🏗️ 微服务架构，支持 Nacos 服务注册与发现
-- 💾 Redis 缓存支持，提升系统性能
-- 📝 完整的 RESTful API 设计
-- 🔧 灵活的配置管理
-- 🐳 Docker 容器化部署支持
-- 📊 分页查询支持（PageHelper）
-- 📦 阿里云 OSS 文件存储集成
+- 🔐 JWT-based security authentication and authorization
+- 🏗️ Microservices architecture with Nacos service registration and discovery
+- 💾 Redis caching support for enhanced performance
+- 📝 Complete RESTful API design
+- 🔧 Flexible configuration management
+- 🐳 Docker containerization deployment support
+- 📊 Pagination query support (PageHelper)
+- 📦 Aliyun OSS file storage integration
 
-## 🛠️ 技术栈
+## 🛠️ Tech Stack
 
-### 核心框架
+### Core Frameworks
 - **JDK**: 17
 - **Spring Boot**: 3.4.3
 - **Spring Cloud**: 2024.0.0
 - **Spring Cloud Alibaba**: 2022.0.0.0
 - **Spring Security**: 安全认证框架
 
-### 数据存储
-- **MySQL**: 8.2.0 - 主数据库
-- **Redis**: 5.2.0 (Jedis) - 缓存
-- **MyBatis**: 3.0.3 - ORM 框架
-- **PageHelper**: 2.1.0 - 分页插件
+### Data Storage
+- **MySQL**: 8.2.0 - Main database
+- **Redis**: 5.2.0 (Jedis) - Cache
+- **MyBatis**: 3.0.3 - ORM framework
+- **PageHelper**: 2.1.0 - Pagination plugin
 
-### 服务治理
-- **Nacos**: 2.2.0 - 服务注册与配置中心
+### Service Governance
+- **Nacos**: 2.2.0 - Service registration and configuration center
 
-### 其他组件
-- **JWT**: 0.11.5 - 身份验证
-- **Lombok**: 1.18.36 - 简化代码
-- **Aliyun OSS**: 3.18.1 - 对象存储
-- **Apache Commons**: 工具库
+### Other Components
+- **JWT**: 0.11.5 - Authentication
+- **Lombok**: 1.18.36 - Code simplification
+- **Aliyun OSS**: 3.18.1 - Object storage
+- **Apache Commons**: Utility library
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 online-store/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/example/onlinestore/
-│   │   │   ├── OnlineStoreApplication.java    # 应用启动类
-│   │   │   ├── bean/                           # Bean 配置
-│   │   │   ├── config/                         # 配置类
-│   │   │   ├── constants/                      # 常量定义
-│   │   │   ├── controller/                     # REST 控制器
+│   │   │   ├── OnlineStoreApplication.java    # Application entry point
+│   │   │   ├── bean/                           # Bean configuration
+│   │   │   ├── config/                         # Configuration classes
+│   │   │   ├── constants/                      # Constant definitions
+│   │   │   ├── controller/                     # REST controllers
 │   │   │   │   ├── AttributeController.java
 │   │   │   │   ├── BrandController.java
 │   │   │   │   ├── CategoryController.java
 │   │   │   │   ├── ItemController.java
 │   │   │   │   ├── ItemDetailController.java
 │   │   │   │   └── MemberController.java
-│   │   │   ├── dto/                            # 数据传输对象
-│   │   │   ├── entity/                         # 实体类
-│   │   │   ├── enums/                          # 枚举类
-│   │   │   ├── errors/                         # 错误处理
-│   │   │   ├── exceptions/                     # 自定义异常
-│   │   │   ├── handler/                        # 处理器
+│   │   │   ├── dto/                            # Data transfer objects
+│   │   │   ├── entity/                         # Entity classes
+│   │   │   ├── enums/                          # Enum classes
+│   │   │   ├── errors/                         # Error handling
+│   │   │   ├── exceptions/                     # Custom exceptions
+│   │   │   ├── handler/                        # Handlers
 │   │   │   ├── mapper/                         # MyBatis Mapper
-│   │   │   ├── security/                       # 安全配置
-│   │   │   ├── service/                        # 业务逻辑层
-│   │   │   └── utils/                          # 工具类
+│   │   │   ├── security/                       # Security configuration
+│   │   │   ├── service/                        # Business logic layer
+│   │   │   └── utils/                          # Utility classes
 │   │   └── resources/
-│   │       ├── application.yaml                # 主配置文件
-│   │       └── mapper/                         # MyBatis XML 映射文件
-│   └── test/                                   # 测试代码
-├── scripts/                                    # 脚本工具
-├── docker-compose.yaml                         # Docker Compose 配置
-├── Dockerfile                                  # Docker 镜像构建文件
-├── pom.xml                                     # Maven 项目配置
-└── README.md                                   # 项目文档
+│   │       ├── application.yaml                # Main configuration file
+│   │       └── mapper/                         # MyBatis XML mapping files
+│   └── test/                                   # Test code
+├── scripts/                                    # Script tools
+├── docker-compose.yaml                         # Docker Compose configuration
+├── Dockerfile                                  # Docker image build file
+├── pom.xml                                     # Maven project configuration
+└── README.md                                   # Project documentation
 ```
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 环境要求
+### Requirements
 
-- **JDK**: 17 或更高版本
-- **Maven**: 3.6 或更高版本
-- **MySQL**: 8.0 或更高版本
-- **Redis**: 6.0 或更高版本
+- **JDK**: 17 or higher
+- **Maven**: 3.6 or higher
+- **MySQL**: 8.0 or higher
+- **Redis**: 6.0 or higher
 
-### 本地开发
+### Local Development
 
-#### 1. 启动依赖服务（使用 Docker Compose）
+#### 1. Start dependent services (using Docker Compose)
 
 ```bash
-# 启动 MySQL 和 Redis
+# Start MySQL and Redis
 docker-compose --profile all up -d
 
-# 仅启动 MySQL
+# Start MySQL only
 docker-compose --profile without-redis up -d
 ```
 
-#### 2. 创建数据库
+#### 2. Create database
 
 ```sql
 CREATE DATABASE online_store DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-#### 3. 配置环境变量（可选）
+#### 3. Configure environment variables (optional)
 
-创建 `.env` 文件或设置系统环境变量：
+Create a `.env` file or set system environment variables:
 
 ```bash
 export JWT_SECRET=your-secret-key-here
@@ -115,9 +115,9 @@ export SPRING_PROFILES_ACTIVE=local
 export NACOS_ENABLED=false
 ```
 
-#### 4. 修改配置文件
+#### 4. Modify configuration file
 
-编辑 `src/main/resources/application.yaml`，根据实际情况修改以下配置：
+Edit `src/main/resources/application.yaml` and update the following configuration:
 
 ```yaml
 spring:
@@ -131,53 +131,53 @@ spring:
       port: 6379
 ```
 
-#### 5. 运行应用程序
+#### 5. Run the application
 
-**方式一：使用 Maven**
+**Option 1: Using Maven**
 
 ```bash
-# 添加 JVM 参数运行
+# Run with JVM arguments
 mvn spring-boot:run -Dspring-boot.run.jvmArguments="--add-opens java.base/java.lang=ALL-UNNAMED"
 ```
 
-**方式二：IDE 运行**
+**Option 2: Run in IDE**
 
-在 IDE 中配置 VM 参数：
+Configure VM arguments in your IDE:
 ```
 --add-opens java.base/java.lang=ALL-UNNAMED
 ```
 
-然后运行 `OnlineStoreApplication.java`
+Then run `OnlineStoreApplication.java`
 
-**方式三：打包后运行**
+**Option 3: Run packaged JAR**
 
 ```bash
-# 打包
+# Package
 mvn clean package -DskipTests
 
-# 运行
+# Run
 java --add-opens java.base/java.lang=ALL-UNNAMED -jar target/online-store-1.0-SNAPSHOT.jar
 ```
 
-#### 6. 验证服务
+#### 6. Verify the service
 
-应用启动后，访问：
-- **健康检查**: http://localhost:8080/actuator/health
-- **API 接口**: http://localhost:8080/
+After the application starts, visit:
+- **Health check**: http://localhost:8080/actuator/health
+- **API endpoints**: http://localhost:8080/
 
-默认用户名和密码：
-- 用户名: `admin`
-- 密码: `admin123`
+Default credentials:
+- Username: `admin`
+- Password: `admin123`
 
-## 🐳 Docker 部署
+## 🐳 Docker Deployment
 
-### 构建镜像
+### Build image
 
 ```bash
 docker build -t online-store:latest .
 ```
 
-### 运行容器
+### Run container
 
 ```bash
 docker run -d \
@@ -188,97 +188,97 @@ docker run -d \
   online-store:latest
 ```
 
-## 📝 API 文档
+## 📝 API Documentation
 
-主要 API 端点：
+Main API endpoints:
 
-### 商品管理
-- `GET /items` - 获取商品列表
-- `GET /items/{id}` - 获取商品详情
-- `POST /items` - 创建商品
-- `PUT /items/{id}` - 更新商品
-- `DELETE /items/{id}` - 删除商品
+### Product Management
+- `GET /items` - Get product list
+- `GET /items/{id}` - Get product details
+- `POST /items` - Create product
+- `PUT /items/{id}` - Update product
+- `DELETE /items/{id}` - Delete product
 
-### 品牌管理
-- `GET /brands` - 获取品牌列表
-- `GET /brands/{id}` - 获取品牌详情
-- `POST /brands` - 创建品牌
+### Brand Management
+- `GET /brands` - Get brand list
+- `GET /brands/{id}` - Get brand details
+- `POST /brands` - Create brand
 
-### 分类管理
-- `GET /categories` - 获取分类列表
-- `GET /categories/{id}` - 获取分类详情
+### Category Management
+- `GET /categories` - Get category list
+- `GET /categories/{id}` - Get category details
 
-### 用户管理
-- `GET /members` - 获取用户列表
-- `GET /members/{id}` - 获取用户详情
+### User Management
+- `GET /members` - Get member list
+- `GET /members/{id}` - Get member details
 
-### 属性管理
-- `GET /attributes` - 获取属性列表
+### Attribute Management
+- `GET /attributes` - Get attribute list
 
-## ⚙️ 配置说明
+## ⚙️ Configuration
 
-### 环境变量
+### Environment Variables
 
-| 变量名 | 说明 | 默认值 |
+| Variable | Description | Default Value |
 |--------|------|--------|
-| `JWT_SECRET` | JWT 密钥（必需） | - |
-| `ADMIN_USERNAME` | 管理员用户名 | admin |
-| `ADMIN_PASSWORD` | 管理员密码 | admin123 |
-| `SPRING_PROFILES_ACTIVE` | 激活的配置文件 | local |
-| `NACOS_ENABLED` | 是否启用 Nacos | false |
+| `JWT_SECRET` | JWT secret key (required) | - |
+| `ADMIN_USERNAME` | Admin username | admin |
+| `ADMIN_PASSWORD` | Admin password | admin123 |
+| `SPRING_PROFILES_ACTIVE` | Active profile | local |
+| `NACOS_ENABLED` | Enable Nacos | false |
 
-### 配置文件说明
+### Configuration Files
 
-- `application.yaml` - 主配置文件
-- `bootstrap.yaml` - Bootstrap 配置（如果使用 Nacos）
+- `application.yaml` - Main configuration file
+- `bootstrap.yaml` - Bootstrap configuration (if using Nacos)
 
-## 🧪 测试
+## 🧪 Testing
 
 ```bash
-# 运行所有测试
+# Run all tests
 mvn test
 
-# 运行测试并生成报告
+# Run tests and generate report
 mvn test jacoco:report
 ```
 
-## 📦 打包部署
+## 📦 Build & Deployment
 
 ```bash
-# 清理并打包
+# Clean and package
 mvn clean package
 
-# 跳过测试打包
+# Package without tests
 mvn clean package -DskipTests
 ```
 
-生成的 JAR 文件位于 `target/online-store-1.0-SNAPSHOT.jar`
+The generated JAR file is located at `target/online-store-1.0-SNAPSHOT.jar`
 
-## 🔧 开发工具
+## 🔧 Development Tools
 
-项目包含 `scripts/` 目录，提供一些实用脚本：
+The project includes a `scripts/` directory with utility scripts:
 
 ```bash
 cd scripts
-# 查看脚本说明
+# View script documentation
 cat README.md
 ```
 
-## 🤝 贡献指南
+## 🤝 Contributing
 
-1. Fork 本项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📄 许可证
+## 📄 License
 
-本项目采用 MIT 许可证。详见 LICENSE 文件。
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-## 📞 联系方式
+## 📞 Contact
 
-如有问题或建议，请提交 Issue 或 Pull Request。
+For questions or suggestions, please submit an Issue or Pull Request.
 
 ---
 
