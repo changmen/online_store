@@ -5,11 +5,16 @@
 ## 技术栈
 
 - JDK 17
-- Spring Cloud 2022.0.4
-- Spring Boot 3.1.5
-- MyBatis 3.0.2
-- MySQL 8.0
-- Redis (Jedis 4.3.1)
+- Spring Cloud 2024.0.0
+- Spring Boot 3.4.3
+- MyBatis Spring Boot 3.0.2
+- MyBatis 3.0.3
+- MySQL 8.2.0
+- Redis（Jedis 5.2.0）
+- Nacos 2.2.0
+- Spring Security + JWT
+- Lombok
+
 
 ## 项目结构
 
@@ -50,7 +55,23 @@ CREATE DATABASE online_store DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unico
 ```
 3. 修改`application.yml`中的数据库和Redis配置
 4. 添加vm参数：`--add-opens java.base/java.lang=ALL-UNNAMED` 
-4. 运行应用程序：
+5. 运行应用程序：
 ```bash
 mvn spring-boot:run
-``` 
+```
+
+### 使用 Docker Compose 启动依赖
+如果本地未安装 MySQL/Redis，可使用项目中的 `docker-compose.yaml` 快速启动：
+```bash
+# 启动 MySQL + Redis
+docker compose --profile all up -d
+
+# 仅启动 MySQL
+docker compose --profile without-redis up -d
+```
+
+### 打包与以可执行 JAR 运行
+```bash
+mvn clean package -DskipTests
+java --add-opens java.base/java.lang=ALL-UNNAMED -jar target/online-store-1.0-SNAPSHOT.jar
+```
