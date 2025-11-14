@@ -1,4 +1,4 @@
-# Online Store
+# 🛒 在线商店微服务平台 - Spring Boot + Spring Cloud 电商后端系统
 
 这是一个基于Spring Cloud的在线商店项目。
 
