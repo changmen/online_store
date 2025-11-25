@@ -1,0 +1,35 @@
+# 测试环境配置
+spring:
+  profiles:
+    active: test
+  
+  # 数据库配置（用于集成测试）
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+    
+  # H2数据库Web控制台（测试环境）
+  h2:
+    console:
+      enabled: true
+      
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.onlinestore.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    
+# 日志配置
+logging:
+  level:
+    com.example.onlinestore: DEBUG
+    org.springframework.security: DEBUG
