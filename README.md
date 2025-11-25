@@ -1,6 +1,6 @@
-# Online Store
+# 🛒 Online Store - 现代化电商平台
 
-这是一个基于Spring Cloud的在线商店项目。
+一个基于Spring Cloud微服务架构的现代化在线商店系统，提供完整的电商功能包括商品管理、用户管理、购物车等核心业务模块。
 
 ## 技术栈
 
