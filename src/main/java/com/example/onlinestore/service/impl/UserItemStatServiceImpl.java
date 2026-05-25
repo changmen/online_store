@@ -5,25 +5,23 @@ import com.example.onlinestore.mapper.UserItemStatMapper;
 import com.example.onlinestore.service.UserItemStatService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-/**
- * 用户商品统计服务实现类
- */
 @Service
 public class UserItemStatServiceImpl implements UserItemStatService {
     
     private static final Logger logger = LoggerFactory.getLogger(UserItemStatServiceImpl.class);
     private static final int RECENT_ITEMS_LIMIT = 5;
     
-    @Autowired
-    private UserItemStatMapper userItemStatMapper;
+    private final UserItemStatMapper userItemStatMapper;
+
+    public UserItemStatServiceImpl(UserItemStatMapper userItemStatMapper) {
+        this.userItemStatMapper = userItemStatMapper;
+    }
     
     @Override
     @Cacheable(value = "userItemStat", key = "#userId")
@@ -70,8 +68,7 @@ public class UserItemStatServiceImpl implements UserItemStatService {
         }
         
         try {
-            // 使用线程安全的ConcurrentHashMap存储结果
-            Map<String, UserItemStatDTO> result = new ConcurrentHashMap<>();
+            Map<String, UserItemStatDTO> result = new HashMap<>();
             
             // 批量获取用户查看商品的数量
             List<Map<String, Object>> viewCounts = userItemStatMapper.batchCountUserViewedItems(userIds);

@@ -4,8 +4,6 @@ import com.example.onlinestore.bean.Sku;
 import com.example.onlinestore.entity.SkuEntity;
 import com.example.onlinestore.mapper.SkuMapper;
 import com.example.onlinestore.service.SkuService;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,8 +13,11 @@ import java.util.stream.Collectors;
 @Service
 public class SkuServiceImpl implements SkuService {
 
-    @Autowired
-    private SkuMapper skuMapper;
+    private final SkuMapper skuMapper;
+
+    public SkuServiceImpl(SkuMapper skuMapper) {
+        this.skuMapper = skuMapper;
+    }
 
     @Override
     public void addSku(Sku sku) {
@@ -50,6 +51,17 @@ public class SkuServiceImpl implements SkuService {
     @Override
     public void deleteSku(Long id) {
         skuMapper.deleteSku(id);
+    }
+
+    @Override
+    public List<Sku> getSkusByItemIds(List<Long> itemIds) {
+        if (itemIds == null || itemIds.isEmpty()) {
+            return List.of();
+        }
+        List<SkuEntity> skuEntities = skuMapper.findByItemIds(itemIds);
+        return skuEntities.stream()
+                .map(this::convertToSku)
+                .collect(Collectors.toList());
     }
 
     private Sku convertToSku(SkuEntity skuEntity) {

@@ -5,7 +5,6 @@ import com.example.onlinestore.dto.UserItemStatDTO;
 import com.example.onlinestore.service.UserItemStatService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -22,8 +21,11 @@ public class UserItemStatController {
     
     private static final Logger logger = LoggerFactory.getLogger(UserItemStatController.class);
     
-    @Autowired
-    private UserItemStatService userItemStatService;
+    private final UserItemStatService userItemStatService;
+
+    public UserItemStatController(UserItemStatService userItemStatService) {
+        this.userItemStatService = userItemStatService;
+    }
     
     /**
      * 获取单个用户的商品统计信息
@@ -85,30 +87,17 @@ public class UserItemStatController {
     public Response<String> concurrentTest(
             @RequestParam(value = "userCount", defaultValue = "100") int userCount) {
 
-        try {
-            // 生成测试数据
-            List<String> userIds = new java.util.ArrayList<>();
-            for (int i = 1; i <= userCount; i++) {
-                userIds.add("test-user-" + i);
-            }
-            
-            // 记录开始时间
-            long startTime = System.currentTimeMillis();
-            
-            // 执行并发测试
-            Map<String, UserItemStatDTO> result =userItemStatService.getUserItemStatsNew(userIds);
-
-            
-            // 记录结束时间
-            long endTime = System.currentTimeMillis();
-            
-            // 返回结果
-            return Response.success(String.format(
-                    "Concurrent test completed in %d ms. Retrieved %d user stats.",
-                    (endTime - startTime), result.size()));
-        } catch (Exception e) {
-            logger.error("Failed to run concurrent test", e);
-            return Response.fail("并发测试失败: " + e.getMessage());
+        List<String> userIds = new java.util.ArrayList<>();
+        for (int i = 1; i <= userCount; i++) {
+            userIds.add("test-user-" + i);
         }
+
+        long startTime = System.currentTimeMillis();
+        Map<String, UserItemStatDTO> result = userItemStatService.getUserItemStatsNew(userIds);
+        long endTime = System.currentTimeMillis();
+
+        return Response.success(String.format(
+                "Concurrent test completed in %d ms. Retrieved %d user stats.",
+                (endTime - startTime), result.size()));
     }
 } 

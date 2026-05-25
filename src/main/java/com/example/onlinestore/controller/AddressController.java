@@ -3,7 +3,6 @@ package com.example.onlinestore.controller;
 import com.example.onlinestore.dto.Response;
 import com.example.onlinestore.entity.AddressEntity;
 import com.example.onlinestore.service.AddressService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,8 +11,11 @@ import java.util.List;
 @RequestMapping("/api/addresses")
 public class AddressController {
 
-    @Autowired
-    private AddressService addressService;
+    private final AddressService addressService;
+
+    public AddressController(AddressService addressService) {
+        this.addressService = addressService;
+    }
 
     @PostMapping
     public Response<Long> createAddress(@RequestBody AddressEntity address, 

@@ -1,5 +1,6 @@
 package com.example.onlinestore.controller;
 
+import com.example.onlinestore.bean.User;
 import com.example.onlinestore.dto.LoginRequest;
 import com.example.onlinestore.dto.LoginResponse;
 import com.example.onlinestore.service.UserService;
@@ -46,7 +47,6 @@ public class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
-        // 准备测试数据
         request = new LoginRequest();
         request.setUsername("test");
         request.setPassword("password");
@@ -62,10 +62,8 @@ public class AuthControllerTest {
         @Test
         @DisplayName("登录成功")
         void whenLoginSucceeds_thenReturnToken() throws Exception {
-            // 设置 mock 行为
             when(userService.login(any(LoginRequest.class))).thenReturn(response);
 
-            // 执行测试
             mockMvc.perform(post("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -77,16 +75,13 @@ public class AuthControllerTest {
         @Test
         @DisplayName("登录失败 - 英文错误消息")
         void whenLoginFailsInEnglish_thenReturnErrorMessage() throws Exception {
-            // 准备测试数据
             request.setPassword("wrong_password");
             String errorMessage = messageSource.getMessage(
                 "error.invalid.credentials", null, Locale.ENGLISH);
 
-            // 设置 mock 行为
             when(userService.login(any(LoginRequest.class)))
                     .thenThrow(new IllegalArgumentException(errorMessage));
 
-            // 执行测试
             mockMvc.perform(post("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Accept-Language", "en")
@@ -98,16 +93,13 @@ public class AuthControllerTest {
         @Test
         @DisplayName("登录失败 - 中文错误消息")
         void whenLoginFailsInChinese_thenReturnErrorMessage() throws Exception {
-            // 准备测试数据
             request.setPassword("wrong_password");
             String errorMessage = messageSource.getMessage(
                 "error.invalid.credentials", null, Locale.SIMPLIFIED_CHINESE);
 
-            // 设置 mock 行为
             when(userService.login(any(LoginRequest.class)))
                     .thenThrow(new IllegalArgumentException(errorMessage));
 
-            // 执行测试
             mockMvc.perform(post("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Accept-Language", "zh-CN")
@@ -119,11 +111,9 @@ public class AuthControllerTest {
         @Test
         @DisplayName("系统错误 - 多语言错误消息")
         void whenSystemError_thenReturnLocalizedErrorMessage() throws Exception {
-            // 设置 mock 行为
             when(userService.login(any(LoginRequest.class)))
                     .thenThrow(new RuntimeException("Unexpected error"));
 
-            // 测试英文系统错误
             String enErrorMessage = messageSource.getMessage(
                 "error.system.internal", null, Locale.ENGLISH);
             mockMvc.perform(post("/api/auth/login")
@@ -133,7 +123,6 @@ public class AuthControllerTest {
                     .andExpect(status().isInternalServerError())
                     .andExpect(content().string(enErrorMessage));
 
-            // 测试中文系统错误
             String zhErrorMessage = messageSource.getMessage(
                 "error.system.internal", null, Locale.SIMPLIFIED_CHINESE);
             mockMvc.perform(post("/api/auth/login")
@@ -144,4 +133,4 @@ public class AuthControllerTest {
                     .andExpect(content().string(zhErrorMessage));
         }
     }
-} 
+}

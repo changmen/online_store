@@ -13,6 +13,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,7 +34,7 @@ public class AdminAuthAspectTest {
     @BeforeEach
     void setUp() {
         adminAuthAspect.adminUsername = ADMIN_USERNAME;
-        when(messageSource.getMessage(eq(ERROR_ACCESS_DENIED), any(), eq(LocaleContextHolder.getLocale())))
+        lenient().when(messageSource.getMessage(eq(ERROR_ACCESS_DENIED), any(), eq(LocaleContextHolder.getLocale())))
             .thenReturn(ACCESS_DENIED_MESSAGE);
     }
 

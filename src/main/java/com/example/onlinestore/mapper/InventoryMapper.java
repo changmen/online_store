@@ -69,4 +69,28 @@ public interface InventoryMapper {
         @Param("offset") int offset,
         @Param("limit") int limit
     );
+
+    /**
+     * 原子锁定库存：仅在可用库存充足时执行
+     * @return 受影响的行数（0 表示库存不足）
+     */
+    int atomicLockInventory(@Param("id") Long id, @Param("quantity") Integer quantity);
+
+    /**
+     * 原子扣减库存：仅在可用库存充足时执行
+     * @return 受影响的行数（0 表示库存不足）
+     */
+    int atomicDeductInventory(@Param("id") Long id, @Param("quantity") Integer quantity);
+
+    /**
+     * 原子解锁库存
+     * @return 受影响的行数
+     */
+    int atomicUnlockInventory(@Param("id") Long id, @Param("quantity") Integer quantity);
+
+    /**
+     * 原子增加库存
+     * @return 受影响的行数
+     */
+    int atomicIncreaseInventory(@Param("id") Long id, @Param("quantity") Integer quantity);
 } 

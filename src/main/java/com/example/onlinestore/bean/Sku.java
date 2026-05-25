@@ -2,6 +2,7 @@ package com.example.onlinestore.bean;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class Sku implements Serializable {
@@ -13,6 +14,9 @@ public class Sku implements Serializable {
     private String name;
     private String description;
     private String images;
+    private String properties;
+    private BigDecimal price;
+    private BigDecimal originalPrice;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -54,6 +58,30 @@ public class Sku implements Serializable {
 
     public void setImages(String images) {
         this.images = images;
+    }
+
+    public String getProperties() {
+        return properties;
+    }
+
+    public void setProperties(String properties) {
+        this.properties = properties;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public BigDecimal getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(BigDecimal originalPrice) {
+        this.originalPrice = originalPrice;
     }
 
     public LocalDateTime getCreatedAt() {

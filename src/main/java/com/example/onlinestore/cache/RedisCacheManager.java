@@ -1,28 +1,28 @@
 package com.example.onlinestore.cache;
 
-import com.example.onlinestore.utils.JacksonJsonUtils;
+import com.example.onlinestore.util.JacksonJsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Redis缓存管理器实现
- */
-@Component
 public class RedisCacheManager implements CacheManager {
 
     private static final Logger logger = LoggerFactory.getLogger(RedisCacheManager.class);
 
     private static final String CACHE_PREFIX = "item:cache:";
 
-    @Autowired
-    private StringRedisTemplate redisTemplate;
+    private final StringRedisTemplate redisTemplate;
+
+    public RedisCacheManager(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
 
     @Override
@@ -84,7 +84,13 @@ public class RedisCacheManager implements CacheManager {
 
     @Override
     public void clear() {
-        Set<String> keys = redisTemplate.keys(CACHE_PREFIX + "*");
+        Set<String> keys = new HashSet<>();
+        ScanOptions options = ScanOptions.scanOptions().match(CACHE_PREFIX + "*").count(100).build();
+        try (Cursor<String> cursor = redisTemplate.scan(options)) {
+            while (cursor.hasNext()) {
+                keys.add(cursor.next());
+            }
+        }
         if (!keys.isEmpty()) {
             redisTemplate.delete(keys);
             logger.debug("Cache cleared: {} keys removed", keys.size());

@@ -29,4 +29,9 @@ public interface SkuService {
      * 删除SKU
      */
     void deleteSku(Long id);
+
+    /**
+     * 根据多个商品ID批量获取SKU
+     */
+    List<Sku> getSkusByItemIds(List<Long> itemIds);
 } 

@@ -17,11 +17,11 @@
         <jedis.version>5.2.0</jedis.version>
         <mysql.version>8.2.0</mysql.version>
         <spring.cloud.alibaba.version>2022.0.0.0</spring.cloud.alibaba.version>
-        <nacos.version>2.2.0</nacos.version>
+        <nacos.version>2.3.2</nacos.version>
         <commons.lang3.version>3.17.0</commons.lang3.version>
         <cglib.version>3.3.0</cglib.version>
         <mvn.compiler.plugin.version>3.14.0</mvn.compiler.plugin.version>
-        <common.collections.version>3.2.2</common.collections.version>
+        <commons.collections4.version>4.4</commons.collections4.version>
     </properties>
 
     <dependencyManagement>
@@ -164,23 +164,16 @@
             <version>${commons.lang3.version}</version>
         </dependency>
         <dependency>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-            <version>${common.collections.version}</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>${commons.collections4.version}</version>
         </dependency>
 
         <!-- 阿里云OSS SDK -->
         <dependency>
             <groupId>com.aliyun.oss</groupId>
             <artifactId>aliyun-sdk-oss</artifactId>
-            <version>3.15.1</version>
-        </dependency>
-        
-        <!-- Apache HttpClient -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
+            <version>3.17.4</version>
         </dependency>
     </dependencies>
 

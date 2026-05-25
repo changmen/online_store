@@ -5,7 +5,6 @@ import com.example.onlinestore.dto.CommentStatistics;
 import com.example.onlinestore.dto.PageResponse;
 import com.example.onlinestore.dto.Response;
 import com.example.onlinestore.service.CommentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,27 +13,20 @@ import java.util.List;
 @RequestMapping("/api/comments")
 public class CommentController {
 
-    @Autowired
-    private CommentService commentService;
+    private final CommentService commentService;
 
-    /**
-     * 创建评论
-     */
-    @PostMapping
-    public Response<Long> createComment( @RequestBody Comment comment,
-                                      @RequestHeader("X-User-Id") String userId) {
-        try {
-            comment.setUserId(Long.parseLong(userId));
-            Long commentId = commentService.addComment(comment);
-            return Response.success(commentId);
-        } catch (IllegalArgumentException e) {
-            return Response.fail(e.getMessage());
-        }
+    public CommentController(CommentService commentService) {
+        this.commentService = commentService;
     }
 
-    /**
-     * 获取评论详情
-     */
+    @PostMapping
+    public Response<Long> createComment(@RequestBody Comment comment,
+                                        @RequestHeader("X-User-Id") String userId) {
+        comment.setUserId(Long.parseLong(userId));
+        Long commentId = commentService.addComment(comment);
+        return Response.success(commentId);
+    }
+
     @GetMapping("/{id}")
     public Response<Comment> getComment(@PathVariable("id") Long id) {
         Comment comment = commentService.getComment(id);
@@ -44,9 +36,6 @@ public class CommentController {
         return Response.fail("Comment not found");
     }
 
-    /**
-     * 删除评论
-     */
     @DeleteMapping("/{id}")
     public Response<Void> deleteComment(@PathVariable("id") Long id) {
         boolean success = commentService.deleteComment(id);
@@ -56,33 +45,23 @@ public class CommentController {
         return Response.fail("Failed to delete comment");
     }
 
-    /**
-     * 获取商品的评论列表
-     */
     @GetMapping("/items/{itemId}")
     public Response<PageResponse<Comment>> listItemComments(
             @PathVariable("itemId") Long itemId,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size) {
-        
+
         List<Comment> comments = commentService.getItemComments(itemId, page, size);
         long total = commentService.countItemComments(itemId);
-        
+
         PageResponse<Comment> pageResponse = PageResponse.of(comments, total, page, size);
         return Response.success(pageResponse);
     }
 
-    /**
-     * 获取商品评论统计信息
-     */
     @GetMapping("/items/{itemId}/statistics")
     public Response<CommentStatistics> getItemCommentStatistics(
             @PathVariable("itemId") Long itemId) {
-        try {
-            CommentStatistics statistics = commentService.getItemCommentStatistics(itemId);
-            return Response.success(statistics);
-        } catch (IllegalArgumentException e) {
-            return Response.fail(e.getMessage());
-        }
+        CommentStatistics statistics = commentService.getItemCommentStatistics(itemId);
+        return Response.success(statistics);
     }
-} 
+}

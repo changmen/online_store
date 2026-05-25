@@ -16,7 +16,6 @@ import com.example.onlinestore.service.SkuService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cglib.beans.BeanCopier;
 import org.springframework.stereotype.Service;
@@ -34,9 +33,11 @@ public class ItemServiceImpl implements ItemService {
     private static final Logger logger = LoggerFactory.getLogger(ItemServiceImpl.class);
     private static final int MAX_NAME_LENGTH = 64;
     private static final Pattern VALID_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9\\u4e00-\\u9fa5\\s]+$");
+    private static final BeanCopier ENTITY_TO_ITEM = BeanCopier.create(ItemEntity.class, Item.class, false);
+    private static final BeanCopier ITEM_TO_ENTITY = BeanCopier.create(Item.class, ItemEntity.class, false);
 
-    // 缓存相关常量
     private static final String CACHE_KEY_ITEM = "item:%d";
+
     @Value("${cache.item.expire-seconds:3600}")
     private long itemCacheExpireSeconds;
 
@@ -46,21 +47,23 @@ public class ItemServiceImpl implements ItemService {
     @Value("${item.description.use-oss:true}")
     private boolean useOssForDescription;
 
+    private final ItemMapper itemMapper;
+    private final SkuService skuService;
+    private final CacheManager cacheManager;
+    private final CategoryService categoryService;
+    private final OssService ossService;
 
-    @Autowired
-    private ItemMapper itemMapper;
-
-    @Autowired
-    private SkuService skuService;
-
-    @Autowired
-    private CacheManager cacheManager;
-
-    @Autowired
-    private CategoryService categoryService;
-
-    @Autowired
-    private OssService ossService;
+    public ItemServiceImpl(ItemMapper itemMapper,
+                           SkuService skuService,
+                           CacheManager cacheManager,
+                           CategoryService categoryService,
+                           OssService ossService) {
+        this.itemMapper = itemMapper;
+        this.skuService = skuService;
+        this.cacheManager = cacheManager;
+        this.categoryService = categoryService;
+        this.ossService = ossService;
+    }
 
     @Override
     public void addItem(String userId, Item item) {
@@ -198,7 +201,6 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<Item> queryItems(ItemQueryDTO queryDTO) {
-        // 缓存未命中，从数据库获取
         int offset = (queryDTO.getPage() - 1) * queryDTO.getSize();
         List<ItemEntity> itemEntities = itemMapper.findByCondition(
                 queryDTO.getCategoryId(),
@@ -211,13 +213,15 @@ public class ItemServiceImpl implements ItemService {
                 .map(this::convertToItem)
                 .collect(Collectors.toList());
 
-        // 如果启用了OSS存储描述，则从OSS获取完整描述内容
         if (useOssForDescription) {
+            List<java.util.concurrent.CompletableFuture<Void>> futures = new ArrayList<>();
             for (Item item : items) {
                 if (StringUtils.isNotBlank(item.getDescriptionUrl())) {
-                    loadItemDescriptionFromOss(item);
+                    futures.add(java.util.concurrent.CompletableFuture.runAsync(() ->
+                            loadItemDescriptionFromOss(item)));
                 }
             }
+            java.util.concurrent.CompletableFuture.allOf(futures.toArray(new java.util.concurrent.CompletableFuture[0])).join();
         }
 
         return items;
@@ -318,42 +322,27 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Map<Long, Long> countItemsByCategoryWithSubcategories(boolean includeSubcategories) {
         logger.info("Counting items by category with subcategories");
-        // 获取所有类目
         List<Category> allCategories = categoryService.getAllCategories();
         List<Long> allCategoryIds = new ArrayList<>();
 
-        // 结果映射
         Map<Long, Long> result = new HashMap<>();
 
-        // 处理每个类目
         for (Category category : allCategories) {
-            // 添加当前类目ID
             allCategoryIds.add(category.getId());
-
-            // 如果需要包含子类目
             if (includeSubcategories && category.hasChildren()) {
                 collectSubcategoryIds(category, allCategoryIds);
             }
-            List<Map<String, Object>> counts = itemMapper.countItemsByCategoryIds(List.of(category.getId()));
-
-            // 处理查询结果
-            for (Map<String, Object> count : counts) {
-                Long categoryId = ((Number) count.get("categoryId")).longValue();
-                Long itemCount = ((Number) count.get("itemCount")).longValue();
-                result.put(categoryId, itemCount);
-            }
         }
-        if (includeSubcategories) {
-            List<Map<String, Object>> allCounts = itemMapper.countItemsByCategoryIds(allCategoryIds);
 
-            // 处理查询结果
-            for (Map<String, Object> count : allCounts) {
-                Long categoryId = ((Number) count.get("categoryId")).longValue();
-                Long itemCount = ((Number) count.get("itemCount")).longValue();
+        if (allCategoryIds.isEmpty()) {
+            return result;
+        }
 
-                // 更新结果映射
-                result.put(categoryId, itemCount);
-            }
+        List<Map<String, Object>> allCounts = itemMapper.countItemsByCategoryIds(allCategoryIds);
+        for (Map<String, Object> count : allCounts) {
+            Long categoryId = ((Number) count.get("categoryId")).longValue();
+            Long itemCount = ((Number) count.get("itemCount")).longValue();
+            result.put(categoryId, itemCount);
         }
 
         return result;
@@ -402,8 +391,7 @@ public class ItemServiceImpl implements ItemService {
         }
 
         Item item = new Item();
-        BeanCopier copier = BeanCopier.create(ItemEntity.class, Item.class, false);
-        copier.copy(itemEntity, item, null);
+        ENTITY_TO_ITEM.copy(itemEntity, item, null);
 
         return item;
     }
@@ -414,8 +402,7 @@ public class ItemServiceImpl implements ItemService {
         }
 
         ItemEntity itemEntity = new ItemEntity();
-        BeanCopier copier = BeanCopier.create(Item.class, ItemEntity.class, false);
-        copier.copy(item, itemEntity, null);
+        ITEM_TO_ENTITY.copy(item, itemEntity, null);
         return itemEntity;
     }
 }

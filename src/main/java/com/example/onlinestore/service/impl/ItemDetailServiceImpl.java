@@ -10,9 +10,9 @@ import com.example.onlinestore.dto.ReviewStatisticsDTO;
 import com.example.onlinestore.service.CategoryService;
 import com.example.onlinestore.service.ItemService;
 import com.example.onlinestore.service.ItemDetailService;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -44,15 +44,21 @@ public class ItemDetailServiceImpl implements ItemDetailService {
     // 创建线程池用于并行加载数据
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
     
-    @Autowired
-    private ItemService itemService;
+    private final ItemService itemService;
+    private final CategoryService categoryService;
+    private final CacheManager cacheManager;
 
-    @Autowired
-    private CategoryService categoryService;
-    
-    @Autowired
-    private CacheManager cacheManager;
-    
+    public ItemDetailServiceImpl(ItemService itemService, CategoryService categoryService, CacheManager cacheManager) {
+        this.itemService = itemService;
+        this.categoryService = categoryService;
+        this.cacheManager = cacheManager;
+    }
+
+    @PreDestroy
+    private void destroy() {
+        executorService.shutdownNow();
+    }
+
     @Override
     public ItemDetailDTO getItemDetail(Long itemId, Long skuId) {
         // 如果启用了缓存，先从缓存中获取
@@ -166,14 +172,8 @@ public class ItemDetailServiceImpl implements ItemDetailService {
         
         ItemDetailDTO detailDTO = new ItemDetailDTO();
         detailDTO.setItem(item);
-        
 
-        ExecutorService categoryExecutor = Executors.newFixedThreadPool(2);
-        ExecutorService skusExecutor = Executors.newFixedThreadPool(2);
-        ExecutorService imagesExecutor = Executors.newFixedThreadPool(2);
-        ExecutorService reviewExecutor = Executors.newFixedThreadPool(2);
-        ExecutorService contentExecutor = Executors.newFixedThreadPool(2);
-        
+
         // 并行加载类目信息
         CompletableFuture<Void> categoryFuture = CompletableFuture.runAsync(() -> {
             try {
@@ -189,7 +189,7 @@ public class ItemDetailServiceImpl implements ItemDetailService {
             } catch (Exception e) {
                 logger.error("Failed to load category for item: {}", itemId, e);
             }
-        }, categoryExecutor);
+        }, executorService);
         
         // 并行加载SKU信息
         CompletableFuture<Void> skusFuture = CompletableFuture.runAsync(() -> {
@@ -226,7 +226,7 @@ public class ItemDetailServiceImpl implements ItemDetailService {
             } catch (Exception e) {
                 logger.error("Failed to load SKUs for item: {}", itemId, e);
             }
-        }, skusExecutor);
+        }, executorService);
         
         // 并行加载图片信息
         CompletableFuture<Void> imagesFuture = CompletableFuture.runAsync(() -> {
@@ -254,7 +254,7 @@ public class ItemDetailServiceImpl implements ItemDetailService {
             } catch (Exception e) {
                 logger.error("Failed to load images for item: {}", itemId, e);
             }
-        }, imagesExecutor);
+        }, executorService);
         
         // 并行加载评价统计信息
         CompletableFuture<Void> reviewStatsFuture = CompletableFuture.runAsync(() -> {
@@ -267,7 +267,7 @@ public class ItemDetailServiceImpl implements ItemDetailService {
             } catch (Exception e) {
                 logger.error("Failed to load review statistics for item: {}", itemId, e);
             }
-        }, reviewExecutor);
+        }, executorService);
         
         // 并行加载商品详情内容
         CompletableFuture<Void> detailContentFuture = CompletableFuture.runAsync(() -> {
@@ -278,7 +278,7 @@ public class ItemDetailServiceImpl implements ItemDetailService {
             } catch (Exception e) {
                 logger.error("Failed to load detail content for item: {}", itemId, e);
             }
-        }, contentExecutor);
+        }, executorService);
         
         // 等待所有异步任务完成
         try {

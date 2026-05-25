@@ -5,10 +5,9 @@ import com.example.onlinestore.dto.CategoryAttributeQuery;
 import com.example.onlinestore.entity.CategoryAttributeEntity;
 import com.example.onlinestore.mapper.CategoryAttributeMapper;
 import com.example.onlinestore.service.CategoryAttributeService;
-import com.example.onlinestore.utils.JacksonJsonUtils;
+import com.example.onlinestore.util.JacksonJsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -17,16 +16,16 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 
-/**
- * 类目属性服务实现类
- */
 @Service
 public class CategoryAttributeServiceImpl implements CategoryAttributeService {
 
     private static final Logger logger = LoggerFactory.getLogger(CategoryAttributeServiceImpl.class);
 
-    @Autowired
-    private CategoryAttributeMapper categoryAttributeMapper;
+    private final CategoryAttributeMapper categoryAttributeMapper;
+
+    public CategoryAttributeServiceImpl(CategoryAttributeMapper categoryAttributeMapper) {
+        this.categoryAttributeMapper = categoryAttributeMapper;
+    }
 
     @Override
     @Transactional

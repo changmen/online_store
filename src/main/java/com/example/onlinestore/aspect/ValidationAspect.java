@@ -7,7 +7,6 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseEntity;
@@ -38,11 +37,14 @@ import java.util.stream.Collectors;
 public class ValidationAspect {
     private static final Logger logger = LoggerFactory.getLogger(ValidationAspect.class);
 
-    @Autowired
-    private Validator validator;
+    private final Validator validator;
 
-    @Autowired
-    private MessageSource messageSource;
+    private final MessageSource messageSource;
+
+    public ValidationAspect(Validator validator, MessageSource messageSource) {
+        this.validator = validator;
+        this.messageSource = messageSource;
+    }
 
     /**
      * 验证方法参数的切面方法

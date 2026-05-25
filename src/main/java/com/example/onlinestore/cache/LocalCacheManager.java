@@ -1,10 +1,10 @@
 package com.example.onlinestore.cache;
 
-import com.example.onlinestore.utils.JacksonJsonUtils;
+import com.example.onlinestore.util.JacksonJsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.DisposableBean;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,22 +12,26 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * 本地缓存管理器实现
- */
-@Component
-public class LocalCacheManager implements CacheManager {
-    
+public class LocalCacheManager implements CacheManager, DisposableBean {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalCacheManager.class);
-    
-    // 缓存数据
+
     private final Map<String, CacheItem<?>> cache = new ConcurrentHashMap<>();
-    
+
+    private final ScheduledExecutorService scheduler;
+
     public LocalCacheManager() {
-        // 每分钟执行一次清理过期缓存的任务
-        // 定时清理过期缓存的线程池
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler = Executors.newScheduledThreadPool(1, r -> {
+            Thread t = new Thread(r, "local-cache-cleaner");
+            t.setDaemon(true);
+            return t;
+        });
         scheduler.scheduleAtFixedRate(this::cleanExpiredCache, 1, 1, TimeUnit.MINUTES);
+    }
+
+    @Override
+    public void destroy() {
+        scheduler.shutdownNow();
     }
     
     @Override

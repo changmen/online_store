@@ -6,7 +6,6 @@ import com.example.onlinestore.service.ItemAccessLogService;
 import com.example.onlinestore.util.SqlInjectionRiskWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -18,23 +17,21 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * 商品访问日志服务实现类
- */
 @Service
 public class ItemAccessLogServiceImpl implements ItemAccessLogService {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemAccessLogServiceImpl.class);
 
-    
-
     private final Map<Long, Integer> accessCountMap = new HashMap<>();
     private final List<ItemAccessLogEntity> accessLogBuffer = new ArrayList<>();
-    
+
     private final Lock lock = new ReentrantLock();
-    
-    @Autowired
-    private ItemAccessLogMapper itemAccessLogMapper;
+
+    private final ItemAccessLogMapper itemAccessLogMapper;
+
+    public ItemAccessLogServiceImpl(ItemAccessLogMapper itemAccessLogMapper) {
+        this.itemAccessLogMapper = itemAccessLogMapper;
+    }
 
     
     /**

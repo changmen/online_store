@@ -5,7 +5,6 @@ import com.example.onlinestore.dto.Response;
 import com.example.onlinestore.service.ItemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,8 +22,11 @@ public class ItemStatisticsController {
     
     private static final Logger logger = LoggerFactory.getLogger(ItemStatisticsController.class);
     
-    @Autowired
-    private ItemService itemService;
+    private final ItemService itemService;
+
+    public ItemStatisticsController(ItemService itemService) {
+        this.itemService = itemService;
+    }
     
     /**
      * 按类目统计商品数量

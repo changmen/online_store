@@ -1,7 +1,7 @@
 package com.example.onlinestore.exception;
 
-public class OrderException extends RuntimeException {
+public class OrderException extends BusinessException {
     public OrderException(String message) {
-        super(message);
+        super("ORDER_ERROR", message);
     }
-} 
+}

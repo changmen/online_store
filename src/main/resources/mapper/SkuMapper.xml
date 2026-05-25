@@ -27,4 +27,11 @@
     <delete id="deleteSku">
         DELETE FROM skus WHERE id = #{id}
     </delete>
+
+    <select id="findByItemIds" resultType="com.example.onlinestore.entity.SkuEntity">
+        SELECT * FROM skus WHERE item_id IN
+        <foreach collection="itemIds" item="itemId" open="(" separator="," close=")">
+            #{itemId}
+        </foreach>
+    </select>
 </mapper> 

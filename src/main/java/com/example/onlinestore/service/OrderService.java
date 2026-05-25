@@ -1,11 +1,11 @@
 package com.example.onlinestore.service;
 
+import com.example.onlinestore.dto.OrderDetailDTO;
 import com.example.onlinestore.entity.OrderEntity;
 import com.example.onlinestore.entity.OrderItemEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 public interface OrderService {
     /**
@@ -121,5 +121,5 @@ public interface OrderService {
      * @param userId 用户ID（可选）
      * @return 订单详情，包含订单信息和订单项
      */
-    Map<String, Object> getOrderDetail(String orderNo, Long userId);
+    OrderDetailDTO getOrderDetail(String orderNo, Long userId);
 } 

@@ -6,7 +6,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -43,8 +42,11 @@ public class AdminAuthAspect {
     @Value("${admin.auth.username}")
     protected String adminUsername;
 
-    @Autowired
-    private MessageSource messageSource;
+    private final MessageSource messageSource;
+
+    public AdminAuthAspect(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
 
     /**
      * 检查当前用户是否具有管理员权限

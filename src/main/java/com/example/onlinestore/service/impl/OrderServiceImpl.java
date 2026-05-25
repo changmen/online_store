@@ -1,51 +1,69 @@
 package com.example.onlinestore.service.impl;
 
+import com.example.onlinestore.dto.OrderDetailDTO;
 import com.example.onlinestore.entity.CartItemEntity;
-import com.example.onlinestore.entity.ItemEntity;
 import com.example.onlinestore.entity.OrderEntity;
 import com.example.onlinestore.entity.OrderItemEntity;
+import com.example.onlinestore.enums.OrderStatus;
 import com.example.onlinestore.exception.OrderException;
 import com.example.onlinestore.mapper.OrderItemMapper;
 import com.example.onlinestore.mapper.OrderMapper;
 import com.example.onlinestore.service.CartService;
 import com.example.onlinestore.service.InventoryService;
 import com.example.onlinestore.service.ItemService;
+import com.example.onlinestore.service.OrderAmountCalculator;
 import com.example.onlinestore.service.OrderService;
+import com.example.onlinestore.service.SkuService;
+import com.example.onlinestore.util.OrderNoGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
     private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
-    
-    @Autowired
-    private OrderMapper orderMapper;
-    
-    @Autowired
-    private OrderItemMapper orderItemMapper;
-    
-    @Autowired
-    private CartService cartService;
-    
-    @Autowired
-    private ItemService itemService;
-    
-    @Autowired
-    private InventoryService inventoryService;
+
+    private final OrderMapper orderMapper;
+    private final OrderItemMapper orderItemMapper;
+    private final CartService cartService;
+    private final ItemService itemService;
+    private final SkuService skuService;
+    private final InventoryService inventoryService;
+    private final OrderNoGenerator orderNoGenerator;
+    private final OrderAmountCalculator amountCalculator;
+    private final OrderService self;
+
+    @Value("${order.shipping-fee:10.00}")
+    private BigDecimal defaultShippingFee;
+
+    public OrderServiceImpl(OrderMapper orderMapper,
+                            OrderItemMapper orderItemMapper,
+                            CartService cartService,
+                            ItemService itemService,
+                            SkuService skuService,
+                            InventoryService inventoryService,
+                            OrderNoGenerator orderNoGenerator,
+                            OrderAmountCalculator amountCalculator,
+                            @Lazy OrderService self) {
+        this.orderMapper = orderMapper;
+        this.orderItemMapper = orderItemMapper;
+        this.cartService = cartService;
+        this.itemService = itemService;
+        this.skuService = skuService;
+        this.inventoryService = inventoryService;
+        this.orderNoGenerator = orderNoGenerator;
+        this.amountCalculator = amountCalculator;
+        this.self = self;
+    }
 
     @Override
     @Transactional
@@ -57,7 +75,6 @@ public class OrderServiceImpl implements OrderService {
         String paymentMethod,
         String remark
     ) {
-        // 参数验证
         if (userId == null) {
             throw new OrderException("用户ID不能为空");
         }
@@ -70,28 +87,24 @@ public class OrderServiceImpl implements OrderService {
         if (receiverAddress == null || receiverAddress.trim().isEmpty()) {
             throw new OrderException("收货地址不能为空");
         }
-        
-        // 生成订单号
-        String orderNo = generateOrderNo();
-        
-        // 创建订单
+
         OrderEntity order = new OrderEntity();
-        order.setOrderNo(orderNo);
+        order.setOrderNo(orderNoGenerator.generate());
         order.setUserId(userId);
         order.setTotalAmount(BigDecimal.ZERO);
         order.setPayAmount(BigDecimal.ZERO);
         order.setDiscountAmount(BigDecimal.ZERO);
         order.setShippingFee(BigDecimal.ZERO);
-        order.setStatus(0); // 待付款
+        order.setStatus(OrderStatus.PENDING_PAYMENT.getCode());
         order.setReceiverName(receiverName);
         order.setReceiverPhone(receiverPhone);
         order.setReceiverAddress(receiverAddress);
         order.setPaymentMethod(paymentMethod);
         order.setRemark(remark);
-        
+
         orderMapper.insertOrder(order);
-        
-        return orderNo;
+
+        return order.getOrderNo();
     }
 
     @Override
@@ -105,7 +118,6 @@ public class OrderServiceImpl implements OrderService {
         String paymentMethod,
         String remark
     ) {
-        // 参数验证
         if (userId == null) {
             throw new OrderException("用户ID不能为空");
         }
@@ -121,100 +133,84 @@ public class OrderServiceImpl implements OrderService {
         if (receiverAddress == null || receiverAddress.trim().isEmpty()) {
             throw new OrderException("收货地址不能为空");
         }
-        
-        // 获取购物车项
+
         List<CartItemEntity> cartItems = cartService.getCartItems(userId);
         List<CartItemEntity> selectedCartItems = cartItems.stream()
                 .filter(item -> cartItemIds.contains(item.getId()))
                 .collect(Collectors.toList());
-        
+
         if (selectedCartItems.isEmpty()) {
             throw new OrderException("未找到选中的购物车项");
         }
-        
-        // 生成订单号
-        String orderNo = generateOrderNo();
-        
-        // 创建订单
+
         OrderEntity order = new OrderEntity();
-        order.setOrderNo(orderNo);
+        order.setOrderNo(orderNoGenerator.generate());
         order.setUserId(userId);
-        order.setStatus(0); // 待付款
+        order.setStatus(OrderStatus.PENDING_PAYMENT.getCode());
         order.setReceiverName(receiverName);
         order.setReceiverPhone(receiverPhone);
         order.setReceiverAddress(receiverAddress);
         order.setPaymentMethod(paymentMethod);
         order.setRemark(remark);
-        
-        // 计算订单金额
+
         BigDecimal totalAmount = BigDecimal.ZERO;
-        BigDecimal shippingFee = new BigDecimal("10.00"); // 默认运费
-        
-        // 创建订单项
         List<OrderItemEntity> orderItems = new ArrayList<>();
-        
+
         for (CartItemEntity cartItem : selectedCartItems) {
-            // 获取商品信息
             com.example.onlinestore.bean.Item item = itemService.getItemById(cartItem.getItemId());
             if (item == null) {
                 throw new OrderException("商品不存在: " + cartItem.getItemId());
             }
-            
-            // 检查库存
+
             if (inventoryService.getInventoryById(cartItem.getSkuId()) == null) {
                 throw new OrderException("商品库存不存在: " + cartItem.getSkuId());
             }
-            
-            // TODO: 获取商品价格，这里简化处理，实际应该从SKU中获取
-            BigDecimal price = new BigDecimal("100.00");
-            BigDecimal originalPrice = new BigDecimal("120.00");
-            
-            // 创建订单项
+
+            com.example.onlinestore.bean.Sku sku = skuService.getSkuById(cartItem.getSkuId());
+            if (sku == null || sku.getPrice() == null) {
+                throw new OrderException("商品价格未配置: " + cartItem.getSkuId());
+            }
+
+            BigDecimal price = sku.getPrice();
+            BigDecimal totalItemAmount = amountCalculator.calculateItemTotalAmount(price, cartItem.getQuantity());
+
             OrderItemEntity orderItem = new OrderItemEntity();
-            orderItem.setOrderId(null); // 订单保存后设置
-            orderItem.setOrderNo(orderNo);
+            orderItem.setOrderNo(order.getOrderNo());
             orderItem.setItemId(cartItem.getItemId());
             orderItem.setSkuId(cartItem.getSkuId());
             orderItem.setItemName(item.getName());
             orderItem.setItemImage(item.getImage());
-            orderItem.setSkuProperties(""); // TODO: 从SKU中获取属性
+            orderItem.setSkuProperties(sku.getProperties());
             orderItem.setPrice(price);
-            orderItem.setOriginalPrice(originalPrice);
+            orderItem.setOriginalPrice(sku.getOriginalPrice());
             orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setTotalAmount(price.multiply(new BigDecimal(cartItem.getQuantity())));
-            
+            orderItem.setTotalAmount(totalItemAmount);
+
             orderItems.add(orderItem);
-            
-            // 累加总金额
-            totalAmount = totalAmount.add(orderItem.getTotalAmount());
+            totalAmount = totalAmount.add(totalItemAmount);
         }
-        
-        // 设置订单金额
+
         order.setTotalAmount(totalAmount);
-        order.setPayAmount(totalAmount.add(shippingFee));
+        order.setPayAmount(totalAmount.add(defaultShippingFee));
         order.setDiscountAmount(BigDecimal.ZERO);
-        order.setShippingFee(shippingFee);
-        
-        // 保存订单
+        order.setShippingFee(defaultShippingFee);
+
         orderMapper.insertOrder(order);
-        
-        // 设置订单项的订单ID并保存
+
         for (OrderItemEntity orderItem : orderItems) {
             orderItem.setOrderId(order.getId());
         }
         orderItemMapper.batchInsertOrderItems(orderItems);
-        
-        // 从购物车中删除已下单的商品
+
         for (CartItemEntity cartItem : selectedCartItems) {
             cartService.removeFromCart(userId, cartItem.getItemId());
         }
-        
-        // 锁定库存
+
         for (OrderItemEntity orderItem : orderItems) {
             inventoryService.lockInventory(orderItem.getSkuId(), orderItem.getQuantity());
         }
-        
-        return orderNo;
+
+        return order.getOrderNo();
     }
 
     @Override
@@ -239,17 +235,15 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             throw new OrderException("订单不存在");
         }
-        
-        if (order.getStatus() != 0) {
+
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT.getCode()) {
             throw new OrderException("只能取消待付款的订单");
         }
-        
-        // 更新订单状态
-        order.setStatus(4); // 已取消
+
+        order.setStatus(OrderStatus.CANCELLED.getCode());
         order.setCancelTime(LocalDateTime.now());
         orderMapper.updateOrder(order);
-        
-        // 解锁库存
+
         List<OrderItemEntity> orderItems = orderItemMapper.findByOrderId(orderId);
         for (OrderItemEntity orderItem : orderItems) {
             inventoryService.unlockInventory(orderItem.getSkuId(), orderItem.getQuantity());
@@ -260,17 +254,18 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public void payOrder(String orderNo) {
         OrderEntity order = orderMapper.findByOrderNo(orderNo);
-        
-        if (order.getStatus() != 0) {
+        if (order == null) {
+            throw new OrderException("订单不存在");
+        }
+
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT.getCode()) {
             throw new OrderException("订单状态不正确");
         }
-        
-        // 更新订单状态
-        order.setStatus(1); // 待发货
+
+        order.setStatus(OrderStatus.PENDING_SHIPMENT.getCode());
         order.setPayTime(LocalDateTime.now());
         orderMapper.updateOrder(order);
-        
-        // 扣减库存
+
         List<OrderItemEntity> orderItems = orderItemMapper.findByOrderNo(orderNo);
         for (OrderItemEntity orderItem : orderItems) {
             inventoryService.deductInventory(orderItem.getSkuId(), orderItem.getQuantity());
@@ -284,15 +279,13 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             throw new OrderException("订单不存在");
         }
-        
-        if (order.getStatus() != 1) {
+
+        if (order.getStatus() != OrderStatus.PENDING_SHIPMENT.getCode()) {
             throw new OrderException("订单状态不正确");
         }
-        
-        // 更新订单状态
-        order.setStatus(2); // 待收货
+
+        order.setStatus(OrderStatus.PENDING_RECEIPT.getCode());
         order.setDeliveryTime(LocalDateTime.now());
-        // TODO: 保存物流信息
         orderMapper.updateOrder(order);
     }
 
@@ -303,13 +296,12 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             throw new OrderException("订单不存在");
         }
-        
-        if (order.getStatus() != 2) {
+
+        if (order.getStatus() != OrderStatus.PENDING_RECEIPT.getCode()) {
             throw new OrderException("订单状态不正确");
         }
-        
-        // 更新订单状态
-        order.setStatus(3); // 已完成
+
+        order.setStatus(OrderStatus.COMPLETED.getCode());
         order.setCompleteTime(LocalDateTime.now());
         orderMapper.updateOrder(order);
     }
@@ -326,12 +318,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
     public void processTimeoutOrders(int timeoutMinutes, int batchSize) {
         List<OrderEntity> timeoutOrders = orderMapper.findTimeoutOrders(timeoutMinutes, batchSize);
         for (OrderEntity order : timeoutOrders) {
             try {
-                cancelOrder(order.getId());
+                self.cancelOrder(order.getId());
                 logger.info("自动取消超时订单: {}", order.getOrderNo());
             } catch (Exception e) {
                 logger.error("取消超时订单失败: {}", order.getOrderNo(), e);
@@ -349,120 +340,49 @@ public class OrderServiceImpl implements OrderService {
     public int countItemSales(Long itemId, LocalDateTime startTime, LocalDateTime endTime) {
         return orderItemMapper.countItemSales(itemId, startTime, endTime);
     }
-    
-    /**
-     * 生成订单号
-     */
-    private String generateOrderNo() {
-        // 生成格式: 年月日时分秒 + 4位随机数
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        String timestamp = LocalDateTime.now().format(formatter);
-        
-        // 生成4位随机数
-        Random random = new Random();
-        int randomNum = random.nextInt(10000);
-        String randomStr = String.format("%04d", randomNum);
-        
-        return timestamp + randomStr;
-    }
 
-    /**
-     * 更新订单项数量
-     *
-     */
     @Override
     @Transactional
     public void updateQuantity(Long orderItemId, Integer quantity) {
-        // 获取订单项
         OrderItemEntity orderItem = orderItemMapper.findById(orderItemId);
+        if (orderItem == null) {
+            throw new OrderException("订单项不存在");
+        }
 
         if (quantity > 0) {
-            // 更新数量
             orderItem.setQuantity(quantity);
-            
-            // 计算新的总金额
-            BigDecimal totalAmount = orderItem.getPrice().multiply(new BigDecimal(quantity));
-            orderItem.setTotalAmount(totalAmount);
-            
-            // 更新订单项
+            orderItem.setTotalAmount(amountCalculator.calculateItemTotalAmount(orderItem.getPrice(), quantity));
             orderItemMapper.updateOrderItem(orderItem);
-            
-            // 更新订单总金额
-            updateOrderAmount(orderItem.getOrderId());
-            
+            recalculateOrderAmount(orderItem.getOrderId());
             logger.info("更新订单项数量: orderItemId={}, quantity={}", orderItemId, quantity);
         } else {
-            // 如果数量为0，删除订单项
             orderItemMapper.deleteOrderItem(orderItemId);
-            
-            // 更新订单总金额
-            updateOrderAmount(orderItem.getOrderId());
-            
+            recalculateOrderAmount(orderItem.getOrderId());
             logger.info("删除订单项: orderItemId={}", orderItemId);
         }
     }
 
-    
-    /**
-     * 更新订单金额
-     */
-    private void updateOrderAmount(Long orderId) {
-        // 参数验证
-        if (orderId == null) {
-            throw new OrderException("订单ID不能为空");
-        }
-        
+    private void recalculateOrderAmount(Long orderId) {
         OrderEntity order = orderMapper.findById(orderId);
         if (order == null) {
             throw new OrderException("订单不存在");
         }
-        
-        // 获取订单项
         List<OrderItemEntity> orderItems = orderItemMapper.findByOrderId(orderId);
-        
-        // 计算总金额
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        for (OrderItemEntity item : orderItems) {
-            // 安全地处理可能为null的值
-            if (item != null && item.getTotalAmount() != null) {
-                totalAmount = totalAmount.add(item.getTotalAmount());
-            }
-        }
-        
-        // 更新订单金额
-        order.setTotalAmount(totalAmount);
-        
-        // 安全地处理可能为null的值
-        BigDecimal shippingFee = Objects.requireNonNullElse(order.getShippingFee(), BigDecimal.ZERO);
-        order.setPayAmount(totalAmount.add(shippingFee));
-        
+        amountCalculator.recalculateOrderAmount(order, orderItems);
         orderMapper.updateOrder(order);
     }
 
-    /**
-     * 查询订单详情
-     */
     @Override
-    public Map<String, Object> getOrderDetail(String orderNo, Long userId) {
-        Map<String, Object> result = new HashMap<>();
-        
-        // 获取订单信息
+    public OrderDetailDTO getOrderDetail(String orderNo, Long userId) {
         OrderEntity order = orderMapper.findByOrderNo(orderNo);
         if (order == null) {
             throw new OrderException("订单不存在");
         }
 
-        // 获取订单项
         List<OrderItemEntity> orderItems = orderItemMapper.findByOrderNo(orderNo);
-        
-        // 构建返回结果
-        result.put("order", order);
-        result.put("orderItems", orderItems);
-        
-        // 记录访问日志
         logger.info("查询订单详情: orderNo={}, userId={}", orderNo, userId);
-        
-        return result;
+
+        return new OrderDetailDTO(order, orderItems);
     }
 
-} 
+}

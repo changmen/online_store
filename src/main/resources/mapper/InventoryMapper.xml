@@ -97,4 +97,36 @@
         ORDER BY expiry_date ASC
         LIMIT #{limit} OFFSET #{offset}
     </select>
+
+    <update id="atomicLockInventory">
+        UPDATE inventory
+        SET locked_quantity = locked_quantity + #{quantity},
+            available_quantity = available_quantity - #{quantity},
+            updated_at = NOW()
+        WHERE id = #{id} AND available_quantity >= #{quantity}
+    </update>
+
+    <update id="atomicDeductInventory">
+        UPDATE inventory
+        SET quantity = quantity - #{quantity},
+            available_quantity = available_quantity - #{quantity},
+            updated_at = NOW()
+        WHERE id = #{id} AND available_quantity >= #{quantity}
+    </update>
+
+    <update id="atomicUnlockInventory">
+        UPDATE inventory
+        SET locked_quantity = locked_quantity - #{quantity},
+            available_quantity = available_quantity + #{quantity},
+            updated_at = NOW()
+        WHERE id = #{id} AND locked_quantity >= #{quantity}
+    </update>
+
+    <update id="atomicIncreaseInventory">
+        UPDATE inventory
+        SET quantity = quantity + #{quantity},
+            available_quantity = available_quantity + #{quantity},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
 </mapper> 

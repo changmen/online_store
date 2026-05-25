@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cglib.beans.BeanCopier;
 import org.springframework.context.MessageSource;
@@ -34,12 +33,8 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+    private static final BeanCopier ENTITY_TO_USER = BeanCopier.create(UserEntity.class, User.class, false);
     private final ObjectMapper objectMapper;
-
-    public UserServiceImpl() {
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
-    }
 
     @Value("${admin.auth.username}")
     private String adminUsername;
@@ -54,17 +49,22 @@ public class UserServiceImpl implements UserService {
     private static final String TOKEN_PREFIX = "token:";
     private static final long TOKEN_EXPIRE_DAYS = 1;
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
+    private final UserMapper userMapper;
+    private final StringRedisTemplate redisTemplate;
+    private final MessageSource messageSource;
 
-    @Autowired
-    private UserMapper userMapper;
-
-    @Autowired
-    private StringRedisTemplate redisTemplate;
-
-    @Autowired
-    private MessageSource messageSource;
+    public UserServiceImpl(RestTemplate restTemplate,
+                           UserMapper userMapper,
+                           StringRedisTemplate redisTemplate,
+                           MessageSource messageSource) {
+        this.restTemplate = restTemplate;
+        this.userMapper = userMapper;
+        this.redisTemplate = redisTemplate;
+        this.messageSource = messageSource;
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule());
+    }
 
     @Override
     @Transactional
@@ -187,17 +187,16 @@ public class UserServiceImpl implements UserService {
                 return null;
             }
             UserEntity userEntity =  objectMapper.readValue(userJson, UserEntity.class);
-            return convert_user(userEntity);
+            return convertUser(userEntity);
         } catch (Exception e) {
             logger.error("从Redis获取用户信息失败", e);
             return null;
         }
     }
 
-    private User convert_user(UserEntity userEntity) {
-        BeanCopier copier = BeanCopier.create(UserEntity.class, User.class, false);
+    private User convertUser(UserEntity userEntity) {
         User user = new User();
-        copier.copy(userEntity, user, null);
+        ENTITY_TO_USER.copy(userEntity, user, null);
         return user;
     }
 } 

@@ -3,17 +3,16 @@ package com.example.onlinestore.service.impl;
 import com.aliyun.oss.ClientException;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSException;
-import com.aliyun.oss.model.OSSObject;
 import com.example.onlinestore.config.OssConfig;
 import com.example.onlinestore.service.OssService;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -21,26 +20,30 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-/**
- * 阿里云OSS服务实现类
- */
 @Service
-public class OssServiceImpl implements OssService {
+public class OssServiceImpl implements OssService, DisposableBean {
 
     private static final Logger logger = LoggerFactory.getLogger(OssServiceImpl.class);
     private static final String ITEM_DESCRIPTION_PREFIX = "item/description/";
     private static final String ITEM_DESCRIPTION_SUFFIX = ".html";
 
-    @Autowired
-    private OSS ossClient;
+    private final OSS ossClient;
+    private final OssConfig ossConfig;
+    private final CloseableHttpClient httpClient;
 
-    @Autowired
-    private OssConfig ossConfig;
+    public OssServiceImpl(OSS ossClient, OssConfig ossConfig) {
+        this.ossClient = ossClient;
+        this.ossConfig = ossConfig;
+        this.httpClient = HttpClients.createDefault();
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        httpClient.close();
+    }
 
     /**
      * 上传商品描述文件到OSS（安全实现）
@@ -78,30 +81,25 @@ public class OssServiceImpl implements OssService {
      */
     @Override
     public String getItemDescription(String ossUrl) {
-        HttpClient httpClient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(ossUrl);
 
         try {
-            // 执行HTTP请求
             HttpResponse response = httpClient.execute(httpGet);
 
-            // 读取响应内容
-            InputStream inputStream = response.getEntity().getContent();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            try (InputStream inputStream = response.getEntity().getContent();
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
 
-            StringBuilder content = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line).append("\n");
+                StringBuilder content = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line).append("\n");
+                }
+
+                logger.info("Successfully retrieved item description from OSS URL: {}", ossUrl);
+                return content.toString();
             }
-
-            logger.info("Successfully retrieved item description from OSS URL: {}", ossUrl);
-
-
-            return content.toString();
         } catch (IOException e) {
             logger.error("Failed to get item description from OSS URL: {}", ossUrl, e);
-
             throw new RuntimeException("Failed to get item description from OSS", e);
         }
     }

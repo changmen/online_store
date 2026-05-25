@@ -2,6 +2,7 @@ package com.example.onlinestore.mapper;
 
 import com.example.onlinestore.entity.SkuEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -31,4 +32,9 @@ public interface SkuMapper {
      * 删除SKU
      */
     void deleteSku(Long id);
+
+    /**
+     * 根据多个商品ID批量查找SKU
+     */
+    List<SkuEntity> findByItemIds(@Param("itemIds") List<Long> itemIds);
 } 

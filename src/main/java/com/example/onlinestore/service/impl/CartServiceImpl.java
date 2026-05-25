@@ -8,7 +8,6 @@ import com.example.onlinestore.service.InventoryService;
 import com.example.onlinestore.service.ItemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,20 +17,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class CartServiceImpl implements CartService {
     private static final Logger logger = LoggerFactory.getLogger(CartServiceImpl.class);
-    
-    @Autowired
-    private CartItemMapper cartItemMapper;
-    
-    @Autowired
-    private ItemService itemService;
-    
-    @Autowired
-    private InventoryService inventoryService;
+
+    private final CartItemMapper cartItemMapper;
+    private final ItemService itemService;
+    private final InventoryService inventoryService;
+
+    public CartServiceImpl(CartItemMapper cartItemMapper, ItemService itemService, InventoryService inventoryService) {
+        this.cartItemMapper = cartItemMapper;
+        this.itemService = itemService;
+        this.inventoryService = inventoryService;
+    }
 
     @Override
     @Transactional

@@ -1,9 +1,7 @@
 package com.example.onlinestore.actuator;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -15,19 +13,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 自定义Actuator端点 - 数据库信息
- *
- */
 @Component
 @Endpoint(id = "dbinfo")
 public class DatabaseInfoEndpoint {
 
-    @Autowired
-    private DataSource dataSource;
-    
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final DataSource dataSource;
+
+    public DatabaseInfoEndpoint(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     @ReadOperation
     public Map<String, Object> getDatabaseInfo() {
@@ -79,25 +73,11 @@ public class DatabaseInfoEndpoint {
                 }
             }
             dbInfo.put("tables", tables);
-            
-            try {
-                List<Map<String, Object>> users = jdbcTemplate.queryForList("SELECT user, host FROM mysql.user");
-                dbInfo.put("users", users);
-            } catch (Exception e) {
-                dbInfo.put("usersError", e.getMessage());
-            }
-            
-            try {
-                List<Map<String, Object>> variables = jdbcTemplate.queryForList("SHOW VARIABLES");
-                dbInfo.put("variables", variables);
-            } catch (Exception e) {
-                dbInfo.put("variablesError", e.getMessage());
-            }
-            
+
         } catch (Exception e) {
             dbInfo.put("error", e.getMessage());
         }
-        
+
         return dbInfo;
     }
 } 

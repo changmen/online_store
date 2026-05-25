@@ -6,40 +6,20 @@ import com.example.onlinestore.mapper.InventoryMapper;
 import com.example.onlinestore.service.InventoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class InventoryServiceImpl implements InventoryService {
     private static final Logger logger = LoggerFactory.getLogger(InventoryServiceImpl.class);
-    
-    @Autowired
-    private InventoryMapper inventoryMapper;
 
-    // 库存锁映射，用于控制并发访问
-    private final Map<Long, Lock> inventoryLocks = new ConcurrentHashMap<>();
-    
-    // 商品锁映射，用于控制并发访问
-    private final Map<Long, Lock> skuLocks = new ConcurrentHashMap<>();
-    
-    // 获取库存锁
-    private Lock getInventoryLock(Long inventoryId) {
-        return inventoryLocks.computeIfAbsent(inventoryId, k -> new ReentrantLock());
-    }
-    
-    // 获取商品锁
-    private Lock getSkuLock(Long skuId) {
-        return skuLocks.computeIfAbsent(skuId, k -> new ReentrantLock());
+    private final InventoryMapper inventoryMapper;
+
+    public InventoryServiceImpl(InventoryMapper inventoryMapper) {
+        this.inventoryMapper = inventoryMapper;
     }
 
     @Override
@@ -70,192 +50,70 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional
     public void lockInventory(Long inventoryId, Integer quantity) {
-        InventoryEntity inventory = getInventoryById(inventoryId);
-        if (inventory == null) {
-            throw new InventoryException("库存不存在");
-        }
-        
-        if (inventory.getAvailableQuantity() < quantity) {
+        int affected = inventoryMapper.atomicLockInventory(inventoryId, quantity);
+        if (affected == 0) {
+            InventoryEntity inventory = getInventoryById(inventoryId);
+            if (inventory == null) {
+                throw new InventoryException("库存不存在");
+            }
             throw new InventoryException("可用库存不足");
         }
-        
-        inventoryMapper.updateQuantity(
-            inventoryId,
-            inventory.getQuantity(),
-            inventory.getLockedQuantity() + quantity,
-            inventory.getAvailableQuantity() - quantity
-        );
     }
 
     @Override
     @Transactional
     public void unlockInventory(Long inventoryId, Integer quantity) {
-        InventoryEntity inventory = getInventoryById(inventoryId);
-        if (inventory == null) {
-            throw new InventoryException("库存不存在");
-        }
-        
-        if (inventory.getLockedQuantity() < quantity) {
+        int affected = inventoryMapper.atomicUnlockInventory(inventoryId, quantity);
+        if (affected == 0) {
+            InventoryEntity inventory = getInventoryById(inventoryId);
+            if (inventory == null) {
+                throw new InventoryException("库存不存在");
+            }
             throw new InventoryException("锁定库存不足");
         }
-        
-        inventoryMapper.updateQuantity(
-            inventoryId,
-            inventory.getQuantity(),
-            inventory.getLockedQuantity() - quantity,
-            inventory.getAvailableQuantity() + quantity
-        );
     }
 
-    /**
-     * 扣减库存
-     */
     @Override
     @Transactional
     public void deductInventory(Long inventoryId, Integer quantity) {
         if (inventoryId == null) {
             throw new InventoryException("库存ID不能为空");
         }
-        
         if (quantity == null || quantity <= 0) {
             throw new InventoryException("扣减数量必须大于0");
         }
-        
-        // 获取库存锁
-        Lock inventoryLock = getInventoryLock(inventoryId);
-        boolean inventoryLockAcquired = false;
-        
-        try {
-            // 尝试获取库存锁，超时时间5秒
-            inventoryLockAcquired = inventoryLock.tryLock(5, TimeUnit.SECONDS);
-            if (!inventoryLockAcquired) {
-                throw new InventoryException("获取库存锁超时");
-            }
-            
-            logger.debug("获取库存锁: inventoryId={}", inventoryId);
-            
-            // 获取库存信息
+
+        int affected = inventoryMapper.atomicDeductInventory(inventoryId, quantity);
+        if (affected == 0) {
             InventoryEntity inventory = getInventoryById(inventoryId);
             if (inventory == null) {
                 throw new InventoryException("库存不存在");
             }
-            
-            // 检查可用库存
-            if (inventory.getAvailableQuantity() < quantity) {
-                throw new InventoryException("可用库存不足");
-            }
-            
-            Lock skuLock = getSkuLock(inventory.getSkuId());
-            boolean skuLockAcquired = false;
-            
-            try {
-                // 尝试获取SKU锁，超时时间5秒
-                skuLockAcquired = skuLock.tryLock(5, TimeUnit.SECONDS);
-                if (!skuLockAcquired) {
-                    throw new InventoryException("获取SKU锁超时");
-                }
-                
-                logger.debug("获取SKU锁: skuId={}", inventory.getSkuId());
-                
-                // 执行库存扣减
-                inventoryMapper.updateQuantity(
-                    inventoryId,
-                    inventory.getQuantity() - quantity,
-                    inventory.getLockedQuantity(),
-                    inventory.getAvailableQuantity() - quantity
-                );
-                
-                logger.info("扣减库存成功: inventoryId={}, quantity={}, newQuantity={}, newAvailableQuantity={}",
-                    inventoryId, quantity, inventory.getQuantity() - quantity, inventory.getAvailableQuantity() - quantity);
-            } finally {
-                if (skuLockAcquired) {
-                    skuLock.unlock();
-                    logger.debug("释放SKU锁: skuId={}", inventory.getSkuId());
-                }
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new InventoryException("获取锁被中断");
-        } finally {
-            if (inventoryLockAcquired) {
-                inventoryLock.unlock();
-                logger.debug("释放库存锁: inventoryId={}", inventoryId);
-            }
+            throw new InventoryException("可用库存不足");
         }
+        logger.info("扣减库存成功: inventoryId={}, quantity={}", inventoryId, quantity);
     }
 
-    /**
-     * 增加库存
-     */
     @Override
     @Transactional
     public void increaseInventory(Long inventoryId, Integer quantity) {
         if (inventoryId == null) {
             throw new InventoryException("库存ID不能为空");
         }
-        
         if (quantity == null || quantity <= 0) {
             throw new InventoryException("增加数量必须大于0");
         }
-        
-        // 获取库存信息（不加锁）
-        InventoryEntity inventory = getInventoryById(inventoryId);
-        if (inventory == null) {
-            throw new InventoryException("库存不存在");
-        }
-        
-        Lock skuLock = getSkuLock(inventory.getSkuId());
-        boolean skuLockAcquired = false;
-        
-        try {
-            // 尝试获取SKU锁，超时时间5秒
-            skuLockAcquired = skuLock.tryLock(5, TimeUnit.SECONDS);
-            if (!skuLockAcquired) {
-                throw new InventoryException("获取SKU锁超时");
-            }
-            
-            logger.debug("获取SKU锁: skuId={}", inventory.getSkuId());
-            
-            // 获取库存锁
-            Lock inventoryLock = getInventoryLock(inventoryId);
-            boolean inventoryLockAcquired = false;
-            
-            try {
-                // 尝试获取库存锁，超时时间5秒
-                inventoryLockAcquired = inventoryLock.tryLock(5, TimeUnit.SECONDS);
-                if (!inventoryLockAcquired) {
-                    throw new InventoryException("获取库存锁超时");
-                }
-                
-                logger.debug("获取库存锁: inventoryId={}", inventoryId);
-                
-                // 执行库存增加
-                inventoryMapper.updateQuantity(
-                    inventoryId,
-                    inventory.getQuantity() + quantity,
-                    inventory.getLockedQuantity(),
-                    inventory.getAvailableQuantity() + quantity
-                );
-                
-                logger.info("增加库存成功: inventoryId={}, quantity={}, newQuantity={}, newAvailableQuantity={}",
-                    inventoryId, quantity, inventory.getQuantity() + quantity, inventory.getAvailableQuantity() + quantity);
-            } finally {
-                if (inventoryLockAcquired) {
-                    inventoryLock.unlock();
-                    logger.debug("释放库存锁: inventoryId={}", inventoryId);
-                }
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new InventoryException("获取锁被中断");
-        } finally {
-            if (skuLockAcquired) {
-                skuLock.unlock();
-                logger.debug("释放SKU锁: skuId={}", inventory.getSkuId());
-            }
-        }
-    }
 
+        int affected = inventoryMapper.atomicIncreaseInventory(inventoryId, quantity);
+        if (affected == 0) {
+            InventoryEntity inventory = getInventoryById(inventoryId);
+            if (inventory == null) {
+                throw new InventoryException("库存不存在");
+            }
+            throw new InventoryException("增加库存失败");
+        }
+        logger.info("增加库存成功: inventoryId={}, quantity={}", inventoryId, quantity);
+    }
 
     @Override
     public List<InventoryEntity> queryInventories(Long skuId, String location, String status, int page, int size) {
@@ -283,96 +141,69 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional
     public void processBatchInventory(Long inventoryId, Integer quantity, String operationType, String batchNumber) {
-        // 1. 获取并验证库存信息
         InventoryEntity inventory = getInventoryById(inventoryId);
         if (inventory == null) {
             throw new InventoryException("库存不存在");
         }
-        
-        // 2. 验证库存状态
-        if ("NORMAL" == inventory.getStatus()) {
+
+        if (!"NORMAL".equals(inventory.getStatus())) {
             throw new InventoryException("库存状态异常: " + inventory.getStatus());
         }
-        
-        // 3. 验证库存数量
+
         if (quantity <= 0) {
             throw new InventoryException("操作数量必须大于0");
         }
-        
-        // 4. 根据操作类型进行不同的处理
+
+        int affected;
         switch (operationType) {
             case "LOCK":
-                // 锁定库存
-                if (inventory.getAvailableQuantity() < quantity) {
+                affected = inventoryMapper.atomicLockInventory(inventoryId, quantity);
+                if (affected == 0) {
                     throw new InventoryException("可用库存不足");
                 }
-                inventoryMapper.updateQuantity(
-                    inventoryId,
-                    inventory.getQuantity(),
-                    inventory.getLockedQuantity() + quantity,
-                    inventory.getAvailableQuantity() - quantity
-                );
                 logger.info("锁定库存: inventoryId={}, quantity={}, batchNumber={}", inventoryId, quantity, batchNumber);
                 break;
-                
+
             case "UNLOCK":
-                // 解锁库存
-                if (inventory.getLockedQuantity() < quantity) {
+                affected = inventoryMapper.atomicUnlockInventory(inventoryId, quantity);
+                if (affected == 0) {
                     throw new InventoryException("锁定库存不足");
                 }
-                inventoryMapper.updateQuantity(
-                    inventoryId,
-                    inventory.getQuantity(),
-                    inventory.getLockedQuantity() - quantity,
-                    inventory.getAvailableQuantity() + quantity
-                );
                 logger.info("解锁库存: inventoryId={}, quantity={}, batchNumber={}", inventoryId, quantity, batchNumber);
                 break;
-                
+
             case "DEDUCT":
-                // 扣减库存
-                if (inventory.getAvailableQuantity() < quantity) {
+                affected = inventoryMapper.atomicDeductInventory(inventoryId, quantity);
+                if (affected == 0) {
                     throw new InventoryException("可用库存不足");
                 }
-                inventoryMapper.updateQuantity(
-                    inventoryId,
-                    inventory.getQuantity() - quantity,
-                    inventory.getLockedQuantity(),
-                    inventory.getAvailableQuantity() - quantity
-                );
                 logger.info("扣减库存: inventoryId={}, quantity={}, batchNumber={}", inventoryId, quantity, batchNumber);
                 break;
-                
+
             case "INCREASE":
-                // 增加库存
-                inventoryMapper.updateQuantity(
-                    inventoryId,
-                    inventory.getQuantity() + quantity,
-                    inventory.getLockedQuantity(),
-                    inventory.getAvailableQuantity() + quantity
-                );
+                affected = inventoryMapper.atomicIncreaseInventory(inventoryId, quantity);
+                if (affected == 0) {
+                    throw new InventoryException("增加库存失败");
+                }
                 logger.info("增加库存: inventoryId={}, quantity={}, batchNumber={}", inventoryId, quantity, batchNumber);
                 break;
-                
+
             default:
                 throw new InventoryException("不支持的操作类型: " + operationType);
         }
-        
-        // 5. 检查是否需要发送库存预警
+
         InventoryEntity updatedInventory = getInventoryById(inventoryId);
         if (updatedInventory.getAvailableQuantity() <= updatedInventory.getWarningQuantity()) {
             logger.warn("库存预警: inventoryId={}, availableQuantity={}, warningQuantity={}, batchNumber={}",
                 inventoryId, updatedInventory.getAvailableQuantity(), updatedInventory.getWarningQuantity(), batchNumber);
         }
-        
-        // 6. 检查库存是否过期
-        if (updatedInventory.getExpiryDate() != null && 
+
+        if (updatedInventory.getExpiryDate() != null &&
             updatedInventory.getExpiryDate().isBefore(LocalDateTime.now())) {
             logger.warn("库存过期: inventoryId={}, expiryDate={}, batchNumber={}",
                 inventoryId, updatedInventory.getExpiryDate(), batchNumber);
         }
-        
-        // 7. 更新库存状态
+
         if (updatedInventory.getQuantity() == 0) {
             inventory.setStatus("EMPTY");
             inventoryMapper.updateInventory(inventory);
@@ -396,7 +227,6 @@ public class InventoryServiceImpl implements InventoryService {
         String operator,
         String remark
     ) {
-        // 1. 参数验证
         if (skuId == null) {
             throw new InventoryException("SKU ID不能为空");
         }
@@ -418,22 +248,18 @@ public class InventoryServiceImpl implements InventoryService {
         if (quantity < (lockedQuantity + availableQuantity)) {
             throw new InventoryException("库存数量不能小于锁定数量和可用数量之和");
         }
-        
-        // 2. 查找或创建库存记录
+
         List<InventoryEntity> inventories = inventoryMapper.findBySkuId(skuId);
         InventoryEntity inventory;
-        
+
         if (inventories.isEmpty()) {
-            // 创建新的库存记录
             inventory = new InventoryEntity();
             inventory.setSkuId(skuId);
             inventory.setCreatedAt(LocalDateTime.now());
         } else {
-            // 使用现有的库存记录
             inventory = inventories.get(0);
         }
-        
-        // 3. 更新库存信息
+
         inventory.setQuantity(quantity);
         inventory.setLockedQuantity(lockedQuantity);
         inventory.setAvailableQuantity(availableQuantity);
@@ -444,27 +270,23 @@ public class InventoryServiceImpl implements InventoryService {
         inventory.setExpiryDate(expiryDate);
         inventory.setStatus(status);
         inventory.setUpdatedAt(LocalDateTime.now());
-        
-        // 4. 保存更新
+
         if (inventory.getId() == null) {
             inventoryMapper.insertInventory(inventory);
         } else {
             inventoryMapper.updateInventory(inventory);
         }
-        
-        // 5. 记录操作日志
+
         logger.info("更新SKU库存: skuId={}, quantity={}, lockedQuantity={}, availableQuantity={}, " +
                    "warningQuantity={}, location={}, batchNumber={}, operator={}, remark={}",
             skuId, quantity, lockedQuantity, availableQuantity, warningQuantity,
             location, batchNumber, operator, remark);
-            
-        // 6. 检查是否需要发送预警
+
         if (availableQuantity <= warningQuantity) {
             logger.warn("SKU库存预警: skuId={}, availableQuantity={}, warningQuantity={}",
                 skuId, availableQuantity, warningQuantity);
         }
-        
-        // 7. 检查是否过期
+
         if (expiryDate != null && expiryDate.isBefore(LocalDateTime.now())) {
             logger.warn("SKU库存过期: skuId={}, expiryDate={}", skuId, expiryDate);
         }

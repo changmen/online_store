@@ -7,7 +7,6 @@ import com.example.onlinestore.mapper.OrderMapper;
 import com.example.onlinestore.service.AddressService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +17,13 @@ public class AddressServiceImpl implements AddressService {
     
     private static final Logger logger = LoggerFactory.getLogger(AddressServiceImpl.class);
     
-    @Autowired
-    private AddressMapper addressMapper;
-    
-    @Autowired
-    private OrderMapper orderMapper;
+    private final AddressMapper addressMapper;
+    private final OrderMapper orderMapper;
+
+    public AddressServiceImpl(AddressMapper addressMapper, OrderMapper orderMapper) {
+        this.addressMapper = addressMapper;
+        this.orderMapper = orderMapper;
+    }
 
     @Override
     @Transactional
