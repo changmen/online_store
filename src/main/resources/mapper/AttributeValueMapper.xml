@@ -53,4 +53,24 @@
         WHERE `attribute_id` = #{attributeId}
     </select>
 
+    <select id="findByIds" resultMap="attributeValueResultMap">
+        SELECT
+        <include refid="AttributeValue_base_sql" />
+        FROM `attribute_value`
+        WHERE `id` IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="findByAttributeIds" resultMap="attributeValueResultMap">
+        SELECT
+        <include refid="AttributeValue_base_sql" />
+        FROM `attribute_value`
+        WHERE `attribute_id` IN
+        <foreach collection="attributeIds" item="attributeId" open="(" separator="," close=")">
+            #{attributeId}
+        </foreach>
+    </select>
+
 </mapper>

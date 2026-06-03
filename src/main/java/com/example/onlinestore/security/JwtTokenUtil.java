@@ -36,6 +36,10 @@ public class JwtTokenUtil {
         return extractClaim(token, Claims::getExpiration);
     }
 
+    public Long extractMemberId(String token) {
+        return extractClaim(token, claims -> claims.get("memberId", Long.class));
+    }
+
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -55,6 +59,9 @@ public class JwtTokenUtil {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+        if (userDetails instanceof CustomUserDetails customUserDetails) {
+            claims.put("memberId", customUserDetails.getMemberId());
+        }
         return createToken(claims, userDetails.getUsername());
     }
 

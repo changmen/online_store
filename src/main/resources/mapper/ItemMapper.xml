@@ -67,7 +67,7 @@
             AND `brand_id` = #{options.brandId}
         </if>
         <if test="options != null and options.nameLike != null">
-            AND `name` LIKE '%${options.nameLike}%'
+            AND `name` LIKE CONCAT('%', #{options.nameLike}, '%')
         </if>
     </select>
 </mapper>

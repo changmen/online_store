@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 public interface AttributeService {
 
@@ -88,5 +89,10 @@ public interface AttributeService {
      */
     void ensureItemAttributes(@NotNull Long itemId, @NotNull Long skuId, @NotNull @Valid List<ItemAttributeRequest> attributes);
 
+    List<Attribute> getAttributesByIds(List<Long> ids);
+
+    Map<Long, List<AttributeValue>> getAttributeValuesByAttributeIds(List<Long> attributeIds);
+
+    Map<Long, AttributeValue> getAttributeValuesByIds(List<Long> ids);
 
 }

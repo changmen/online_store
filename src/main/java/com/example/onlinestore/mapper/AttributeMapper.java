@@ -2,6 +2,9 @@ package com.example.onlinestore.mapper;
 
 import com.example.onlinestore.entity.AttributeEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 @Mapper
 public interface AttributeMapper {
@@ -44,5 +47,7 @@ public interface AttributeMapper {
      * @return 匹配的属性实体对象，包含所有字段值；未找到时返回null
      */
     AttributeEntity findByName(String name);
+
+    List<AttributeEntity> findByIds(@Param("ids") List<Long> ids);
 
 }

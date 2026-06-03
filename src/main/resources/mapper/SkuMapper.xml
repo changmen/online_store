@@ -37,7 +37,7 @@
         VALUES
         <foreach collection="list" item="item" separator=",">
             (
-                #{itemId}, #{skuCode}, #{name}, #{description}, #{price}, #{defaultSku}, #{stockQuantity}, #{soldQuantity}, #{warningQuantity}, #{image}, #{createdAt}, #{updatedAt}
+                #{item.itemId}, #{item.skuCode}, #{item.name}, #{item.description}, #{item.price}, #{item.defaultSku}, #{item.stockQuantity}, #{item.soldQuantity}, #{item.warningQuantity}, #{item.image}, #{item.createdAt}, #{item.updatedAt}
             )
         </foreach>
     </insert>

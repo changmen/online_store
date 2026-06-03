@@ -18,7 +18,7 @@
     </sql>
 
     <insert id="insert" parameterType="com.example.onlinestore.entity.BrandEntity">
-        INSERT INTO brand (`id`,`name`, `description`, `logo`, `story`, `sort_score`, `visible`, `created_at`, `updated_at`)
+        INSERT INTO brand (`name`, `description`, `logo`, `story`, `sort_score`, `visible`, `created_at`, `updated_at`)
         VALUES (#{name}, #{description}, #{logo}, #{story}, #{sortScore}, #{visible}, #{createdAt}, #{updatedAt})
     </insert>
 

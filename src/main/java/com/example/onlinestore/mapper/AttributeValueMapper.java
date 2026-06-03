@@ -70,5 +70,8 @@ public interface AttributeValueMapper {
      */
     int countValuesByAttributeId(@Param("attributeId") Long attributeId);
 
+    List<AttributeValueEntity> findByIds(@Param("ids") List<Long> ids);
+
+    List<AttributeValueEntity> findByAttributeIds(@Param("attributeIds") List<Long> attributeIds);
 
 }

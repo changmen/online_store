@@ -8,6 +8,7 @@ import com.example.onlinestore.entity.MemberEntity;
 import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.MemberMapper;
+import com.example.onlinestore.security.CustomUserDetails;
 import com.example.onlinestore.security.JwtTokenUtil;
 import com.example.onlinestore.service.MemberService;
 import jakarta.validation.Valid;
@@ -20,13 +21,11 @@ import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 
 @Service
 public class MemberServiceImpl implements MemberService {
@@ -54,7 +53,8 @@ public class MemberServiceImpl implements MemberService {
             throw new BizException(ErrorCode.MEMBER_PASSWORD_INCORRECT);
         }
 
-        String token = jwtTokenUtil.generateToken(new User(user.getName(), user.getPassword(), new ArrayList<>()));
+        CustomUserDetails userDetails = new CustomUserDetails(user);
+        String token = jwtTokenUtil.generateToken(userDetails);
         return new LoginResponse(token);
     }
 
@@ -107,20 +107,14 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public Member getLoginMember() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication instanceof AnonymousAuthenticationToken)) {
-            String currentUserName = authentication.getName();
-            if (StringUtils.isBlank(currentUserName)) {
-                throw new BizException(ErrorCode.MEMBER_NOT_LOGIN);
-            }
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
+            throw new BizException(ErrorCode.MEMBER_NOT_LOGIN);
+        }
 
-            Member member = getMemberByName(currentUserName);
-            if (member == null) {
-                throw new BizException(ErrorCode.MEMBER_NOT_LOGIN);
-            }
-            return member;
+        if (authentication.getPrincipal() instanceof CustomUserDetails customUserDetails) {
+            return customUserDetails.getMember();
         }
 
         throw new BizException(ErrorCode.MEMBER_NOT_LOGIN);
-
     }
 }

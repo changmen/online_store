@@ -36,7 +36,7 @@
     <update id="update">
         UPDATE `attribute`
         <set>
-            <if test="name != null">`name` = #{name}</if>
+            <if test="name != null">`name` = #{name},</if>
             <if test="required != null">`required` = #{required},</if>
             <if test="searchable != null">`searchable` = #{searchable},</if>
             <if test="inputType != null">`input_type` = #{inputType},</if>
@@ -53,6 +53,16 @@
         FROM `attribute`
         WHERE `name` = #{name}
         LIMIT 1
+    </select>
+
+    <select id="findByIds" resultMap="attributeResultMap">
+        SELECT
+        <include refid="Attribute_base_sql" />
+        FROM `attribute`
+        WHERE `id` IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </select>
 
 </mapper>

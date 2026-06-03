@@ -1,8 +1,4 @@
 spring:
-  security:
-    user:
-      name: ${ADMIN_USERNAME:admin}
-      password: ${ADMIN_PASSWORD:admin123} 
   jackson:
     default-property-inclusion: non_null
   datasource:
@@ -10,6 +6,12 @@ spring:
     url: jdbc:mysql://localhost:3306/online_store?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: ${MYSQL_PASSWORD:123456}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 30000
+      max-lifetime: 1800000
   data:
     redis:
       host: localhost
