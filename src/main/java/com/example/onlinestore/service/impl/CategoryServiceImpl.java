@@ -72,12 +72,19 @@ public class CategoryServiceImpl implements CategoryService, InitializingBean, D
 
     @Override
     public List<Category> getAllCategories() {
-        return List.of();
+        return new ArrayList<>(categoryMap.values());
     }
 
     @Override
     public List<Category> getChildCategories(Long parentId) {
-        return List.of();
+        Category parent = categoryMap.get(parentId);
+        if (parent == null || parent.getChildren() == null) {
+            return List.of();
+        }
+        return parent.getChildren().stream()
+                .map(categoryMap::get)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     private void loadCategory() {

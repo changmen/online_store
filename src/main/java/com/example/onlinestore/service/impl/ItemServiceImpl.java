@@ -169,7 +169,9 @@ public class ItemServiceImpl implements ItemService {
                 item.setSubImageURLs(Collections.emptyList());
             }
         }
-        item.setStatus(ItemStatus.valueOf(itemEntity.getStatus()));
+        if (StringUtils.isNotBlank(itemEntity.getStatus())) {
+            item.setStatus(ItemStatus.valueOf(itemEntity.getStatus()));
+        }
         item.setSortScore(itemEntity.getSortScore());
         return item;
     }
