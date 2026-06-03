@@ -144,7 +144,10 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Page<Item> listItems(@NotNull @Valid ItemListQueryRequest queryRequest) {
-        PageHelper.startPage(queryRequest.getPageNum(), queryRequest.getPageSize(), DEFAULT_ITEM_LIST_QUERY_ORDERBY);
+        String orderBy = StringUtils.isNotBlank(queryRequest.getOrderBy())
+                ? queryRequest.getOrderBy()
+                : DEFAULT_ITEM_LIST_QUERY_ORDERBY;
+        PageHelper.startPage(queryRequest.getPageNum(), queryRequest.getPageSize(), orderBy);
         List<ItemEntity> itemEntities = itemMapper.queryItemsByOptions(queryRequest);
         PageInfo<ItemEntity> pageInfo = new PageInfo<>(itemEntities);
         return Page.of(itemEntities.stream().map(itemEntity -> convertToEntity(itemEntity, e -> null)).toList(), pageInfo.getTotal(), queryRequest.getPageNum(), queryRequest.getPageSize());

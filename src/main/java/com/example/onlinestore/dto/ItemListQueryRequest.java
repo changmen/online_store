@@ -1,6 +1,7 @@
 package com.example.onlinestore.dto;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,5 +26,11 @@ public class ItemListQueryRequest extends PageRequest {
 
     @Min(value = 1, message = "brandId的值只能为正整数")
     private Long brandId;
+
+    private String status;
+
+    @Pattern(regexp = "^(id|name|sort_score|created_at|updated_at)(\\s+(ASC|DESC|asc|desc))?$",
+            message = "orderBy格式不正确，示例: created_at DESC")
+    private String orderBy;
 
 }

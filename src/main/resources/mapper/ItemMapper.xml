@@ -66,6 +66,9 @@
         <if test="options != null and options.brandId != null">
             AND `brand_id` = #{options.brandId}
         </if>
+        <if test="options != null and options.status != null">
+            AND `status` = #{options.status}
+        </if>
         <if test="options != null and options.nameLike != null">
             AND `name` LIKE CONCAT('%', #{options.nameLike}, '%')
         </if>
