@@ -14,6 +14,7 @@ import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.ItemAttributeRelationMapper;
 import com.example.onlinestore.mapper.SkuMapper;
 import com.example.onlinestore.service.AttributeService;
+import com.example.onlinestore.service.ItemDetailService;
 import com.example.onlinestore.service.ItemService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,9 @@ class SkuServiceImplTest {
 
     @Mock
     private ItemAttributeRelationMapper itemAttributeRelationMapper;
+
+    @Mock
+    private ItemDetailService itemDetailService;
 
     @InjectMocks
     private SkuServiceImpl skuService;

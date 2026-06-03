@@ -15,6 +15,7 @@ import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.ItemAttributeRelationMapper;
 import com.example.onlinestore.mapper.SkuMapper;
 import com.example.onlinestore.service.AttributeService;
+import com.example.onlinestore.service.ItemDetailService;
 import com.example.onlinestore.service.ItemService;
 import com.example.onlinestore.service.SkuService;
 import jakarta.validation.Valid;
@@ -47,6 +48,9 @@ public class SkuServiceImpl implements SkuService {
 
     @Autowired
     private ItemAttributeRelationMapper itemAttributeRelationMapper;
+
+    @Autowired
+    private ItemDetailService itemDetailService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -119,6 +123,7 @@ public class SkuServiceImpl implements SkuService {
 
         //记录属性
         processSkuAttributes(createSkuRequest.getItemId(), skuEntity.getId(), createSkuRequest.getAttributes());
+        itemDetailService.evictItemDetailCache(createSkuRequest.getItemId());
         return convertSkuEntity(skuEntity, null);
     }
 
@@ -164,7 +169,7 @@ public class SkuServiceImpl implements SkuService {
             logger.error("update sku stock quantity failed. because effect rows is 0. skuId:{}", skuId);
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-
+        itemDetailService.evictItemDetailCache(sku.getItemId());
     }
 
     @Override

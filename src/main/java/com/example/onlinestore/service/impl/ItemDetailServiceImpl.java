@@ -78,4 +78,13 @@ public class ItemDetailServiceImpl implements ItemDetailService {
 
         return result;
     }
+
+    @Override
+    public void evictItemDetailCache(@NotNull Long itemId) {
+        try {
+            redisTemplate.delete(CACHE_KEY_PREFIX + itemId);
+        } catch (Exception e) {
+            logger.warn("Failed to evict item detail cache, itemId: {}", itemId, e);
+        }
+    }
 }

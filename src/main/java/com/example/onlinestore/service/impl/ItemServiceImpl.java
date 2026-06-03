@@ -61,6 +61,9 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private ItemDetailService itemDetailService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Item createItem(@NotNull @Valid CreateItemRequest request) {
@@ -126,6 +129,7 @@ public class ItemServiceImpl implements ItemService {
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
         attributeService.ensureItemAttributes(id, 0L, request.getAttributes());
+        itemDetailService.evictItemDetailCache(id);
     }
 
     @Override
@@ -143,7 +147,7 @@ public class ItemServiceImpl implements ItemService {
         PageHelper.startPage(queryRequest.getPageNum(), queryRequest.getPageSize(), DEFAULT_ITEM_LIST_QUERY_ORDERBY);
         List<ItemEntity> itemEntities = itemMapper.queryItemsByOptions(queryRequest);
         PageInfo<ItemEntity> pageInfo = new PageInfo<>(itemEntities);
-        return Page.of(itemEntities.stream().map(itemEntity -> convertToEntity(itemEntity, this::getItemDescription)).toList(), pageInfo.getTotal(), queryRequest.getPageNum(), queryRequest.getPageSize());
+        return Page.of(itemEntities.stream().map(itemEntity -> convertToEntity(itemEntity, e -> null)).toList(), pageInfo.getTotal(), queryRequest.getPageNum(), queryRequest.getPageSize());
     }
 
     private Item convertToEntity(ItemEntity itemEntity, Function<ItemEntity, String> descriptionMap) {

@@ -15,6 +15,7 @@ import com.example.onlinestore.mapper.ItemMapper;
 import com.example.onlinestore.service.AttributeService;
 import com.example.onlinestore.service.BrandService;
 import com.example.onlinestore.service.CategoryService;
+import com.example.onlinestore.service.ItemDetailService;
 import com.example.onlinestore.service.OssService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +52,9 @@ class ItemServiceImplTest {
 
     @Mock
     private CategoryService categoryService;
+
+    @Mock
+    private ItemDetailService itemDetailService;
 
     @InjectMocks
     private ItemServiceImpl itemService;
