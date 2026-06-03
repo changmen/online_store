@@ -75,8 +75,16 @@ public class ItemServiceImpl implements ItemService {
             }
         }
 
+        List<Long> attributeIds = request.getAttributes().stream()
+                .map(ItemAttributeRequest::getAttributeId).toList();
+        Map<Long, Attribute> attributeMap = attributeService.getAttributesByIds(attributeIds).stream()
+                .collect(Collectors.toMap(Attribute::getId, Function.identity()));
+
         for (ItemAttributeRequest attributeRequest : request.getAttributes()) {
-            Attribute attribute = attributeService.getAttributeById(attributeRequest.getAttributeId());
+            Attribute attribute = attributeMap.get(attributeRequest.getAttributeId());
+            if (attribute == null) {
+                throw new BizException(ErrorCode.ATTRIBUTE_NOT_FOUND, attributeRequest.getAttributeId());
+            }
             if (attribute.getInputType() == AttributeInputType.SINGLE_SELECT || attribute.getInputType() == AttributeInputType.MULTI_SELECT) {
                 // 此时需要校验value
                 if (attributeRequest.getAttributeValueId() == null) {
@@ -143,8 +151,16 @@ public class ItemServiceImpl implements ItemService {
             }
         }
 
+        List<Long> attributeIds = request.getAttributes().stream()
+                .map(ItemAttributeRequest::getAttributeId).toList();
+        Map<Long, Attribute> attributeMap = attributeService.getAttributesByIds(attributeIds).stream()
+                .collect(Collectors.toMap(Attribute::getId, Function.identity()));
+
         for (ItemAttributeRequest attributeRequest : request.getAttributes()) {
-            Attribute attribute = attributeService.getAttributeById(attributeRequest.getAttributeId());
+            Attribute attribute = attributeMap.get(attributeRequest.getAttributeId());
+            if (attribute == null) {
+                throw new BizException(ErrorCode.ATTRIBUTE_NOT_FOUND, attributeRequest.getAttributeId());
+            }
             if (attribute.getInputType() == AttributeInputType.SINGLE_SELECT || attribute.getInputType() == AttributeInputType.MULTI_SELECT) {
                 // 此时需要校验value
                 if (attributeRequest.getAttributeValueId() == null) {
@@ -160,6 +176,7 @@ public class ItemServiceImpl implements ItemService {
 
 
         ItemEntity updateItemEntity = new ItemEntity();
+        updateItemEntity.setId(id);
         if (uploadDescriptionToOSS) {
             // 存储描述到OSS
             String url = ossService.uploadItemDescription(request.getDescription());

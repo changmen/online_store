@@ -27,9 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -192,7 +191,7 @@ public class AttributeServiceImpl implements AttributeService {
                 throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
-            newRelations = attributes.stream().filter(attribute -> !curAttributeIds.contains(attribute.getAttributeId())).map(attribute -> {
+            newRelations = attributes.stream().map(attribute -> {
                 ItemAttributeRelationEntity relationEntity = new ItemAttributeRelationEntity();
                 relationEntity.setItemId(itemId);
                 relationEntity.setSkuId(skuId);
@@ -216,6 +215,37 @@ public class AttributeServiceImpl implements AttributeService {
         }
 
 
+    }
+
+    @Override
+    public List<Attribute> getAttributesByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<AttributeEntity> entities = attributeMapper.findByIds(ids);
+        return entities.stream().map(this::convertToAttribute).toList();
+    }
+
+    @Override
+    public Map<Long, List<AttributeValue>> getAttributeValuesByAttributeIds(List<Long> attributeIds) {
+        if (attributeIds == null || attributeIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<AttributeValueEntity> entities = attributeValueMapper.findByAttributeIds(attributeIds);
+        return entities.stream()
+                .map(this::convertToAttributeValue)
+                .collect(Collectors.groupingBy(AttributeValue::getAttributeId));
+    }
+
+    @Override
+    public Map<Long, AttributeValue> getAttributeValuesByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<AttributeValueEntity> entities = attributeValueMapper.findByIds(ids);
+        return entities.stream()
+                .map(this::convertToAttributeValue)
+                .collect(Collectors.toMap(AttributeValue::getId, Function.identity()));
     }
 
     private AttributeEntity getAttributeEntity(CreateAttributeRequest request, String name, LocalDateTime now) {

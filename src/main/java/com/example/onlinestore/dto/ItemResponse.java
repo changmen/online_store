@@ -66,5 +66,14 @@ public class ItemResponse implements Serializable {
      */
     private Long brandId;
 
+    /**
+     * 商品状态（如 DRAFT / ON_SALE / OFF_SALE 等）
+     */
+    private String status;
+
+    /**
+     * 排序权重值，数值越大展示越靠前
+     */
+    private Integer sortScore;
 
 }

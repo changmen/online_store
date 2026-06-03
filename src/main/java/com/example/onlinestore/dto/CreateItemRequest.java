@@ -1,7 +1,9 @@
 package com.example.onlinestore.dto;
 
+import com.example.onlinestore.constants.Constants;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -54,6 +56,8 @@ public class CreateItemRequest implements Serializable {
      * 用于商品列表页展示
      */
     @NotNull(message = "mainImageUrl不能为空")
+    @Size(max = 256, message = "mainImageUrl最大长度不超过256个字符")
+    @Pattern(regexp = Constants.URL_PATTERN, message = "mainImageUrl格式不正确")
     private String mainImageUrl;
 
     /**

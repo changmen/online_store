@@ -28,10 +28,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -65,9 +63,22 @@ public class SkuServiceImpl implements SkuService {
             throw new BizException(ErrorCode.SKU_WARNING_QUANTITY_EXCEEDS_STOCK_QUANTITY);
         }
 
-        // 校验属性
+        // 校验属性（批量查询替代循环查询）
+        List<Long> attributeIds = createSkuRequest.getAttributes().stream()
+                .map(ItemAttributeRequest::getAttributeId).toList();
+        List<Long> valueIds = createSkuRequest.getAttributes().stream()
+                .map(ItemAttributeRequest::getAttributeValueId)
+                .filter(Objects::nonNull).toList();
+
+        Map<Long, Attribute> attributeMap = attributeService.getAttributesByIds(attributeIds).stream()
+                .collect(Collectors.toMap(Attribute::getId, Function.identity()));
+        Map<Long, AttributeValue> valueMap = attributeService.getAttributeValuesByIds(valueIds);
+
         createSkuRequest.getAttributes().forEach(attributeRequest -> {
-            Attribute attribute = attributeService.getAttributeById(attributeRequest.getAttributeId());
+            Attribute attribute = attributeMap.get(attributeRequest.getAttributeId());
+            if (attribute == null) {
+                throw new BizException(ErrorCode.ATTRIBUTE_NOT_FOUND, attributeRequest.getAttributeId());
+            }
             if (attribute.getAttributeType() != AttributeType.SKU) {
                 throw new BizException(ErrorCode.ATTRIBUTE_TYPE_NOT_SKU, attributeRequest.getAttributeId());
             }
@@ -80,9 +91,9 @@ public class SkuServiceImpl implements SkuService {
                 throw new BizException(ErrorCode.SKU_ATTRIBUTE_VALUE_EMPTY, attributeRequest.getAttributeId());
             }
 
-            // 校验属性值是否存在
-            attributeService.getAttributeValueById(attributeRequest.getAttributeValueId());
-
+            if (!valueMap.containsKey(attributeRequest.getAttributeValueId())) {
+                throw new BizException(ErrorCode.ATTRIBUTE_VALUE_NOT_FOUND, attributeRequest.getAttributeValueId());
+            }
         });
 
         LocalDateTime now = LocalDateTime.now();
@@ -118,7 +129,35 @@ public class SkuServiceImpl implements SkuService {
         if (CollectionUtils.isEmpty(skuEntities)) {
             return Collections.emptyList();
         }
-        return skuEntities.stream().map(skuEntity -> convertSkuEntity(skuEntity, null)).collect(Collectors.toList());
+
+        // 批量查询所有 SKU 的属性关联
+        List<Long> skuIds = skuEntities.stream().map(SkuEntity::getId).toList();
+        Map<Long, List<ItemAttributeRelationEntity>> relationsBySkuId = new HashMap<>();
+        Set<Long> allAttributeIds = new HashSet<>();
+        Set<Long> allValueIds = new HashSet<>();
+
+        for (SkuEntity skuEntity : skuEntities) {
+            List<ItemAttributeRelationEntity> relations = itemAttributeRelationMapper.findByItemIdAndSkuId(itemId, skuEntity.getId());
+            relationsBySkuId.put(skuEntity.getId(), relations);
+            if (relations != null) {
+                for (ItemAttributeRelationEntity r : relations) {
+                    allAttributeIds.add(r.getAttributeId());
+                    if (r.getValueId() != null) {
+                        allValueIds.add(r.getValueId());
+                    }
+                }
+            }
+        }
+
+        // 批量查询所有属性和属性值
+        Map<Long, Attribute> attributeMap = attributeService.getAttributesByIds(new ArrayList<>(allAttributeIds)).stream()
+                .collect(Collectors.toMap(Attribute::getId, Function.identity()));
+        Map<Long, List<AttributeValue>> valuesByAttributeId = attributeService.getAttributeValuesByAttributeIds(new ArrayList<>(allAttributeIds));
+        Map<Long, AttributeValue> valueMap = attributeService.getAttributeValuesByIds(new ArrayList<>(allValueIds));
+
+        return skuEntities.stream()
+                .map(skuEntity -> convertSkuEntity(skuEntity, relationsBySkuId.get(skuEntity.getId()), attributeMap, valuesByAttributeId, valueMap))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -150,6 +189,50 @@ public class SkuServiceImpl implements SkuService {
             return null;
         }
 
+        if (relationEntities == null) {
+            relationEntities = itemAttributeRelationMapper.findByItemIdAndSkuId(skuEntity.getItemId(), skuEntity.getId());
+        }
+
+        if (CollectionUtils.isEmpty(relationEntities)) {
+            return buildSku(skuEntity, Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+        }
+
+        Set<Long> attributeIds = new HashSet<>();
+        Set<Long> valueIds = new HashSet<>();
+        for (ItemAttributeRelationEntity r : relationEntities) {
+            attributeIds.add(r.getAttributeId());
+            if (r.getValueId() != null) {
+                valueIds.add(r.getValueId());
+            }
+        }
+
+        Map<Long, Attribute> attributeMap = attributeService.getAttributesByIds(new ArrayList<>(attributeIds)).stream()
+                .collect(Collectors.toMap(Attribute::getId, Function.identity()));
+        Map<Long, List<AttributeValue>> valuesByAttributeId = attributeService.getAttributeValuesByAttributeIds(new ArrayList<>(attributeIds));
+        Map<Long, AttributeValue> valueMap = attributeService.getAttributeValuesByIds(new ArrayList<>(valueIds));
+
+        return buildSku(skuEntity, relationEntities, attributeMap, valuesByAttributeId, valueMap);
+    }
+
+    private Sku convertSkuEntity(SkuEntity skuEntity,
+                                  List<ItemAttributeRelationEntity> relationEntities,
+                                  Map<Long, Attribute> attributeMap,
+                                  Map<Long, List<AttributeValue>> valuesByAttributeId,
+                                  Map<Long, AttributeValue> valueMap) {
+        if (skuEntity == null) {
+            return null;
+        }
+        if (CollectionUtils.isEmpty(relationEntities)) {
+            return buildSku(skuEntity, Collections.emptyList(), attributeMap, valuesByAttributeId, valueMap);
+        }
+        return buildSku(skuEntity, relationEntities, attributeMap, valuesByAttributeId, valueMap);
+    }
+
+    private Sku buildSku(SkuEntity skuEntity,
+                          List<ItemAttributeRelationEntity> relationEntities,
+                          Map<Long, Attribute> attributeMap,
+                          Map<Long, List<AttributeValue>> valuesByAttributeId,
+                          Map<Long, AttributeValue> valueMap) {
         Sku sku = new Sku();
         sku.setId(skuEntity.getId());
         sku.setItemId(skuEntity.getItemId());
@@ -160,28 +243,40 @@ public class SkuServiceImpl implements SkuService {
         sku.setImage(skuEntity.getImage());
         sku.setDefaultSku(skuEntity.getDefaultSku());
 
-        if (relationEntities == null) {
-            relationEntities = itemAttributeRelationMapper.findByItemIdAndSkuId(skuEntity.getItemId(), skuEntity.getId());
-        }
         if (CollectionUtils.isEmpty(relationEntities)) {
             sku.setAttributes(Collections.emptyList());
         } else {
             sku.setAttributes(relationEntities.stream().map(relationEntity -> {
                 ItemAttributeAndValue itemAttributeAndValue = new ItemAttributeAndValue();
-                Attribute attribute = attributeService.getAttributeByIdWithValues(relationEntity.getAttributeId());
-                itemAttributeAndValue.setAttribute(attribute);
-                if (attribute.getInputType() == AttributeInputType.INPUT){
+                Attribute attribute = attributeMap.get(relationEntity.getAttributeId());
+                // 填充属性值列表
+                List<AttributeValue> values = valuesByAttributeId.getOrDefault(relationEntity.getAttributeId(), Collections.emptyList());
+                Attribute attributeWithValues = cloneAttributeWithValues(attribute, values);
+                itemAttributeAndValue.setAttribute(attributeWithValues);
+                if (attribute.getInputType() == AttributeInputType.INPUT) {
                     itemAttributeAndValue.setInputValue(relationEntity.getInputValue());
-                }else{
-                    AttributeValue attributeValue = attributeService.getAttributeValueById(relationEntity.getValueId());
+                } else {
+                    AttributeValue attributeValue = valueMap.get(relationEntity.getValueId());
                     itemAttributeAndValue.setAttributeValue(attributeValue);
                 }
-
                 return itemAttributeAndValue;
-
             }).collect(Collectors.toList()));
         }
         return sku;
+    }
+
+    private Attribute cloneAttributeWithValues(Attribute attribute, List<AttributeValue> values) {
+        Attribute clone = new Attribute();
+        clone.setId(attribute.getId());
+        clone.setName(attribute.getName());
+        clone.setAttributeType(attribute.getAttributeType());
+        clone.setInputType(attribute.getInputType());
+        clone.setRequired(attribute.getRequired());
+        clone.setSearchable(attribute.getSearchable());
+        clone.setSortScore(attribute.getSortScore());
+        clone.setVisible(attribute.getVisible());
+        clone.setValues(values);
+        return clone;
     }
 
     private void processSkuAttributes(Long itemId, Long skuId, List<ItemAttributeRequest> attributes) {
@@ -194,6 +289,7 @@ public class SkuServiceImpl implements SkuService {
             newRelations = attributes.stream().map(attribute -> {
                 ItemAttributeRelationEntity relationEntity = new ItemAttributeRelationEntity();
                 relationEntity.setItemId(itemId);
+                relationEntity.setSkuId(skuId);
                 relationEntity.setAttributeId(attribute.getAttributeId());
                 relationEntity.setValueId(attribute.getAttributeValueId());
                 relationEntity.setInputValue(attribute.getValue());
@@ -210,7 +306,7 @@ public class SkuServiceImpl implements SkuService {
                 throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
-            newRelations = attributes.stream().filter(attribute -> !curAttributeIds.contains(attribute.getAttributeId())).map(attribute -> {
+            newRelations = attributes.stream().map(attribute -> {
                 ItemAttributeRelationEntity relationEntity = new ItemAttributeRelationEntity();
                 relationEntity.setItemId(itemId);
                 relationEntity.setSkuId(skuId);

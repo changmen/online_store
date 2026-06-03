@@ -46,6 +46,7 @@ public class UpdateItemRequest implements Serializable {
     /**
      * 子图URL集合（存储格式需根据具体业务实现），在更新的场景下，为null则不进行更新
      */
+    @Size(max = 5, message = "子图不能超过5个")
     private List<String> subImageUrls;
 
     /**

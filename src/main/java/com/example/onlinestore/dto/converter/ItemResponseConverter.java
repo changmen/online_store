@@ -21,6 +21,10 @@ public class ItemResponseConverter {
         response.setSubImageURLs(item.getSubImageURLs());
         response.setCategoryId(item.getCategoryId());
         response.setBrandId(item.getBrandId());
+        if (item.getStatus() != null) {
+            response.setStatus(item.getStatus().name());
+        }
+        response.setSortScore(item.getSortScore());
         if (CollectionUtils.isNotEmpty(item.getAttributes())){
             response.setAttributes(item.getAttributes());
         }

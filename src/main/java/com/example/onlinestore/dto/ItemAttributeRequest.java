@@ -18,7 +18,6 @@ public class ItemAttributeRequest {
     @Min(value = 1, message = "attributeId的值只能为正整数")
     private Long attributeId;
 
-    @NotNull(message = "attributeValueId不能为空")
     @Min(value = 1, message = "attributeValueId的值只能为正整数")
     private Long attributeValueId;
 
