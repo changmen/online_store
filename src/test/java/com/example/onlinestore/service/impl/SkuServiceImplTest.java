@@ -204,10 +204,8 @@ class SkuServiceImplTest {
         ItemAttributeRelationEntity rel2 = buildRelation(1L, 1L, 2L, 20L);
         ItemAttributeRelationEntity rel3 = buildRelation(1L, 2L, 1L, 11L);
 
-        when(itemAttributeRelationMapper.findByItemIdAndSkuId(1L, 1L))
-                .thenReturn(Arrays.asList(rel1, rel2));
-        when(itemAttributeRelationMapper.findByItemIdAndSkuId(1L, 2L))
-                .thenReturn(Collections.singletonList(rel3));
+        when(itemAttributeRelationMapper.findByItemId(1L))
+                .thenReturn(Arrays.asList(rel1, rel2, rel3));
 
         when(attributeService.getAttributesByIds(anyList()))
                 .thenReturn(Arrays.asList(skuAttr1, skuAttr2));
@@ -219,13 +217,12 @@ class SkuServiceImplTest {
         List<Sku> result = skuService.getSkusByItemId(1L);
 
         assertEquals(2, result.size());
-        // 验证批量查询只调用了固定次数，不随 SKU 数量增长
         verify(attributeService, times(1)).getAttributesByIds(anyList());
         verify(attributeService, times(1)).getAttributeValuesByAttributeIds(anyList());
         verify(attributeService, times(1)).getAttributeValuesByIds(anyList());
-        // 验证没有使用逐个查询
         verify(attributeService, never()).getAttributeByIdWithValues(anyLong());
         verify(attributeService, never()).getAttributeValueById(anyLong());
+        verify(itemAttributeRelationMapper, never()).findByItemIdAndSkuId(anyLong(), anyLong());
     }
 
     @Test

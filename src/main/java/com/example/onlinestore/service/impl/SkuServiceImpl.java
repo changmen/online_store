@@ -130,33 +130,26 @@ public class SkuServiceImpl implements SkuService {
             return Collections.emptyList();
         }
 
-        // 批量查询所有 SKU 的属性关联
-        List<Long> skuIds = skuEntities.stream().map(SkuEntity::getId).toList();
-        Map<Long, List<ItemAttributeRelationEntity>> relationsBySkuId = new HashMap<>();
+        List<ItemAttributeRelationEntity> allRelations = itemAttributeRelationMapper.findByItemId(itemId);
+        Map<Long, List<ItemAttributeRelationEntity>> relationsBySkuId = allRelations.stream()
+                .collect(Collectors.groupingBy(ItemAttributeRelationEntity::getSkuId));
+
         Set<Long> allAttributeIds = new HashSet<>();
         Set<Long> allValueIds = new HashSet<>();
-
-        for (SkuEntity skuEntity : skuEntities) {
-            List<ItemAttributeRelationEntity> relations = itemAttributeRelationMapper.findByItemIdAndSkuId(itemId, skuEntity.getId());
-            relationsBySkuId.put(skuEntity.getId(), relations);
-            if (relations != null) {
-                for (ItemAttributeRelationEntity r : relations) {
-                    allAttributeIds.add(r.getAttributeId());
-                    if (r.getValueId() != null) {
-                        allValueIds.add(r.getValueId());
-                    }
-                }
+        for (ItemAttributeRelationEntity r : allRelations) {
+            allAttributeIds.add(r.getAttributeId());
+            if (r.getValueId() != null) {
+                allValueIds.add(r.getValueId());
             }
         }
 
-        // 批量查询所有属性和属性值
         Map<Long, Attribute> attributeMap = attributeService.getAttributesByIds(new ArrayList<>(allAttributeIds)).stream()
                 .collect(Collectors.toMap(Attribute::getId, Function.identity()));
         Map<Long, List<AttributeValue>> valuesByAttributeId = attributeService.getAttributeValuesByAttributeIds(new ArrayList<>(allAttributeIds));
         Map<Long, AttributeValue> valueMap = attributeService.getAttributeValuesByIds(new ArrayList<>(allValueIds));
 
         return skuEntities.stream()
-                .map(skuEntity -> convertSkuEntity(skuEntity, relationsBySkuId.get(skuEntity.getId()), attributeMap, valuesByAttributeId, valueMap))
+                .map(skuEntity -> convertSkuEntity(skuEntity, relationsBySkuId.getOrDefault(skuEntity.getId(), Collections.emptyList()), attributeMap, valuesByAttributeId, valueMap))
                 .collect(Collectors.toList());
     }
 

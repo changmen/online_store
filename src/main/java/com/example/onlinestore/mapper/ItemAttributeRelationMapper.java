@@ -34,6 +34,14 @@ public interface ItemAttributeRelationMapper {
     List<ItemAttributeRelationEntity> findByItemIdAndSkuId(@Param("itemId") Long itemId, @Param("skuId") Long skuId);
 
     /**
+     * 根据商品ID查询所有属性关联记录（包含所有SKU的关联）
+     *
+     * @param itemId 商品ID
+     * @return 该商品下所有SKU的属性关联实体列表
+     */
+    List<ItemAttributeRelationEntity> findByItemId(@Param("itemId") Long itemId);
+
+    /**
      * 根据复合条件删除关联关系
      *
      * @param itemId      需要删除关联关系的物品ID

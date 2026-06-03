@@ -35,12 +35,20 @@
         </foreach>
     </insert>
 
-    <!-- 根据物品ID查询 -->
+    <!-- 根据物品ID和SKU ID查询 -->
     <select id="findByItemIdAndSkuId" resultType="com.example.onlinestore.entity.ItemAttributeRelationEntity">
         SELECT
         <include refid="Base_Column_List"/>
         FROM `item_attribute_relation`
         WHERE `item_id` = #{itemId} AND `sku_id` = #{skuId}
+    </select>
+
+    <!-- 根据商品ID查询所有属性关联（含所有SKU） -->
+    <select id="findByItemId" resultMap="itemAttributeRelationResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM `item_attribute_relation`
+        WHERE `item_id` = #{itemId}
     </select>
 
     <!-- 复合条件删除 -->
