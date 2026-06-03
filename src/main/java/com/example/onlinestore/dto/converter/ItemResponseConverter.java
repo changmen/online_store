@@ -2,8 +2,9 @@ package com.example.onlinestore.dto.converter;
 
 import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.dto.ItemResponse;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Component;
+
+import java.util.Collections;
 
 @Component
 public class ItemResponseConverter {
@@ -25,9 +26,7 @@ public class ItemResponseConverter {
             response.setStatus(item.getStatus().name());
         }
         response.setSortScore(item.getSortScore());
-        if (CollectionUtils.isNotEmpty(item.getAttributes())){
-            response.setAttributes(item.getAttributes());
-        }
+        response.setAttributes(item.getAttributes() != null ? item.getAttributes() : Collections.emptyList());
         return response;
     }
 
