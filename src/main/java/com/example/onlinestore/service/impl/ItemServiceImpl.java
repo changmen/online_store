@@ -64,57 +64,21 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Item createItem(@NotNull @Valid CreateItemRequest request) {
-        // 校验名称是否包含敏感字符
-        if (getForbiddenWords().stream().anyMatch(StringUtils.toRootLowerCase(StringUtils.trim(request.getName()))::contains)) {
-            throw new BizException(ErrorCode.ITEM_NAME_CONTAINS_FORBIDDEN_WORDS, request.getName());
-        }
-
-        if (StringUtils.isNotBlank(request.getDescription())) {
-            if (getForbiddenWords().stream().anyMatch(StringUtils.toRootLowerCase(StringUtils.trim(request.getDescription()))::contains)) {
-                throw new BizException(ErrorCode.ITEM_DESCRIPTION_CONTAINS_FORBIDDEN_WORDS, request.getDescription());
-            }
-        }
-
-        List<Long> attributeIds = request.getAttributes().stream()
-                .map(ItemAttributeRequest::getAttributeId).toList();
-        Map<Long, Attribute> attributeMap = attributeService.getAttributesByIds(attributeIds).stream()
-                .collect(Collectors.toMap(Attribute::getId, Function.identity()));
-
-        for (ItemAttributeRequest attributeRequest : request.getAttributes()) {
-            Attribute attribute = attributeMap.get(attributeRequest.getAttributeId());
-            if (attribute == null) {
-                throw new BizException(ErrorCode.ATTRIBUTE_NOT_FOUND, attributeRequest.getAttributeId());
-            }
-            if (attribute.getInputType() == AttributeInputType.SINGLE_SELECT || attribute.getInputType() == AttributeInputType.MULTI_SELECT) {
-                // 此时需要校验value
-                if (attributeRequest.getAttributeValueId() == null) {
-                    throw new BizException(ErrorCode.ITEM_ATTRIBUTE_VALUE_IS_EMPTY, attributeRequest.getAttributeId());
-                }
-
-            } else {
-                if (StringUtils.isBlank(attributeRequest.getValue())) {
-                    throw new BizException(ErrorCode.ITEM_ATTRIBUTE_VALUE_IS_EMPTY, attributeRequest.getAttributeId());
-                }
-            }
-        }
+        validateForbiddenWords(request.getName(), request.getDescription());
+        validateAttributes(request.getAttributes());
 
         categoryService.getCategoryById(request.getCategoryId());
         brandService.getBrandById(request.getBrandId());
 
         ItemEntity itemEntity = new ItemEntity();
         if (uploadDescriptionToOSS) {
-            // 存储描述到OSS
             String url = ossService.uploadItemDescription(request.getDescription());
             itemEntity.setDescriptionURL(url);
         }
 
         itemEntity.setName(request.getName());
         itemEntity.setMainImageURL(request.getMainImageUrl());
-        try {
-            itemEntity.setSubImageURLs(JacksonJsonUtils.toString(request.getSubImageUrls()));
-        } catch (JsonProcessingException e) {
-            itemEntity.setSubImageURLs("");
-        }
+        itemEntity.setSubImageURLs(serializeSubImageUrls(request.getSubImageUrls()));
 
         LocalDateTime now = LocalDateTime.now();
         itemEntity.setBrandId(request.getBrandId());
@@ -132,7 +96,6 @@ public class ItemServiceImpl implements ItemService {
 
         attributeService.ensureItemAttributes(itemEntity.getId(), 0L, request.getAttributes());
 
-        //
         return convertToEntity(itemEntity, item -> request.getDescription());
     }
 
@@ -140,45 +103,12 @@ public class ItemServiceImpl implements ItemService {
     @Transactional(rollbackFor = Exception.class)
     public void updateItem(@NotNull Long id, @NotNull @Valid UpdateItemRequest request) {
         getItemById(id);
-        // 校验
-        if (getForbiddenWords().stream().anyMatch(StringUtils.toRootLowerCase(StringUtils.trim(request.getName()))::contains)) {
-            throw new BizException(ErrorCode.ITEM_NAME_CONTAINS_FORBIDDEN_WORDS, request.getName());
-        }
-
-        if (StringUtils.isNotBlank(request.getDescription())) {
-            if (getForbiddenWords().stream().anyMatch(StringUtils.toRootLowerCase(StringUtils.trim(request.getDescription()))::contains)) {
-                throw new BizException(ErrorCode.ITEM_DESCRIPTION_CONTAINS_FORBIDDEN_WORDS, request.getDescription());
-            }
-        }
-
-        List<Long> attributeIds = request.getAttributes().stream()
-                .map(ItemAttributeRequest::getAttributeId).toList();
-        Map<Long, Attribute> attributeMap = attributeService.getAttributesByIds(attributeIds).stream()
-                .collect(Collectors.toMap(Attribute::getId, Function.identity()));
-
-        for (ItemAttributeRequest attributeRequest : request.getAttributes()) {
-            Attribute attribute = attributeMap.get(attributeRequest.getAttributeId());
-            if (attribute == null) {
-                throw new BizException(ErrorCode.ATTRIBUTE_NOT_FOUND, attributeRequest.getAttributeId());
-            }
-            if (attribute.getInputType() == AttributeInputType.SINGLE_SELECT || attribute.getInputType() == AttributeInputType.MULTI_SELECT) {
-                // 此时需要校验value
-                if (attributeRequest.getAttributeValueId() == null) {
-                    throw new BizException(ErrorCode.ITEM_ATTRIBUTE_VALUE_IS_EMPTY, attributeRequest.getAttributeId());
-                }
-
-            } else {
-                if (StringUtils.isBlank(attributeRequest.getValue())) {
-                    throw new BizException(ErrorCode.ITEM_ATTRIBUTE_VALUE_IS_EMPTY, attributeRequest.getAttributeId());
-                }
-            }
-        }
-
+        validateForbiddenWords(request.getName(), request.getDescription());
+        validateAttributes(request.getAttributes());
 
         ItemEntity updateItemEntity = new ItemEntity();
         updateItemEntity.setId(id);
         if (uploadDescriptionToOSS) {
-            // 存储描述到OSS
             String url = ossService.uploadItemDescription(request.getDescription());
             updateItemEntity.setDescriptionURL(url);
         } else {
@@ -188,20 +118,14 @@ public class ItemServiceImpl implements ItemService {
         updateItemEntity.setUpdatedAt(LocalDateTime.now());
         updateItemEntity.setName(request.getName());
         updateItemEntity.setMainImageURL(request.getMainImageUrl());
-        try {
-            updateItemEntity.setSubImageURLs(JacksonJsonUtils.toString(request.getSubImageUrls()));
-        } catch (JsonProcessingException e) {
-            logger.error("Failed to convert subImageUrls to JSON string when item update. itemId:{}", id, e);
-            throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
+        updateItemEntity.setSubImageURLs(serializeSubImageUrls(request.getSubImageUrls()));
+
         int effectRows = itemMapper.update(updateItemEntity);
         if (effectRows != 1) {
             logger.error("update item failed. because effect rows is 0. itemId:{}", id);
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
         attributeService.ensureItemAttributes(id, 0L, request.getAttributes());
-
-
     }
 
     @Override
@@ -250,6 +174,50 @@ public class ItemServiceImpl implements ItemService {
         return itemEntity.getDescription();
     }
 
+
+    private void validateForbiddenWords(String name, String description) {
+        Set<String> words = getForbiddenWords();
+        if (words.stream().anyMatch(StringUtils.toRootLowerCase(StringUtils.trim(name))::contains)) {
+            throw new BizException(ErrorCode.ITEM_NAME_CONTAINS_FORBIDDEN_WORDS, name);
+        }
+        if (StringUtils.isNotBlank(description)
+                && words.stream().anyMatch(StringUtils.toRootLowerCase(StringUtils.trim(description))::contains)) {
+            throw new BizException(ErrorCode.ITEM_DESCRIPTION_CONTAINS_FORBIDDEN_WORDS, description);
+        }
+    }
+
+    private void validateAttributes(List<ItemAttributeRequest> attributes) {
+        List<Long> attributeIds = attributes.stream()
+                .map(ItemAttributeRequest::getAttributeId).toList();
+        Map<Long, Attribute> attributeMap = attributeService.getAttributesByIds(attributeIds).stream()
+                .collect(Collectors.toMap(Attribute::getId, Function.identity()));
+
+        for (ItemAttributeRequest attributeRequest : attributes) {
+            Attribute attribute = attributeMap.get(attributeRequest.getAttributeId());
+            if (attribute == null) {
+                throw new BizException(ErrorCode.ATTRIBUTE_NOT_FOUND, attributeRequest.getAttributeId());
+            }
+            if (attribute.getInputType() == AttributeInputType.SINGLE_SELECT
+                    || attribute.getInputType() == AttributeInputType.MULTI_SELECT) {
+                if (attributeRequest.getAttributeValueId() == null) {
+                    throw new BizException(ErrorCode.ITEM_ATTRIBUTE_VALUE_IS_EMPTY, attributeRequest.getAttributeId());
+                }
+            } else {
+                if (StringUtils.isBlank(attributeRequest.getValue())) {
+                    throw new BizException(ErrorCode.ITEM_ATTRIBUTE_VALUE_IS_EMPTY, attributeRequest.getAttributeId());
+                }
+            }
+        }
+    }
+
+    private String serializeSubImageUrls(List<String> subImageUrls) {
+        try {
+            return JacksonJsonUtils.toString(subImageUrls);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to serialize subImageUrls: {}", subImageUrls, e);
+            throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     private Set<String> getForbiddenWords() {
         if (StringUtils.isBlank(this.forbiddenWords)) {
