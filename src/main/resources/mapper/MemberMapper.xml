@@ -9,12 +9,16 @@
         <result property="phone" column="phone"/>
         <result property="gender" column="gender"/>
         <result property="age" column="age"/>
+        <result property="role" column="role"/>
+        <result property="status" column="status"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <sql id="Member_basic_column">
-        id, `name`,nick_name, password, phone, gender, age, created_at, updated_at
+        id, `name`, nick_name, password, phone, gender, age, role,
+        COALESCE(status, 'ACTIVE') AS status,
+        created_at, updated_at
     </sql>
 
     <!-- name添加索引-->
@@ -31,8 +35,8 @@
     </select>
 
     <insert id="insertMember" parameterType="com.example.onlinestore.entity.MemberEntity" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO member (name, nick_name, password, phone, gender, age, created_at, updated_at)
-        VALUES (#{name}, #{nickName}, #{password}, #{phone}, #{gender}, #{age}, #{createdAt}, #{updatedAt})
+        INSERT INTO member (name, nick_name, password, phone, gender, age, role, status, created_at, updated_at)
+        VALUES (#{name}, #{nickName}, #{password}, #{phone}, #{gender}, #{age}, #{role}, COALESCE(#{status}, 'ACTIVE'), #{createdAt}, #{updatedAt})
     </insert>
 
 </mapper>

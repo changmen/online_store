@@ -1,17 +1,19 @@
 package com.example.onlinestore.handler;
 
 import com.example.onlinestore.dto.Response;
+import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
 import jakarta.validation.ConstraintViolationException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -30,16 +32,12 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @Autowired
-    private MessageSource messageSource;
+    private final MessageSource messageSource;
 
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    @ExceptionHandler({Exception.class, RuntimeException.class})
-    public Response<String> handleException(Exception e) {
-        logger.error("Internal server error", e);
-        return Response.failWithInternalError();
+    public GlobalExceptionHandler(MessageSource messageSource) {
+        this.messageSource = messageSource;
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -49,19 +47,38 @@ public class GlobalExceptionHandler {
         return Response.failWithInternalError();
     }
 
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(RuntimeException.class)
+    public Response<String> handleException(RuntimeException e) {
+        logger.error("Runtime error", e);
+        return Response.failWithInternalError();
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(Exception.class)
+    public Response<String> handleException(Exception e) {
+        logger.error("Internal server error", e);
+        return Response.failWithInternalError();
+    }
+
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Response<String> handleException(MethodArgumentNotValidException e) {
-        logger.error("Invalid request", e);
+        logger.warn("Invalid request: {}", e.getMessage());
         BindingResult exceptions = e.getBindingResult();
         if (exceptions.hasErrors()) {
             List<ObjectError> errors = exceptions.getAllErrors();
-
             if (CollectionUtils.isNotEmpty(errors)) {
-                FieldError fieldError = (FieldError) errors.get(0);
-                return Response.fail(MessageFormat.format("Parameter:{0}, error:{1}", fieldError.getField(), fieldError.getDefaultMessage()));
+                StringBuilder message = new StringBuilder();
+                for (int i = 0; i < errors.size(); i++) {
+                    FieldError fieldError = (FieldError) errors.get(i);
+                    if (i > 0) {
+                        message.append("; ");
+                    }
+                    message.append(MessageFormat.format("Parameter:{0}, error:{1}", fieldError.getField(), fieldError.getDefaultMessage()));
+                }
+                return Response.fail(message.toString());
             }
-
         }
         return Response.fail("Invalid request");
     }
@@ -93,13 +110,13 @@ public class GlobalExceptionHandler {
         return Response.fail("请求的资源不存在");
     }
 
-    @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(BizException.class)
-    public Response<String> handleException(BizException e) {
+    public ResponseEntity<Response<String>> handleException(BizException e) {
 
         if (e.getErrorCode() == null) {
             logger.error("BizException. errorCode is null", e);
-            return Response.fail("INTERNAL ERROR");
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Response.fail("INTERNAL ERROR"));
         }
 
         logger.error("BizException. errorCode:{}, params:{}", e.getErrorCode(), e.getParams(), e);
@@ -119,13 +136,23 @@ public class GlobalExceptionHandler {
         if (e.getParams() != null && e.getParams().length > 0) {
             message = MessageFormat.format(message, e.getParams());
         }
-        return Response.fail(message);
+
+        HttpStatus status = isAuthError(e.getErrorCode()) ? HttpStatus.UNAUTHORIZED : HttpStatus.CONFLICT;
+        return ResponseEntity.status(status).body(Response.fail(message));
+    }
+
+    private boolean isAuthError(ErrorCode errorCode) {
+        return errorCode == ErrorCode.MEMBER_PASSWORD_INCORRECT
+                || errorCode == ErrorCode.MEMBER_NOT_LOGIN
+                || errorCode == ErrorCode.MEMBER_DISABLED
+                || errorCode == ErrorCode.MEMBER_LOCKED
+                || errorCode == ErrorCode.INVALID_REFRESH_TOKEN;
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ConstraintViolationException.class)
     public Response<String> handleException(ConstraintViolationException e) {
-        logger.error("ConstraintViolationException", e);
+        logger.warn("ConstraintViolationException: {}", e.getMessage());
         StringBuilder message = new StringBuilder("参数验证失败: ");
         e.getConstraintViolations().forEach(violation ->
                 message.append(violation.getPropertyPath())

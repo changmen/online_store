@@ -27,7 +27,7 @@ spring:
       maximum-pool-size: 20
       minimum-idle: 5
       idle-timeout: 300000
-      connection-timeout: 30000
+      connection-timeout: 10000
       max-lifetime: 1800000
   data:
     redis:
@@ -37,18 +37,29 @@ spring:
       database: 0
       jedis:
         pool:
-          max-active: 8
+          max-active: 16
           max-idle: 8
           min-idle: 0
-          max-wait: -1ms
+          max-wait: 3000ms
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.example.onlinestore.model
+  type-aliases-package: com.example.onlinestore.entity
   configuration:
     map-underscore-to-camel-case: true
 
 
 jwt:
+  # HS256 requires a secret of at least 32 bytes (256 bits).
+  # Production: set via JWT_SECRET environment variable.
   secret: ${JWT_SECRET}
   expiration: 86400
+  refresh-expiration: 604800  # 7 days in seconds
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:8080}
+
+auth:
+  rate-limit:
+    max-requests: ${AUTH_RATE_LIMIT_MAX_REQUESTS:10}
+    window-seconds: ${AUTH_RATE_LIMIT_WINDOW_SECONDS:60}

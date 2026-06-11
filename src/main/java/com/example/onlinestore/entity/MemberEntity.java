@@ -42,6 +42,12 @@ public class MemberEntity implements Serializable  {
     // 用户年龄
     private int age;
 
+    // 用户角色
+    private String role;
+
+    // 账号状态: ACTIVE / DISABLED / LOCKED
+    private String status;
+
     // 创建时间
     private LocalDateTime createdAt;
 
@@ -55,7 +61,6 @@ public class MemberEntity implements Serializable  {
         MemberBaseInfo baseInfo = new MemberBaseInfo();
         baseInfo.setName(this.name);
         baseInfo.setNickName(this.nickName);
-        baseInfo.setPassword(this.password);
         baseInfo.setPhone(this.phone);
         baseInfo.setGender(GenderType.valueOf(this.gender));
         baseInfo.setAge(this.age);

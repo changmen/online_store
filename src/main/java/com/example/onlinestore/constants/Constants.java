@@ -1,7 +1,17 @@
 package com.example.onlinestore.constants;
 
+import java.util.List;
+
 public class Constants {
     public static final Long ROOT_CATEGORY_PARENT_ID = 0L;
+
+    public static final List<String> PUBLIC_API_PATHS = List.of(
+            "/api/v1/members/login",
+            "/api/v1/members/registry",
+            "/api/v1/members/refresh",
+            "/actuator/health",
+            "/actuator/info"
+    );
     /**
      * 会员名规则
      */

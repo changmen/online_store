@@ -3,11 +3,13 @@ package com.example.onlinestore.security;
 import com.example.onlinestore.bean.Member;
 import com.example.onlinestore.entity.MemberEntity;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serial;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class CustomUserDetails implements UserDetails {
 
@@ -17,11 +19,23 @@ public class CustomUserDetails implements UserDetails {
     private final Member member;
     private final String username;
     private final String password;
+    private final List<GrantedAuthority> authorities;
+    private final boolean enabled;
+    private final boolean accountNonLocked;
 
     public CustomUserDetails(MemberEntity memberEntity) {
         this.member = memberEntity.toMember();
         this.username = memberEntity.getName();
         this.password = memberEntity.getPassword();
+        String role = memberEntity.getRole();
+        if (role == null || role.isBlank()) {
+            role = "USER";
+        }
+        this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+
+        String status = memberEntity.getStatus();
+        this.enabled = !"DISABLED".equals(status);
+        this.accountNonLocked = !"LOCKED".equals(status);
     }
 
     public Member getMember() {
@@ -34,7 +48,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return this.authorities;
     }
 
     @Override
@@ -54,7 +68,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return this.accountNonLocked;
     }
 
     @Override
@@ -64,6 +78,6 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.enabled;
     }
 }

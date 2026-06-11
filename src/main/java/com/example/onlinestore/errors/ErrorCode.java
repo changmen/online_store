@@ -6,11 +6,15 @@ import org.apache.commons.lang3.StringUtils;
 @Getter
 public enum ErrorCode {
     MEMBER_PASSWORD_INCORRECT("ErrorCode.Member.Password.Incorrect", "密码不正确"),
+    MEMBER_DISABLED("ErrorCode.Member.Disabled", "账号已被禁用"),
+    MEMBER_LOCKED("ErrorCode.Member.Locked", "账号已被锁定"),
+    INVALID_REFRESH_TOKEN("ErrorCode.Invalid.Refresh.Token", "刷新令牌无效或已过期"),
     INTERNAL_SERVER_ERROR("ErrorCode.Internal.Error", "系统内部错误"),
     MEMBER_NOT_FOUND("ErrorCode.Member.NotFound", "会员:{0}不存在"),
     MEMBER_EXISTED("ErrorCode.Member.Existed", "会员:{0}已存在"),
     MEMBER_NOT_LOGIN("ErrorCode.Member.Not.Login", "会员未登录"),
     ITEM_NOT_FOUND("ErrorCode.Item.NotFound", "商品不存在"),
+    CATEGORY_NOT_FOUND("ErrorCode.Category.NotFound", "类目不存在"),
     BRAND_NOT_FOUND("ErrorCode.Brand.NotFound", "品牌不存在"),
     BRAND_NAME_DUPLICATED("ErrorCode.Brand.Name.Duplicated", "品牌名称:{0}已存在"),
     BRAND_NAME_MODIFY_FORBIDDEN("ErrorCode.Brand.Name.Modify.Forbidden", "品牌名称不能修改"),
