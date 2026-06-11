@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -26,7 +28,8 @@ public class JacksonJsonUtils {
         JSON_MAPPER = new ObjectMapper();
         JSON_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         JSON_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-
+        JSON_MAPPER.registerModule(new JavaTimeModule());
+        JSON_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     /**

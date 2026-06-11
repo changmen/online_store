@@ -15,7 +15,7 @@ import com.example.onlinestore.mapper.ItemMapper;
 import com.example.onlinestore.service.AttributeService;
 import com.example.onlinestore.service.BrandService;
 import com.example.onlinestore.service.CategoryService;
-import com.example.onlinestore.service.ItemDetailService;
+import com.example.onlinestore.service.ItemDetailCacheService;
 import com.example.onlinestore.service.OssService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,16 +54,14 @@ class ItemServiceImplTest {
     private CategoryService categoryService;
 
     @Mock
-    private ItemDetailService itemDetailService;
+    private ItemDetailCacheService itemDetailCacheService;
 
-    @InjectMocks
     private ItemServiceImpl itemService;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(itemService, "forbiddenWords", "刀");
-        ReflectionTestUtils.setField(itemService, "uploadDescriptionToOSS", false);
-        ReflectionTestUtils.setField(itemService, "defaultItemSortScore", 1);
+        itemService = new ItemServiceImpl("刀", false, 1,
+                attributeService, ossService, itemMapper, brandService, categoryService, itemDetailCacheService);
     }
 
     private Attribute buildAttribute(Long id, String name, AttributeInputType inputType) {
@@ -206,7 +204,7 @@ class ItemServiceImplTest {
         existingItem.setId(42L);
         existingItem.setName("旧名称");
         existingItem.setStatus("DRAFT");
-        when(itemMapper.findById(42L)).thenReturn(existingItem);
+        when(itemMapper.findByIdBasic(42L)).thenReturn(existingItem);
 
         Attribute attr = buildAttribute(1L, "颜色", AttributeInputType.SINGLE_SELECT);
         when(attributeService.getAttributesByIds(Collections.singletonList(1L)))

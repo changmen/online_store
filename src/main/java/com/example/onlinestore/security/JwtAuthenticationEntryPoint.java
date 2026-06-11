@@ -1,5 +1,6 @@
 package com.example.onlinestore.security;
 
+import com.example.onlinestore.dto.Response;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +14,6 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -32,9 +32,6 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 
-        objectMapper.writeValue(response.getWriter(), Map.of(
-                "success", false,
-                "message", "会员未登录或登录已过期"
-        ));
+        objectMapper.writeValue(response.getWriter(), Response.fail("会员未登录或登录已过期"));
     }
 }

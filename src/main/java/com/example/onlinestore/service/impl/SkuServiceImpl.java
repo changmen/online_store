@@ -13,10 +13,10 @@ import com.example.onlinestore.enums.AttributeType;
 import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.ItemAttributeRelationMapper;
+import com.example.onlinestore.mapper.ItemMapper;
 import com.example.onlinestore.mapper.SkuMapper;
 import com.example.onlinestore.service.AttributeService;
-import com.example.onlinestore.service.ItemDetailService;
-import com.example.onlinestore.service.ItemService;
+import com.example.onlinestore.service.ItemDetailCacheService;
 import com.example.onlinestore.service.SkuService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -24,7 +24,6 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,26 +36,30 @@ import java.util.stream.Collectors;
 public class SkuServiceImpl implements SkuService {
     private static final Logger logger = LoggerFactory.getLogger(SkuServiceImpl.class);
 
-    @Autowired
-    private ItemService itemService;
+    private final SkuMapper skuMapper;
+    private final ItemMapper itemMapper;
+    private final AttributeService attributeService;
+    private final ItemAttributeRelationMapper itemAttributeRelationMapper;
+    private final ItemDetailCacheService itemDetailCacheService;
 
-    @Autowired
-    private SkuMapper skuMapper;
-
-    @Autowired
-    private AttributeService attributeService;
-
-    @Autowired
-    private ItemAttributeRelationMapper itemAttributeRelationMapper;
-
-    @Autowired
-    private ItemDetailService itemDetailService;
+    public SkuServiceImpl(SkuMapper skuMapper, ItemMapper itemMapper,
+                          AttributeService attributeService,
+                          ItemAttributeRelationMapper itemAttributeRelationMapper,
+                          ItemDetailCacheService itemDetailCacheService) {
+        this.skuMapper = skuMapper;
+        this.itemMapper = itemMapper;
+        this.attributeService = attributeService;
+        this.itemAttributeRelationMapper = itemAttributeRelationMapper;
+        this.itemDetailCacheService = itemDetailCacheService;
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Sku createSku(@NotNull @Valid CreateSkuRequest createSkuRequest) {
         //判断商品是否存在
-        itemService.getItemById(createSkuRequest.getItemId());
+        if (itemMapper.findById(createSkuRequest.getItemId()) == null) {
+            throw new BizException(ErrorCode.ITEM_NOT_FOUND);
+        }
         // 需要判断skuCode是否存在
         if (skuMapper.findBySkuCode(createSkuRequest.getSkuCode()) != null) {
             throw new BizException(ErrorCode.SKU_CODE_EXISTS, createSkuRequest.getSkuCode());
@@ -122,13 +125,14 @@ public class SkuServiceImpl implements SkuService {
         }
 
         //记录属性
-        processSkuAttributes(createSkuRequest.getItemId(), skuEntity.getId(), createSkuRequest.getAttributes());
-        itemDetailService.evictItemDetailCache(createSkuRequest.getItemId());
+        attributeService.ensureItemAttributes(createSkuRequest.getItemId(), skuEntity.getId(), createSkuRequest.getAttributes());
+        itemDetailCacheService.evictItemDetailCache(createSkuRequest.getItemId());
         return convertSkuEntity(skuEntity, null);
     }
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<Sku> getSkusByItemId(@NotNull Long itemId) {
         List<SkuEntity> skuEntities = skuMapper.findByItemId(itemId);
         if (CollectionUtils.isEmpty(skuEntities)) {
@@ -159,9 +163,15 @@ public class SkuServiceImpl implements SkuService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateStockQuantity(@NotNull Long skuId, @NotNull @Min(value = 1, message = "库存数量必须大于0") Integer quantity) {
-        Sku sku = getSkuById(skuId);
-        if (sku.getWarningQuantity() > quantity) {
+        SkuEntity skuEntity = skuMapper.findById(skuId);
+        if (skuEntity == null) {
+            logger.error("sku not found, id: {}", skuId);
+            throw new BizException(ErrorCode.SKU_NOT_FOUND);
+        }
+
+        if (skuEntity.getWarningQuantity() > quantity) {
             throw new BizException(ErrorCode.SKU_WARNING_QUANTITY_EXCEEDS_STOCK_QUANTITY);
         }
 
@@ -169,17 +179,37 @@ public class SkuServiceImpl implements SkuService {
             logger.error("update sku stock quantity failed. because effect rows is 0. skuId:{}", skuId);
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-        itemDetailService.evictItemDetailCache(sku.getItemId());
+        itemDetailCacheService.evictItemDetailCache(skuEntity.getItemId());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Sku getSkuById(Long skuId) {
         SkuEntity skuEntity = skuMapper.findById(skuId);
         if (skuEntity == null) {
             logger.error("sku not found, id: {}", skuId);
             throw new BizException(ErrorCode.SKU_NOT_FOUND);
         }
-        return convertSkuEntity(skuEntity, null);
+
+        List<ItemAttributeRelationEntity> relations = itemAttributeRelationMapper.findByItemIdAndSkuId(skuEntity.getItemId(), skuId);
+        if (CollectionUtils.isEmpty(relations)) {
+            return buildSku(skuEntity, Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+        }
+
+        Set<Long> attributeIds = new HashSet<>();
+        Set<Long> valueIds = new HashSet<>();
+        for (ItemAttributeRelationEntity r : relations) {
+            attributeIds.add(r.getAttributeId());
+            if (r.getValueId() != null) {
+                valueIds.add(r.getValueId());
+            }
+        }
+
+        Map<Long, Attribute> attributeMap = attributeService.getAttributesByIds(new ArrayList<>(attributeIds)).stream()
+                .collect(Collectors.toMap(Attribute::getId, Function.identity()));
+        Map<Long, AttributeValue> valueMap = attributeService.getAttributeValuesByIds(new ArrayList<>(valueIds));
+
+        return buildSku(skuEntity, relations, attributeMap, Collections.emptyMap(), valueMap);
     }
 
     private Sku convertSkuEntity(SkuEntity skuEntity, List<ItemAttributeRelationEntity> relationEntities) {
@@ -275,56 +305,5 @@ public class SkuServiceImpl implements SkuService {
         clone.setVisible(attribute.getVisible());
         clone.setValues(values);
         return clone;
-    }
-
-    private void processSkuAttributes(Long itemId, Long skuId, List<ItemAttributeRequest> attributes) {
-        List<ItemAttributeRelationEntity> relationEntities = itemAttributeRelationMapper.findByItemIdAndSkuId(itemId,skuId);
-
-        List<ItemAttributeRelationEntity> newRelations;
-
-        LocalDateTime now = LocalDateTime.now();
-        if (CollectionUtils.isEmpty(relationEntities)) {
-            newRelations = attributes.stream().map(attribute -> {
-                ItemAttributeRelationEntity relationEntity = new ItemAttributeRelationEntity();
-                relationEntity.setItemId(itemId);
-                relationEntity.setSkuId(skuId);
-                relationEntity.setAttributeId(attribute.getAttributeId());
-                relationEntity.setValueId(attribute.getAttributeValueId());
-                relationEntity.setInputValue(attribute.getValue());
-                relationEntity.setCreatedAt(now);
-                relationEntity.setUpdatedAt(now);
-                return relationEntity;
-            }).toList();
-        } else {
-            Set<Long> curAttributeIds = relationEntities.stream().map(ItemAttributeRelationEntity::getAttributeId).collect(Collectors.toSet());
-
-            int effectRows = itemAttributeRelationMapper.deleteByItemIdAndAttributeIds(itemId, new ArrayList<>(curAttributeIds));
-            if (effectRows != curAttributeIds.size()) {
-                logger.error("delete item attribute relations failed. because effect rows is {}", effectRows);
-                throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
-            }
-
-            newRelations = attributes.stream().map(attribute -> {
-                ItemAttributeRelationEntity relationEntity = new ItemAttributeRelationEntity();
-                relationEntity.setItemId(itemId);
-                relationEntity.setSkuId(skuId);
-                relationEntity.setAttributeId(attribute.getAttributeId());
-                relationEntity.setValueId(attribute.getAttributeValueId());
-                relationEntity.setInputValue(attribute.getValue());
-                relationEntity.setCreatedAt(now);
-                relationEntity.setUpdatedAt(now);
-                return relationEntity;
-            }).toList();
-
-        }
-
-        if (CollectionUtils.isEmpty(newRelations)) {
-            logger.info("no new attribute relations to insert, itemId: {}", itemId);
-            return;
-        }
-        if (itemAttributeRelationMapper.batchInsert(newRelations) != newRelations.size()) {
-            logger.error("insert item attribute relations failed. because effect rows is {}", newRelations.size());
-            throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
     }
 }

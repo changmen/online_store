@@ -19,7 +19,6 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,34 +34,37 @@ import java.util.stream.Collectors;
 public class ItemServiceImpl implements ItemService {
     private static final Logger logger = LoggerFactory.getLogger(ItemServiceImpl.class);
 
-    @Value("${forbidden-words:刀}")
-    private String forbiddenWords;
-
-    @Value("${item.upload-description-to-oss:false}")
-    private boolean uploadDescriptionToOSS;
-
-    @Value("${item.default-sort-score:1}")
-    private int defaultItemSortScore;
-
+    private final String forbiddenWords;
+    private final boolean uploadDescriptionToOSS;
+    private final int defaultItemSortScore;
     private static final String DEFAULT_ITEM_LIST_QUERY_ORDERBY = "id DESC";
 
-    @Autowired
-    private AttributeService attributeService;
+    private final AttributeService attributeService;
+    private final OssService ossService;
+    private final ItemMapper itemMapper;
+    private final BrandService brandService;
+    private final CategoryService categoryService;
+    private final ItemDetailCacheService itemDetailCacheService;
 
-    @Autowired
-    private OssService ossService;
-
-    @Autowired
-    private ItemMapper itemMapper;
-
-    @Autowired
-    private BrandService brandService;
-
-    @Autowired
-    private CategoryService categoryService;
-
-    @Autowired
-    private ItemDetailService itemDetailService;
+    public ItemServiceImpl(@Value("${forbidden-words:刀}") String forbiddenWords,
+                           @Value("${item.upload-description-to-oss:false}") boolean uploadDescriptionToOSS,
+                           @Value("${item.default-sort-score:1}") int defaultItemSortScore,
+                           AttributeService attributeService,
+                           OssService ossService,
+                           ItemMapper itemMapper,
+                           BrandService brandService,
+                           CategoryService categoryService,
+                           ItemDetailCacheService itemDetailCacheService) {
+        this.forbiddenWords = forbiddenWords;
+        this.uploadDescriptionToOSS = uploadDescriptionToOSS;
+        this.defaultItemSortScore = defaultItemSortScore;
+        this.attributeService = attributeService;
+        this.ossService = ossService;
+        this.itemMapper = itemMapper;
+        this.brandService = brandService;
+        this.categoryService = categoryService;
+        this.itemDetailCacheService = itemDetailCacheService;
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -70,7 +72,9 @@ public class ItemServiceImpl implements ItemService {
         validateForbiddenWords(request.getName(), request.getDescription());
         validateAttributes(request.getAttributes());
 
-        categoryService.getCategoryById(request.getCategoryId());
+        if (categoryService.getCategoryById(request.getCategoryId()) == null) {
+            throw new BizException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
         brandService.getBrandById(request.getBrandId());
 
         ItemEntity itemEntity = new ItemEntity();
@@ -105,7 +109,10 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateItem(@NotNull Long id, @NotNull @Valid UpdateItemRequest request) {
-        getItemById(id);
+        if (itemMapper.findByIdBasic(id) == null) {
+            logger.error("item not found, id: {}", id);
+            throw new BizException(ErrorCode.ITEM_NOT_FOUND);
+        }
         validateForbiddenWords(request.getName(), request.getDescription());
         validateAttributes(request.getAttributes());
 
@@ -129,10 +136,11 @@ public class ItemServiceImpl implements ItemService {
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
         attributeService.ensureItemAttributes(id, 0L, request.getAttributes());
-        itemDetailService.evictItemDetailCache(id);
+        itemDetailCacheService.evictItemDetailCache(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Item getItemById(@NotNull Long id) {
         ItemEntity itemEntity = itemMapper.findById(id);
         if (itemEntity == null) {
@@ -143,6 +151,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<Item> listItems(@NotNull @Valid ItemListQueryRequest queryRequest) {
         String orderBy = StringUtils.isNotBlank(queryRequest.getOrderBy())
                 ? queryRequest.getOrderBy()
@@ -170,7 +179,12 @@ public class ItemServiceImpl implements ItemService {
             }
         }
         if (StringUtils.isNotBlank(itemEntity.getStatus())) {
-            item.setStatus(ItemStatus.valueOf(itemEntity.getStatus()));
+            try {
+                item.setStatus(ItemStatus.valueOf(itemEntity.getStatus()));
+            } catch (IllegalArgumentException e) {
+                logger.warn("Unknown item status: {}, defaulting to DRAFT", itemEntity.getStatus());
+                item.setStatus(ItemStatus.DRAFT);
+            }
         }
         item.setSortScore(itemEntity.getSortScore());
         return item;

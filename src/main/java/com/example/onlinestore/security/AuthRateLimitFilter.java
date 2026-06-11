@@ -1,6 +1,7 @@
 package com.example.onlinestore.security;
 
 import com.example.onlinestore.constants.Constants;
+import com.example.onlinestore.dto.Response;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -82,7 +82,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(objectMapper.writeValueAsString(
-                Map.of("success", false, "message", "请求过于频繁，请稍后再试")
+                Response.fail("请求过于频繁，请稍后再试")
         ));
     }
 }

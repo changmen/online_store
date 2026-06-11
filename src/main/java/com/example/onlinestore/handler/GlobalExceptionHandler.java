@@ -119,7 +119,7 @@ public class GlobalExceptionHandler {
                     .body(Response.fail("INTERNAL ERROR"));
         }
 
-        logger.error("BizException. errorCode:{}, params:{}", e.getErrorCode(), e.getParams(), e);
+        logger.warn("BizException. errorCode:{}, params:{}", e.getErrorCode(), e.getParams());
 
         String message;
         try {
@@ -129,7 +129,7 @@ public class GlobalExceptionHandler {
             }
 
         } catch (NoSuchMessageException ne) {
-            logger.error("NoSuchMessageException. {}", e.getErrorCode().getCode());
+            logger.warn("NoSuchMessageException. {}", e.getErrorCode().getCode());
             message = e.getErrorCode().getDefaultMessage();
         }
 
@@ -137,8 +137,18 @@ public class GlobalExceptionHandler {
             message = MessageFormat.format(message, e.getParams());
         }
 
-        HttpStatus status = isAuthError(e.getErrorCode()) ? HttpStatus.UNAUTHORIZED : HttpStatus.CONFLICT;
+        HttpStatus status = resolveHttpStatus(e.getErrorCode());
         return ResponseEntity.status(status).body(Response.fail(message));
+    }
+
+    private HttpStatus resolveHttpStatus(ErrorCode errorCode) {
+        if (isAuthError(errorCode)) {
+            return HttpStatus.UNAUTHORIZED;
+        }
+        if (isNotFoundError(errorCode)) {
+            return HttpStatus.NOT_FOUND;
+        }
+        return HttpStatus.CONFLICT;
     }
 
     private boolean isAuthError(ErrorCode errorCode) {
@@ -147,6 +157,17 @@ public class GlobalExceptionHandler {
                 || errorCode == ErrorCode.MEMBER_DISABLED
                 || errorCode == ErrorCode.MEMBER_LOCKED
                 || errorCode == ErrorCode.INVALID_REFRESH_TOKEN;
+    }
+
+    private boolean isNotFoundError(ErrorCode errorCode) {
+        return errorCode == ErrorCode.MEMBER_NOT_FOUND
+                || errorCode == ErrorCode.ITEM_NOT_FOUND
+                || errorCode == ErrorCode.CATEGORY_NOT_FOUND
+                || errorCode == ErrorCode.BRAND_NOT_FOUND
+                || errorCode == ErrorCode.ATTRIBUTE_NOT_FOUND
+                || errorCode == ErrorCode.ATTRIBUTE_VALUE_NOT_FOUND
+                || errorCode == ErrorCode.SKU_NOT_FOUND
+                || errorCode == ErrorCode.CART_ITEM_NOT_FOUND;
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

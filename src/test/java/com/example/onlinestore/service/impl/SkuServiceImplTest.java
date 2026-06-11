@@ -7,15 +7,16 @@ import com.example.onlinestore.bean.Sku;
 import com.example.onlinestore.dto.CreateSkuRequest;
 import com.example.onlinestore.dto.ItemAttributeRequest;
 import com.example.onlinestore.entity.ItemAttributeRelationEntity;
+import com.example.onlinestore.entity.ItemEntity;
 import com.example.onlinestore.entity.SkuEntity;
 import com.example.onlinestore.enums.AttributeInputType;
 import com.example.onlinestore.enums.AttributeType;
 import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.ItemAttributeRelationMapper;
+import com.example.onlinestore.mapper.ItemMapper;
 import com.example.onlinestore.mapper.SkuMapper;
 import com.example.onlinestore.service.AttributeService;
-import com.example.onlinestore.service.ItemDetailService;
-import com.example.onlinestore.service.ItemService;
+import com.example.onlinestore.service.ItemDetailCacheService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +37,7 @@ import org.mockito.ArgumentCaptor;
 class SkuServiceImplTest {
 
     @Mock
-    private ItemService itemService;
+    private ItemMapper itemMapper;
 
     @Mock
     private SkuMapper skuMapper;
@@ -48,7 +49,7 @@ class SkuServiceImplTest {
     private ItemAttributeRelationMapper itemAttributeRelationMapper;
 
     @Mock
-    private ItemDetailService itemDetailService;
+    private ItemDetailCacheService itemDetailCacheService;
 
     @InjectMocks
     private SkuServiceImpl skuService;
@@ -120,7 +121,7 @@ class SkuServiceImplTest {
                 buildAttrRequest(2L, 20L)
         ));
 
-        when(itemService.getItemById(1L)).thenReturn(new Item());
+        when(itemMapper.findById(1L)).thenReturn(new ItemEntity());
         when(skuMapper.findBySkuCode("SKU-001")).thenReturn(null);
         when(attributeService.getAttributesByIds(Arrays.asList(1L, 2L)))
                 .thenReturn(Arrays.asList(skuAttr1, skuAttr2));
@@ -143,9 +144,6 @@ class SkuServiceImplTest {
             e.setId(100L);
             return 1;
         });
-        when(itemAttributeRelationMapper.findByItemIdAndSkuId(1L, 100L))
-                .thenReturn(Collections.emptyList());
-        when(itemAttributeRelationMapper.batchInsert(anyList())).thenReturn(2);
 
         skuService.createSku(request);
 
@@ -155,6 +153,8 @@ class SkuServiceImplTest {
         // 验证没有使用逐个查询
         verify(attributeService, never()).getAttributeById(anyLong());
         verify(attributeService, never()).getAttributeValueById(anyLong());
+        // 验证属性记录通过 ensureItemAttributes 保存
+        verify(attributeService).ensureItemAttributes(eq(1L), eq(100L), anyList());
     }
 
     @Test
@@ -164,7 +164,7 @@ class SkuServiceImplTest {
                 buildAttrRequest(999L, 20L)
         ));
 
-        when(itemService.getItemById(1L)).thenReturn(new Item());
+        when(itemMapper.findById(1L)).thenReturn(new ItemEntity());
         when(skuMapper.findBySkuCode("SKU-001")).thenReturn(null);
         when(attributeService.getAttributesByIds(Arrays.asList(1L, 999L)))
                 .thenReturn(Collections.singletonList(skuAttr1));
@@ -183,7 +183,7 @@ class SkuServiceImplTest {
                 buildAttrRequest(2L, 999L)
         ));
 
-        when(itemService.getItemById(1L)).thenReturn(new Item());
+        when(itemMapper.findById(1L)).thenReturn(new ItemEntity());
         when(skuMapper.findBySkuCode("SKU-001")).thenReturn(null);
         when(attributeService.getAttributesByIds(Arrays.asList(1L, 2L)))
                 .thenReturn(Arrays.asList(skuAttr1, skuAttr2));
@@ -252,8 +252,6 @@ class SkuServiceImplTest {
 
         when(attributeService.getAttributesByIds(Collections.singletonList(1L)))
                 .thenReturn(Collections.singletonList(skuAttr1));
-        when(attributeService.getAttributeValuesByAttributeIds(Collections.singletonList(1L)))
-                .thenReturn(Map.of(1L, List.of(value1)));
         when(attributeService.getAttributeValuesByIds(Collections.singletonList(10L)))
                 .thenReturn(Map.of(10L, value1));
 
@@ -301,7 +299,7 @@ class SkuServiceImplTest {
                 buildAttrRequest(2L, 20L)
         ));
 
-        when(itemService.getItemById(1L)).thenReturn(new Item());
+        when(itemMapper.findById(1L)).thenReturn(new ItemEntity());
         when(skuMapper.findBySkuCode("SKU-001")).thenReturn(null);
         when(attributeService.getAttributesByIds(Arrays.asList(1L, 2L)))
                 .thenReturn(Arrays.asList(skuAttr1, skuAttr2));
@@ -313,20 +311,10 @@ class SkuServiceImplTest {
             e.setId(100L);
             return 1;
         });
-        when(itemAttributeRelationMapper.findByItemIdAndSkuId(1L, 100L))
-                .thenReturn(Collections.emptyList());
-        when(itemAttributeRelationMapper.batchInsert(anyList())).thenReturn(2);
 
         skuService.createSku(request);
 
-        ArgumentCaptor<List<ItemAttributeRelationEntity>> captor = ArgumentCaptor.forClass(List.class);
-        verify(itemAttributeRelationMapper).batchInsert(captor.capture());
-
-        List<ItemAttributeRelationEntity> inserted = captor.getValue();
-        assertEquals(2, inserted.size());
-        for (ItemAttributeRelationEntity entity : inserted) {
-            assertEquals(100L, entity.getSkuId(), "skuId should be set on first creation");
-            assertEquals(1L, entity.getItemId());
-        }
+        // 验证 ensureItemAttributes 被调用，且 skuId 正确设置为新生成的 100L
+        verify(attributeService).ensureItemAttributes(eq(1L), eq(100L), anyList());
     }
 }

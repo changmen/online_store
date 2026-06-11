@@ -19,33 +19,37 @@ import com.example.onlinestore.service.AttributeService;
 import com.example.onlinestore.utils.CommonUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AttributeServiceImpl implements AttributeService {
 
     private static final Logger logger = LoggerFactory.getLogger(AttributeServiceImpl.class);
 
-    @Autowired
-    private AttributeMapper attributeMapper;
+    private final Map<Long, Attribute> attributeCache = new ConcurrentHashMap<>();
+    private final Map<Long, AttributeValue> attributeValueCache = new ConcurrentHashMap<>();
+    private final Map<Long, List<AttributeValue>> valuesByAttributeIdCache = new ConcurrentHashMap<>();
 
-    @Autowired
-    private AttributeValueMapper attributeValueMapper;
-
-    @Autowired
-    private ItemAttributeRelationMapper itemAttributeRelationMapper;
+    private final AttributeMapper attributeMapper;
+    private final AttributeValueMapper attributeValueMapper;
+    private final ItemAttributeRelationMapper itemAttributeRelationMapper;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Attribute createAttribute(@NotNull @Valid CreateAttributeRequest request) {
         // 校验名称是否重复
         String name = request.getName();
@@ -60,11 +64,14 @@ public class AttributeServiceImpl implements AttributeService {
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
-        return convertToAttribute(attributeEntity);
+        Attribute attribute = convertToAttribute(attributeEntity);
+        attributeCache.put(attributeEntity.getId(), attribute);
+        return attribute;
     }
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateAttribute(@NotNull Long id, @NotNull @Valid UpdateAttributeRequest request) {
         Attribute attribute = getAttributeById(id);
         AttributeEntity updatingEntity = new AttributeEntity();
@@ -85,6 +92,7 @@ public class AttributeServiceImpl implements AttributeService {
             logger.error("update attribute failed. because effect rows is 0. attributeName:{}", request.getName());
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
+        attributeCache.remove(id);
     }
 
     @Override
@@ -108,19 +116,20 @@ public class AttributeServiceImpl implements AttributeService {
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
-        // 删除属性值
-        int valueCount = attributeValueMapper.countValuesByAttributeId(id);
-        if (valueCount > 0) {
-            int valueEffectRows = attributeValueMapper.deleteByAttributeId(id);
-            if (valueEffectRows != valueCount) {
-                logger.error("delete attribute value failed. because effect rows is not equal valueCount. attributeId:{}, valueCount:{}", id, valueCount);
-                throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
-            }
-        }
+        attributeValueMapper.deleteByAttributeId(id);
 
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                attributeCache.remove(id);
+                attributeValueCache.values().removeIf(v -> Objects.equals(v.getAttributeId(), id));
+                valuesByAttributeIdCache.remove(id);
+            }
+        });
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Attribute getAttributeByIdWithValues(@NotNull Long id) {
         Attribute attribute = getAttributeById(id);
         if (attribute.getInputType() == AttributeInputType.SINGLE_SELECT || attribute.getInputType() == AttributeInputType.MULTI_SELECT) {
@@ -131,27 +140,48 @@ public class AttributeServiceImpl implements AttributeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Attribute getAttributeById(@NotNull Long id) {
+        Attribute cached = attributeCache.get(id);
+        if (cached != null) {
+            return cached;
+        }
+
         AttributeEntity attributeEntity = attributeMapper.findById(id);
         if (attributeEntity == null) {
             logger.error("attribute not found, id: {}, name:{}", id);
             throw new BizException(ErrorCode.ATTRIBUTE_NOT_FOUND);
         }
 
-        return convertToAttribute(attributeEntity);
+        Attribute attribute = convertToAttribute(attributeEntity);
+        attributeCache.put(id, attribute);
+        return attribute;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AttributeValue> findAllAttributeValuesByAttributeId(Long attributeId) {
-        Attribute attribute = getAttributeById(attributeId);
-        if (attribute.getInputType() == AttributeInputType.SINGLE_SELECT || attribute.getInputType() == AttributeInputType.MULTI_SELECT) {
-            List<AttributeValueEntity> values = attributeValueMapper.findAllAttributeValuesByAttributeId(attributeId);
-            return values.stream().map(this::convertToAttributeValue).toList();
+        List<AttributeValue> cached = valuesByAttributeIdCache.get(attributeId);
+        if (cached != null) {
+            return cached;
         }
-        return Collections.emptyList();
+
+        List<AttributeValueEntity> values = attributeValueMapper.findAllAttributeValuesByAttributeId(attributeId);
+        if (CollectionUtils.isEmpty(values)) {
+            valuesByAttributeIdCache.put(attributeId, Collections.emptyList());
+            return Collections.emptyList();
+        }
+        List<AttributeValue> result = values.stream().map(entity -> {
+            AttributeValue av = convertToAttributeValue(entity);
+            attributeValueCache.put(entity.getId(), av);
+            return av;
+        }).toList();
+        valuesByAttributeIdCache.put(attributeId, result);
+        return result;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AttributeValue getAttributeValueById(@NotNull Long id) {
         AttributeValueEntity attributeValueEntity = attributeValueMapper.findById(id);
         if (attributeValueEntity != null) {
@@ -218,34 +248,101 @@ public class AttributeServiceImpl implements AttributeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Attribute> getAttributesByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
         }
-        List<AttributeEntity> entities = attributeMapper.findByIds(ids);
-        return entities.stream().map(this::convertToAttribute).toList();
+
+        List<Attribute> result = new ArrayList<>(ids.size());
+        List<Long> missedIds = new ArrayList<>();
+        for (Long id : ids) {
+            Attribute cached = attributeCache.get(id);
+            if (cached != null) {
+                result.add(cached);
+            } else {
+                missedIds.add(id);
+            }
+        }
+
+        if (!missedIds.isEmpty()) {
+            List<AttributeEntity> entities = attributeMapper.findByIds(missedIds);
+            for (AttributeEntity entity : entities) {
+                Attribute attr = convertToAttribute(entity);
+                attributeCache.put(entity.getId(), attr);
+                result.add(attr);
+            }
+        }
+
+        return result;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<Long, List<AttributeValue>> getAttributeValuesByAttributeIds(List<Long> attributeIds) {
         if (attributeIds == null || attributeIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        List<AttributeValueEntity> entities = attributeValueMapper.findByAttributeIds(attributeIds);
-        return entities.stream()
-                .map(this::convertToAttributeValue)
-                .collect(Collectors.groupingBy(AttributeValue::getAttributeId));
+
+        Map<Long, List<AttributeValue>> result = new HashMap<>(attributeIds.size());
+        List<Long> missedIds = new ArrayList<>();
+        for (Long attrId : attributeIds) {
+            List<AttributeValue> cached = valuesByAttributeIdCache.get(attrId);
+            if (cached != null) {
+                result.put(attrId, cached);
+            } else {
+                missedIds.add(attrId);
+            }
+        }
+
+        if (!missedIds.isEmpty()) {
+            List<AttributeValueEntity> entities = attributeValueMapper.findByAttributeIds(missedIds);
+            Map<Long, List<AttributeValue>> dbResults = entities.stream()
+                    .map(entity -> {
+                        AttributeValue av = convertToAttributeValue(entity);
+                        attributeValueCache.put(entity.getId(), av);
+                        return av;
+                    })
+                    .collect(Collectors.groupingBy(AttributeValue::getAttributeId));
+
+            for (Long attrId : missedIds) {
+                List<AttributeValue> values = dbResults.getOrDefault(attrId, Collections.emptyList());
+                valuesByAttributeIdCache.put(attrId, values);
+                result.put(attrId, values);
+            }
+        }
+
+        return result;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<Long, AttributeValue> getAttributeValuesByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyMap();
         }
-        List<AttributeValueEntity> entities = attributeValueMapper.findByIds(ids);
-        return entities.stream()
-                .map(this::convertToAttributeValue)
-                .collect(Collectors.toMap(AttributeValue::getId, Function.identity()));
+
+        Map<Long, AttributeValue> result = new HashMap<>(ids.size());
+        List<Long> missedIds = new ArrayList<>();
+        for (Long id : ids) {
+            AttributeValue cached = attributeValueCache.get(id);
+            if (cached != null) {
+                result.put(id, cached);
+            } else {
+                missedIds.add(id);
+            }
+        }
+
+        if (!missedIds.isEmpty()) {
+            List<AttributeValueEntity> entities = attributeValueMapper.findByIds(missedIds);
+            for (AttributeValueEntity entity : entities) {
+                AttributeValue av = convertToAttributeValue(entity);
+                attributeValueCache.put(entity.getId(), av);
+                result.put(entity.getId(), av);
+            }
+        }
+
+        return result;
     }
 
     private AttributeEntity getAttributeEntity(CreateAttributeRequest request, String name, LocalDateTime now) {
