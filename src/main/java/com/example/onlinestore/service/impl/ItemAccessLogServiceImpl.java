@@ -3,12 +3,12 @@ package com.example.onlinestore.service.impl;
 import com.example.onlinestore.entity.ItemAccessLogEntity;
 import com.example.onlinestore.mapper.ItemAccessLogMapper;
 import com.example.onlinestore.service.ItemAccessLogService;
-import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,29 +16,39 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Service
+@RequiredArgsConstructor
 public class ItemAccessLogServiceImpl implements ItemAccessLogService {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemAccessLogServiceImpl.class);
 
     private final Map<Long, Integer> accessCountMap = new ConcurrentHashMap<>();
     private final List<ItemAccessLogEntity> accessLogBuffer = Collections.synchronizedList(new ArrayList<>(1024));
-    private final ExecutorService asyncExecutor = Executors.newSingleThreadExecutor(r -> {
-        Thread t = new Thread(r, "access-log-async-writer");
-        t.setDaemon(true);
-        return t;
-    });
 
-    @Autowired
-    private ItemAccessLogMapper itemAccessLogMapper;
+    private static final long HOT_ITEMS_CACHE_TTL_MS = 2 * 60 * 1000L;
+    private volatile List<Map<String, Object>> cachedHotItems;
+    private volatile long hotItemsCacheExpireAt;
+    private volatile String hotItemsCacheKey;
 
-    @PreDestroy
-    public void shutdown() {
-        asyncExecutor.shutdown();
+    private static final long ACCESS_COUNT_CACHE_TTL_MS = 60 * 1000L;
+    private final Map<String, CacheEntry<Integer>> accessCountCache = new ConcurrentHashMap<>();
+
+    private static class CacheEntry<T> {
+        final T value;
+        final long expireAt;
+
+        CacheEntry(T value, long ttlMs) {
+            this.value = value;
+            this.expireAt = System.currentTimeMillis() + ttlMs;
+        }
+
+        boolean isExpired() {
+            return System.currentTimeMillis() > expireAt;
+        }
     }
+
+    private final ItemAccessLogMapper itemAccessLogMapper;
 
     @Override
     public void recordAccess(Long itemId, String itemName, String memberId, String memberName, String ip, String userAgent, String referer, String sessionId) {
@@ -51,25 +61,32 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
     }
 
     @Override
-    public void asyncRecordAccessLog(Long itemId, String itemName, String memberId, String memberName, String ip, String userAgent, String referer, String sessionId) {
-        asyncExecutor.execute(() -> {
-            try {
-                ItemAccessLogEntity logEntity = createAccessLogEntity(itemId, itemName, memberId, memberName, ip, userAgent, referer, sessionId);
-                itemAccessLogMapper.insertAccessLog(logEntity);
-            } catch (Throwable t) {
-                logger.error("Failed to record access log", t);
-            }
-        });
-    }
-
-    @Override
+    @Transactional(readOnly = true)
     public int getAccessCount(Long itemId, LocalDateTime startTime, LocalDateTime endTime) {
-        return itemAccessLogMapper.countByItemIdAndTimeRange(itemId, startTime, endTime);
+        String cacheKey = itemId + "|" + startTime + "|" + endTime;
+        CacheEntry<Integer> entry = accessCountCache.get(cacheKey);
+        if (entry != null && !entry.isExpired()) {
+            return entry.value;
+        }
+
+        int count = itemAccessLogMapper.countByItemIdAndTimeRange(itemId, startTime, endTime);
+        accessCountCache.put(cacheKey, new CacheEntry<>(count, ACCESS_COUNT_CACHE_TTL_MS));
+        return count;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> getHotItems(LocalDateTime startTime, LocalDateTime endTime, int limit) {
-        return itemAccessLogMapper.findHotItems(startTime, endTime, limit);
+        String cacheKey = startTime + "|" + endTime + "|" + limit;
+        if (cacheKey.equals(hotItemsCacheKey) && System.currentTimeMillis() < hotItemsCacheExpireAt) {
+            return cachedHotItems;
+        }
+
+        List<Map<String, Object>> result = itemAccessLogMapper.findHotItems(startTime, endTime, limit);
+        cachedHotItems = result;
+        hotItemsCacheKey = cacheKey;
+        hotItemsCacheExpireAt = System.currentTimeMillis() + HOT_ITEMS_CACHE_TTL_MS;
+        return result;
     }
 
     @Scheduled(fixedRate = 60000)

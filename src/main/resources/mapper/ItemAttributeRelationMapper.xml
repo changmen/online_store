@@ -36,7 +36,7 @@
     </insert>
 
     <!-- 根据物品ID和SKU ID查询 -->
-    <select id="findByItemIdAndSkuId" resultType="com.example.onlinestore.entity.ItemAttributeRelationEntity">
+    <select id="findByItemIdAndSkuId" resultMap="itemAttributeRelationResultMap">
         SELECT
         <include refid="Base_Column_List"/>
         FROM `item_attribute_relation`

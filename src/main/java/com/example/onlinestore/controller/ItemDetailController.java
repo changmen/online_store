@@ -11,8 +11,10 @@ import com.example.onlinestore.service.ItemDetailService;
 import com.example.onlinestore.service.MemberService;
 import com.example.onlinestore.utils.WebUtils;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,41 +22,30 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/items")
+@Validated
+@RequiredArgsConstructor
 public class ItemDetailController {
-    @Autowired
-    private ItemDetailService itemDetailService;
-
-    @Autowired
-    private ItemDetailConverter itemDetailConverter;
-
-    @Autowired
-    private ItemAccessLogService itemAccessLogService;
-
-    @Autowired
-    private MemberService memberService;
-
-    @Value("${async-record-access-log:true}")
-    private boolean asyncRecordAccessLog;
+    private final ItemDetailService itemDetailService;
+    private final ItemDetailConverter itemDetailConverter;
+    private final ItemAccessLogService itemAccessLogService;
+    private final MemberService memberService;
 
     @GetMapping("/{itemId}/detail")
-    public Response<ItemDetailResponse> getItemDetail(@PathVariable("itemId") Long itemId, HttpServletRequest request) {
+    public Response<ItemDetailResponse> getItemDetail(@Positive @PathVariable("itemId") Long itemId, HttpServletRequest request) {
         ItemDetail detail = itemDetailService.getItemDetail(itemId);
         // 记录访问日志
         String ip = WebUtils.getClientIp(request);
         String userAgent = request.getHeader("User-Agent");
         String referer = request.getHeader("Referer");
-        String sessionId = request.getSession(false) != null ? request.getSession(false).getId() : "";
+        HttpSession session = request.getSession(false);
+        String sessionId = session != null ? session.getId() : "";
         Member member = memberService.getLoginMember();
         Item item = detail.getItem();
 
         String memberId = member != null ? String.valueOf(member.getId()) : "";
         String memberName = member != null ? member.getBaseInfo().getName() : "";
 
-        if (asyncRecordAccessLog) {
-            itemAccessLogService.asyncRecordAccessLog(itemId, item.getName(), memberId, memberName, ip, userAgent, referer, sessionId);
-        } else {
-            itemAccessLogService.recordAccess(itemId, item.getName(), memberId, memberName, ip, userAgent, referer, sessionId);
-        }
+        itemAccessLogService.recordAccess(itemId, item.getName(), memberId, memberName, ip, userAgent, referer, sessionId);
 
         return Response.success(itemDetailConverter.convert(detail));
     }

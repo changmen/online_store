@@ -65,15 +65,6 @@ public interface SkuMapper {
     SkuEntity findBySkuCode(String skuCode);
 
     /**
-     * 更新SKU库存
-     *
-     * @param id SKU ID
-     * @param quantity 要更新的库存数量
-     * @return 受影响的数据行数
-     */
-    int updateStock(@Param("id") Long id, @Param("quantity") Integer quantity);
-
-    /**
      * 更新SKU销售数量
      *
      * @param id SKU ID

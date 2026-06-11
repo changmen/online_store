@@ -35,7 +35,7 @@
             `item_id`, `item_name`, `member_id`, `member_name`, `ip`, `user_agent`, `referer`, `access_time`, `access_count`, `session_id`, `created_at`, `updated_at`
         ) VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.itemId},  #{item.itemName}, #{item.memberId}, #{item.memberName}, #{item.ip}, #{item.userAgent}, #{item.referer}, #{item.accessTime}, #{item.accessCount}, #{sessionId},#{item.createdAt}, #{item.updatedAt})
+            (#{item.itemId},  #{item.itemName}, #{item.memberId}, #{item.memberName}, #{item.ip}, #{item.userAgent}, #{item.referer}, #{item.accessTime}, #{item.accessCount}, #{item.sessionId}, #{item.createdAt}, #{item.updatedAt})
         </foreach>
     </insert>
     
@@ -64,7 +64,6 @@
         FROM 
             `item_access_log`
         <where>
-            1=1
             <if test="startTime != null">
                 AND `access_time` >= #{startTime}
             </if>

@@ -6,20 +6,21 @@ import com.example.onlinestore.constants.Constants;
 import com.example.onlinestore.entity.CategoryEntity;
 import com.example.onlinestore.mapper.CategoryMapper;
 import com.example.onlinestore.service.CategoryService;
+import lombok.RequiredArgsConstructor;
 import net.sf.cglib.beans.BeanCopier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService, InitializingBean, DisposableBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(CategoryServiceImpl.class);
 
@@ -29,10 +30,9 @@ public class CategoryServiceImpl implements CategoryService, InitializingBean, D
 
     private final ScheduledExecutorService scheduleExecutorService = Executors.newScheduledThreadPool(1);
 
-    private final Map<Long, Category> categoryMap = Maps.newConcurrentMap();
+    private final Map<Long, Category> categoryMap = new ConcurrentHashMap<>();
 
-    @Autowired
-    private CategoryMapper categoryMapper;
+    private final CategoryMapper categoryMapper;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -47,8 +47,9 @@ public class CategoryServiceImpl implements CategoryService, InitializingBean, D
 
     @Override
     public boolean isRootCategory(Long categoryId) {
-        if (categoryMap.containsKey(categoryId)) {
-            return Objects.equals(categoryMap.get(categoryId).getParentId(), Constants.ROOT_CATEGORY_PARENT_ID);
+        Category category = categoryMap.get(categoryId);
+        if (category != null) {
+            return Objects.equals(category.getParentId(), Constants.ROOT_CATEGORY_PARENT_ID);
         }
         return false;
     }
@@ -56,17 +57,14 @@ public class CategoryServiceImpl implements CategoryService, InitializingBean, D
     @Override
     public List<Category> getRootCategories() {
         if (!rootCategories.isEmpty()) {
-            return rootCategories.stream().map(categoryMap::get).toList();
+            return rootCategories.stream().map(categoryMap::get).filter(Objects::nonNull).toList();
         }
         return List.of();
     }
 
     @Override
     public Category getCategoryById(Long categoryId) {
-        if (categoryMap.containsKey(categoryId)) {
-            return categoryMap.get(categoryId);
-        }
-        return null;
+        return categoryMap.get(categoryId);
     }
 
 
@@ -90,33 +88,27 @@ public class CategoryServiceImpl implements CategoryService, InitializingBean, D
     private void loadCategory() {
         LOGGER.info("Start to load category.");
         synchronized (LOAD_LOCKER) {
-            int limit = 1000;
             try {
-                List<CategoryEntity> allCategories = categoryMapper.findAllCategories(0, limit);
+                List<CategoryEntity> allCategories = categoryMapper.findAll();
                 BeanCopier beanCopier = BeanCopier.create(CategoryEntity.class, Category.class, false);
-                Map<Long, Set<Long>> parentCategoryMap = new HashMap<>();
+
+                Map<Long, Set<Long>> childrenByParentId = new HashMap<>();
+                for (CategoryEntity categoryEntity : allCategories) {
+                    childrenByParentId
+                            .computeIfAbsent(categoryEntity.getParentId(), k -> new HashSet<>())
+                            .add(categoryEntity.getId());
+                }
+
                 Set<Long> newCategoryIds = new HashSet<>();
                 for (CategoryEntity categoryEntity : allCategories) {
                     newCategoryIds.add(categoryEntity.getId());
 
                     Category category = new Category();
                     beanCopier.copy(categoryEntity, category, null);
-
-
-                    Set<Long> Children = allCategories.stream().
-                            filter(c -> Objects.equals(c.getParentId(), categoryEntity.getId())).
-                            map(CategoryEntity::getId).collect(Collectors.toSet());
-                    category.setChildren(Children);
-
+                    category.setChildren(childrenByParentId.getOrDefault(categoryEntity.getId(), Collections.emptySet()));
                     categoryMap.put(categoryEntity.getId(), category);
-
-                    long parentId = categoryEntity.getParentId();
-                    if (parentId > category.getParentId()) {
-                        Set<Long> childCategories = parentCategoryMap.computeIfAbsent(parentId, k -> new HashSet<>());
-                        childCategories.add(categoryEntity.getId());
-                    }
                 }
-                //
+
                 Set<Long> newRoots = new HashSet<>();
                 Iterator<Map.Entry<Long, Category>> it = categoryMap.entrySet().iterator();
                 while (it.hasNext()) {
@@ -127,7 +119,6 @@ public class CategoryServiceImpl implements CategoryService, InitializingBean, D
                         if (Objects.equals(value.getParentId(), Constants.ROOT_CATEGORY_PARENT_ID)) {
                             newRoots.add(key);
                         }
-
                     } else {
                         it.remove();
                     }

@@ -2,20 +2,18 @@ package com.example.onlinestore.dto.converter;
 
 import com.example.onlinestore.bean.ItemDetail;
 import com.example.onlinestore.dto.ItemDetailResponse;
-import org.apache.commons.collections.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class ItemDetailConverter {
 
-    @Autowired
-    private ItemResponseConverter itemResponseConverter;
-
-    @Autowired
-    private SkuConverter skuConverter;
+    private final ItemResponseConverter itemResponseConverter;
+    private final SkuConverter skuConverter;
 
     public ItemDetailResponse convert(ItemDetail itemDetail) {
         if (itemDetail == null) {
@@ -23,9 +21,9 @@ public class ItemDetailConverter {
         }
         ItemDetailResponse response = new ItemDetailResponse();
         response.setItem(itemResponseConverter.convert(itemDetail.getItem()));
-        if (CollectionUtils.isNotEmpty(itemDetail.getSkus())){
-            response.setSkus(itemDetail.getSkus().stream().map(skuConverter::convert).collect(Collectors.toList()));
-        }
+        response.setSkus(itemDetail.getSkus() != null
+                ? itemDetail.getSkus().stream().map(skuConverter::convert).collect(Collectors.toList())
+                : Collections.emptyList());
         return response;
     }
 }

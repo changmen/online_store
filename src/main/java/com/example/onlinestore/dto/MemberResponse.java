@@ -45,12 +45,6 @@ public class MemberResponse implements Serializable {
         private String nickName;
 
         /**
-         * 账户密码
-         * 需加密存储，应符合密码强度策略要求（至少包含大小写字母、数字和特殊符号）
-         */
-        private String password;
-
-        /**
          * 联系电话
          * 需符合E.164国际电话号码格式，如+8613912345678
          */
@@ -75,7 +69,6 @@ public class MemberResponse implements Serializable {
                 .baseInfo(MemberBaseInfoResponse.builder()
                         .name(member.getBaseInfo().getName())
                         .nickName(member.getBaseInfo().getNickName())
-                        .password(member.getBaseInfo().getPassword())
                         .phone(member.getBaseInfo().getPhone())
                         .gender(member.getBaseInfo().getGender())
                         .age(member.getBaseInfo().getAge()).build()

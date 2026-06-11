@@ -5,20 +5,22 @@ import com.example.onlinestore.dto.*;
 import com.example.onlinestore.dto.converter.ItemResponseConverter;
 import com.example.onlinestore.service.ItemService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/items")
+@Validated
+@RequiredArgsConstructor
 public class ItemController {
-    @Autowired
-    private ItemService itemService;
-
-    @Autowired
-    private ItemResponseConverter itemResponseConverter;
+    private final ItemService itemService;
+    private final ItemResponseConverter itemResponseConverter;
 
     @GetMapping("/{itemId}")
-    public Response<ItemResponse> getItemById(@PathVariable("itemId") Long id) {
+    public Response<ItemResponse> getItemById(@Positive @PathVariable("itemId") Long id) {
         Item item = itemService.getItemById(id);
         return Response.success(itemResponseConverter.convert(item));
     }
@@ -36,13 +38,15 @@ public class ItemController {
     }
 
     @PostMapping("")
+    @PreAuthorize("hasRole('ADMIN')")
     public Response<ItemResponse> createItem(@Valid @RequestBody CreateItemRequest request) {
         Item item = itemService.createItem(request);
         return Response.success(itemResponseConverter.convert(item));
     }
 
     @PutMapping("/{itemId}")
-    public Response<Void> updateItem(@PathVariable("itemId") Long id,
+    @PreAuthorize("hasRole('ADMIN')")
+    public Response<Void> updateItem(@Positive @PathVariable("itemId") Long id,
                                      @Valid @RequestBody UpdateItemRequest request) {
         itemService.updateItem(id, request);
         return Response.success();

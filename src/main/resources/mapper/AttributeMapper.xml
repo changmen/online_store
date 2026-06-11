@@ -18,9 +18,9 @@
         `id`, `name`, `attribute_type`, `required`, `searchable`, `input_type`, `visible`, `sort_score`, `created_at`, `updated_at`
     </sql>
 
-    <insert id="insert" parameterType="com.example.onlinestore.entity.AttributeEntity">
-        INSERT INTO `attribute` (`id`, `name`, `attribute_type`, `required`, `searchable`, `input_type`, `sort_score`, `visible`, `created_at`, `updated_at`)
-        VALUES (#{id}, #{name}, #{attributeType}, #{required}, #{searchable}, #{inputType}, #{sortScore}, #{visible}, #{createdAt}, #{updatedAt})
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.example.onlinestore.entity.AttributeEntity">
+        INSERT INTO `attribute` (`name`, `attribute_type`, `required`, `searchable`, `input_type`, `sort_score`, `visible`, `created_at`, `updated_at`)
+        VALUES (#{name}, #{attributeType}, #{required}, #{searchable}, #{inputType}, #{sortScore}, #{visible}, #{createdAt}, #{updatedAt})
     </insert>
 
     <select id="findById" resultMap="attributeResultMap">

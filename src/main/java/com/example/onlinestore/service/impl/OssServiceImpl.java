@@ -8,6 +8,7 @@ import com.example.onlinestore.service.OssService;
 import com.example.onlinestore.utils.DateUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -15,7 +16,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -27,13 +27,13 @@ import java.util.UUID;
  * 阿里云OSS服务实现类
  */
 @Service
+@RequiredArgsConstructor
 public class OssServiceImpl implements OssService {
 
     private static final Logger logger = LoggerFactory.getLogger(OssServiceImpl.class);
     private static final String ITEM_DESCRIPTION_PREFIX = "item/description";
 
-    @Autowired
-    private OssConfig ossConfig;
+    private final OssConfig ossConfig;
 
     private OSS ossClient;
 

@@ -85,13 +85,6 @@
         WHERE `sku_code` = #{skuCode}
     </select>
 
-    <update id="updateStock">
-        UPDATE `sku`
-        SET `stock_quantity` = #{quantity},
-            `updated_at` = NOW()
-        WHERE `id` = #{id}
-    </update>
-
     <update id="updateSoldQuantity">
         UPDATE `sku`
         SET `sold_quantity` = `sold_quantity` + #{quantity},

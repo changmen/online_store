@@ -18,7 +18,7 @@
     </sql>
 
     <!-- 插入操作 -->
-    <insert id="insert" parameterType="com.example.onlinestore.entity.AttributeValueEntity">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.example.onlinestore.entity.AttributeValueEntity">
         INSERT INTO `attribute_value` (`attribute_id`, `value`, `sort_score`, `created_at`, `updated_at`)
         VALUES (#{attributeId}, #{value}, #{sortScore}, #{createdAt}, #{updatedAt})
     </insert>
@@ -72,5 +72,16 @@
             #{attributeId}
         </foreach>
     </select>
+
+    <select id="countValuesByAttributeId" resultType="int">
+        SELECT COUNT(*)
+        FROM `attribute_value`
+        WHERE `attribute_id` = #{attributeId}
+    </select>
+
+    <delete id="deleteByAttributeId">
+        DELETE FROM `attribute_value`
+        WHERE `attribute_id` = #{attributeId}
+    </delete>
 
 </mapper>

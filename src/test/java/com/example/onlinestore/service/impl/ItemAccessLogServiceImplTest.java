@@ -68,20 +68,6 @@ class ItemAccessLogServiceImplTest {
     }
 
     @Test
-    void asyncRecordAccessLog_insertsDirectly() throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-        doAnswer(invocation -> {
-            latch.countDown();
-            return 1;
-        }).when(itemAccessLogMapper).insertAccessLog(any(ItemAccessLogEntity.class));
-
-        itemAccessLogService.asyncRecordAccessLog(1L, "商品A", "m1", "会员1", "127.0.0.1", "ua", "ref", "sid");
-
-        assertTrue(latch.await(5, TimeUnit.SECONDS));
-        verify(itemAccessLogMapper).insertAccessLog(any(ItemAccessLogEntity.class));
-    }
-
-    @Test
     void recordAccess_concurrentAccess_threadSafe() throws InterruptedException {
         int threadCount = 10;
         int logsPerThread = 100;

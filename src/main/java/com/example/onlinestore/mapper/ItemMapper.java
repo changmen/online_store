@@ -42,6 +42,14 @@ public interface ItemMapper {
     ItemEntity findById(Long id);
 
     /**
+     * 根据主键ID查询Item实体（不含description和description_url大字段）
+     *
+     * @param id 要查询的Item记录主键ID
+     * @return 查找到的Item实体对象（不含描述字段），未找到时返回null
+     */
+    ItemEntity findByIdBasic(Long id);
+
+    /**
      * 根据给定的查询条件查询项目列表。
      *
      * @param options 包含查询条件的请求对象

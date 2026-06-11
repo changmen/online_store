@@ -21,17 +21,6 @@ public interface ItemAccessLogService {
     void recordAccess(Long itemId, String itemName, String memberId, String userName, String ip, String userAgent, String referer, String sessionId);
 
     /**
-     * 异步记录商品访问日志
-     *
-     * @param itemId    商品ID
-     * @param memberId    用户ID
-     * @param ip        访问IP
-     * @param userAgent 用户代理
-     * @param referer   来源页面
-     */
-    void asyncRecordAccessLog(Long itemId, String itemName, String memberId, String userName, String ip, String userAgent, String referer, String sessionId);
-
-    /**
      * 获取商品在指定时间范围内的访问次数
      *
      * @param itemId    商品ID

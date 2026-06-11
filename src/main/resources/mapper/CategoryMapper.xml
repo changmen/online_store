@@ -24,4 +24,11 @@
             LIMIT #{offset}, #{limit}
     </select>
 
+    <select id="findAll" resultMap="categoryResultMap">
+        SELECT
+            <include refid="Base_Column"/>
+        FROM category
+        ORDER BY id DESC
+    </select>
+
 </mapper>

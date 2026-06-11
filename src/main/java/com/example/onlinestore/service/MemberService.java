@@ -56,4 +56,12 @@ public interface MemberService {
      */
     Member getLoginMember();
 
+    /**
+     * 使用 refreshToken 刷新 accessToken
+     *
+     * @param refreshToken 刷新令牌
+     * @return 新的登录响应，包含新的 accessToken 和 refreshToken
+     */
+    LoginResponse refreshToken(String refreshToken);
+
 }

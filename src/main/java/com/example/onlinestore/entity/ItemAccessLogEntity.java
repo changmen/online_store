@@ -78,4 +78,9 @@ public class ItemAccessLogEntity implements Serializable {
      * 记录创建时间，由系统自动维护
      */
     private LocalDateTime createdAt;
+
+    /**
+     * 记录更新时间，由系统自动维护
+     */
+    private LocalDateTime updatedAt;
 }

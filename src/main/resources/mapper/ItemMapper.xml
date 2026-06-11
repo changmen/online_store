@@ -20,7 +20,11 @@
         `id`, `brand_id`, `category_id`, `name`, `description`, `description_url`, `main_image_url`, `sub_image_urls`, `status`, `sort_score`, `created_at`, `updated_at`
     </sql>
 
-    <insert id="insert" parameterType="com.example.onlinestore.entity.ItemEntity">
+    <sql id="List_Column">
+        `id`, `brand_id`, `category_id`, `name`, `main_image_url`, `sub_image_urls`, `status`, `sort_score`, `created_at`, `updated_at`
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.example.onlinestore.entity.ItemEntity">
         INSERT INTO `item` (`brand_id`, `category_id`, `name`, `description`, `description_url`, `main_image_url`, `sub_image_urls`,
                             `status`, `sort_score`, `created_at`, `updated_at`)
         VALUES (#{brandId}, #{categoryId}, #{name}, #{description}, #{descriptionURL}, #{mainImageURL}, #{subImageURLs}, #{status},
@@ -30,6 +34,13 @@
     <select id="findById" resultMap="itemResultMap">
         SELECT
         <include refid="Base_Column"/>
+        FROM `item`
+        WHERE `id` = #{id}
+    </select>
+
+    <select id="findByIdBasic" resultMap="itemResultMap">
+        SELECT
+        <include refid="List_Column"/>
         FROM `item`
         WHERE `id` = #{id}
     </select>
@@ -53,24 +64,24 @@
 
     <select id="queryItemsByOptions" parameterType="com.example.onlinestore.dto.ItemListQueryRequest" resultMap="itemResultMap">
         SELECT
-        <include refid="Base_Column"/>
+        <include refid="List_Column"/>
         FROM `item`
-        WHERE
-        1=1
-        <if test="options != null and options.name != null">
-            AND `name` = #{options.name}
-        </if>
-        <if test="options != null and options.categoryId != null">
-            AND `category_id` = #{options.categoryId}
-        </if>
-        <if test="options != null and options.brandId != null">
-            AND `brand_id` = #{options.brandId}
-        </if>
-        <if test="options != null and options.status != null">
-            AND `status` = #{options.status}
-        </if>
-        <if test="options != null and options.nameLike != null">
-            AND `name` LIKE CONCAT('%', #{options.nameLike}, '%')
-        </if>
+        <where>
+            <if test="options != null and options.name != null">
+                AND `name` = #{options.name}
+            </if>
+            <if test="options != null and options.categoryId != null">
+                AND `category_id` = #{options.categoryId}
+            </if>
+            <if test="options != null and options.brandId != null">
+                AND `brand_id` = #{options.brandId}
+            </if>
+            <if test="options != null and options.status != null">
+                AND `status` = #{options.status}
+            </if>
+            <if test="options != null and options.nameLike != null">
+                AND `name` LIKE CONCAT('%', #{options.nameLike}, '%')
+            </if>
+        </where>
     </select>
 </mapper>

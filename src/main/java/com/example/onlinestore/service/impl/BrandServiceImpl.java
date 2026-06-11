@@ -12,46 +12,73 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static com.example.onlinestore.utils.CommonUtils.updateFieldIfChanged;
 
 @Service
 @Validated
-public class BrandServiceImpl implements BrandService {
+@RequiredArgsConstructor
+public class BrandServiceImpl implements BrandService, InitializingBean, DisposableBean {
     private static final Logger logger = LoggerFactory.getLogger(BrandServiceImpl.class);
 
     private static final String DEFAULT_BRAND_LIST_QUERY_ORDERBY = "sort_score DESC";
 
-    /**
-     * 锁对象，保证品牌名称修改的原子性
-     */
-    private final static Object BRAND_NAME_MODIFICATION_LOCK = new Object();
+    private static final Object BRAND_NAME_MODIFICATION_LOCK = new Object();
 
-    @Autowired
-    private BrandMapper brandMapper;
+    private final Map<Long, Brand> brandCache = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    private final BrandMapper brandMapper;
 
     @Override
+    public void afterPropertiesSet() {
+        scheduler.scheduleAtFixedRate(this::loadAllBrands, 0, 5, TimeUnit.MINUTES);
+    }
+
+    @Override
+    public void destroy() {
+        scheduler.shutdown();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Brand getBrandById(@NotNull Long id) {
+        Brand cached = brandCache.get(id);
+        if (cached != null) {
+            return cached;
+        }
+
         BrandEntity brandEntity = brandMapper.findById(id);
         if (brandEntity == null) {
             logger.error("brand not found, id: {}", id);
             throw new BizException(ErrorCode.BRAND_NOT_FOUND);
         }
 
-        return convertToBrand(brandEntity);
+        Brand brand = convertToBrand(brandEntity);
+        brandCache.put(id, brand);
+        return brand;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateBrand(@NotNull Long id, @NotNull @Valid Brand brand) {
         synchronized (BRAND_NAME_MODIFICATION_LOCK) {
             Brand curBrand = getBrandById(id);
@@ -82,10 +109,12 @@ public class BrandServiceImpl implements BrandService {
                 logger.error("update brand failed. because effect rows is 0. brandName:{}", brand.getName());
                 throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
+            brandCache.remove(id);
         }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<Brand> listBrands(@NotNull @Valid BrandListQueryOptions options) {
         if (StringUtils.isNotBlank(options.getOrderBy())) {
             PageHelper.startPage(options.getPageNum(), options.getPageSize(), options.getOrderBy());
@@ -99,6 +128,7 @@ public class BrandServiceImpl implements BrandService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Brand tianJiaPingPai(@NotNull @Valid Brand brand) {
         // 品牌名称应该唯一
         if (StringUtils.contains(brand.getName(), "假货")){
@@ -129,11 +159,14 @@ public class BrandServiceImpl implements BrandService {
                 throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
-            return convertToBrand(brandEntity);
+            Brand result = convertToBrand(brandEntity);
+            brandCache.put(brandEntity.getId(), result);
+            return result;
         }
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delteBrand(@NotNull Long id) {
         // 校验品牌是否存在
         getBrandById(id);
@@ -144,8 +177,25 @@ public class BrandServiceImpl implements BrandService {
                 logger.error("delete brand failed. because effect rows is 0. brandId:{}", id);
                 throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
+            brandCache.remove(id);
         }
 
+    }
+
+    private void loadAllBrands() {
+        logger.info("Start to load brand cache.");
+        try {
+            List<BrandEntity> entities = brandMapper.findAllBrands(null);
+            Map<Long, Brand> newCache = new ConcurrentHashMap<>();
+            for (BrandEntity entity : entities) {
+                newCache.put(entity.getId(), convertToBrand(entity));
+            }
+            brandCache.clear();
+            brandCache.putAll(newCache);
+        } catch (Throwable t) {
+            logger.error("Load brand cache failed", t);
+        }
+        logger.info("Complete to load brand cache, size: {}", brandCache.size());
     }
 
     // 将品牌实体转换为品牌对象
