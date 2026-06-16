@@ -64,4 +64,11 @@ public interface MemberService {
      */
     LoginResponse refreshToken(String refreshToken);
 
+    /**
+     * 登出当前用户，将访问令牌加入黑名单
+     *
+     * @param token 当前用户的访问令牌（从 Authorization 头提取）
+     */
+    void logout(String token);
+
 }

@@ -2,9 +2,8 @@ package com.example.onlinestore.controller;
 
 import com.example.onlinestore.bean.Member;
 import com.example.onlinestore.dto.*;
-import com.example.onlinestore.security.JwtTokenUtil;
 import com.example.onlinestore.service.MemberService;
-import com.example.onlinestore.service.TokenBlacklistService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -25,8 +24,6 @@ public class MemberController {
     private static final Logger logger = LoggerFactory.getLogger(MemberController.class);
 
     private final MemberService memberService;
-    private final JwtTokenUtil jwtTokenUtil;
-    private final TokenBlacklistService tokenBlacklistService;
 
 
     @PostMapping("/registry")
@@ -38,19 +35,16 @@ public class MemberController {
 
     @PostMapping("/login")
     public Response<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        LoginResponse response = memberService.login(request);
-        // 签发 refreshToken
-        Long memberId = jwtTokenUtil.extractMemberId(response.getToken());
-        String refreshToken = jwtTokenUtil.generateRefreshToken(request.getUsername(), memberId);
-        return Response.success(new LoginResponse(response.getToken(), refreshToken));
+        return Response.success(memberService.login(request));
     }
 
     @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
-    public Response<String> logout(@RequestBody LogoutRequest request) {
-        tokenBlacklistService.addToBlacklist(request.getToken());
-        if (request.getRefreshToken() != null && !request.getRefreshToken().isBlank()) {
-            tokenBlacklistService.addToBlacklist(request.getRefreshToken());
+    public Response<String> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            memberService.logout(token);
         }
         return Response.success("登出成功");
     }

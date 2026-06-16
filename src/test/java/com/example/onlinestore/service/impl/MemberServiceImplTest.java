@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -39,8 +38,6 @@ class MemberServiceImplTest {
     @Mock
     private MemberMapper memberMapper;
     @Mock
-    private MessageSource messageSource;
-    @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtTokenUtil jwtTokenUtil;
@@ -60,7 +57,7 @@ class MemberServiceImplTest {
         memberByNameCache = Caffeine.newBuilder().build();
         memberByIdCache = Caffeine.newBuilder().build();
         memberService = new MemberServiceImpl(
-                memberMapper, messageSource, passwordEncoder, jwtTokenUtil,
+                memberMapper, passwordEncoder, jwtTokenUtil,
                 authenticationManager, memberByNameCache, memberByIdCache, tokenBlacklistService
         );
 

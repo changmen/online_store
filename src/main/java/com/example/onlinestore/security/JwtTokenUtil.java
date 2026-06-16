@@ -2,6 +2,7 @@ package com.example.onlinestore.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -38,6 +39,7 @@ public class JwtTokenUtil {
     private Long refreshExpiration;
 
     private Key signingKey;
+    private JwtParser jwtParser;
 
     @PostConstruct
     public void init() {
@@ -49,10 +51,9 @@ public class JwtTokenUtil {
             throw new IllegalStateException("JWT secret must be at least 32 bytes (256 bits) for HS256. Current length: " + keyBytes.length);
         }
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
-    }
-
-    private Key getSigningKey() {
-        return this.signingKey;
+        this.jwtParser = Jwts.parserBuilder()
+                .setSigningKey(this.signingKey)
+                .build();
     }
 
     public String extractUsername(String token) {
@@ -77,11 +78,7 @@ public class JwtTokenUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        return jwtParser.parseClaimsJws(token).getBody();
     }
 
     public String generateToken(UserDetails userDetails) {
@@ -107,7 +104,7 @@ public class JwtTokenUtil {
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expSeconds * 1000))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 

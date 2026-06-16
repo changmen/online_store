@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,7 +37,6 @@ public class MemberServiceImpl implements MemberService {
     private static final Logger logger = LoggerFactory.getLogger(MemberServiceImpl.class);
 
     private final MemberMapper memberMapper;
-    private final MessageSource messageSource;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
     private final org.springframework.security.authentication.AuthenticationManager authenticationManager;
@@ -55,7 +53,8 @@ public class MemberServiceImpl implements MemberService {
             );
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             String token = jwtTokenUtil.generateToken(userDetails);
-            return new LoginResponse(token, null);
+            String refreshToken = jwtTokenUtil.generateRefreshToken(userDetails.getUsername(), userDetails.getMemberId());
+            return new LoginResponse(token, refreshToken);
         } catch (BadCredentialsException e) {
             logger.warn("login failed. because username or password is invalid. username:{}", request.getUsername());
             throw new BizException(ErrorCode.MEMBER_PASSWORD_INCORRECT);
@@ -183,6 +182,13 @@ public class MemberServiceImpl implements MemberService {
         } catch (Exception e) {
             logger.error("Failed to refresh token: {}", e.getMessage(), e);
             throw new BizException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+    }
+
+    @Override
+    public void logout(String token) {
+        if (token != null && !token.isBlank()) {
+            tokenBlacklistService.addToBlacklist(token);
         }
     }
 }

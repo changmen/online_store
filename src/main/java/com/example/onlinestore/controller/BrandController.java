@@ -40,7 +40,7 @@ public class BrandController {
     @PostMapping("")
     @PreAuthorize("hasRole('ADMIN')")
     public Response<Brand> addBrand(@Valid @RequestBody Brand brand) {
-        Brand newBrand = brandService.tianJiaPingPai(brand);
+        Brand newBrand = brandService.addBrand(brand);
         return Response.success(newBrand);
     }
 
@@ -55,7 +55,7 @@ public class BrandController {
     @DeleteMapping("/{brandId}")
     @PreAuthorize("hasRole('ADMIN')")
     public Response<String> deleteBrand(@Positive @PathVariable("brandId") Long brandId) {
-        brandService.delteBrand(brandId);
+        brandService.deleteBrand(brandId);
         return Response.success("Success");
     }
 }

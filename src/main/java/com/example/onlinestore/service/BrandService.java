@@ -26,13 +26,13 @@ public interface BrandService {
      * @param brand 待添加的品牌实体对象，必须有效且不为null（需包含品牌名称等必要属性）
      * @return 新增成功的品牌实体对象（包含系统生成的ID等字段）
      */
-    Brand tianJiaPingPai(@NotNull @Valid Brand brand);
+    Brand addBrand(@NotNull @Valid Brand brand);
 
     /**
      * 根据品牌ID删除指定品牌
      * @param id 品牌唯一标识符，不能为null
      */
-    void delteBrand(@NotNull  Long id);
+    void deleteBrand(@NotNull  Long id);
 
     /**
      * 更新指定ID的品牌信息

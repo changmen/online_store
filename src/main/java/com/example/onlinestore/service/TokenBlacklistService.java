@@ -42,9 +42,18 @@ public class TokenBlacklistService {
     public boolean isBlacklisted(String token) {
         try {
             String jti = jwtTokenUtil.extractJti(token);
-            if (jti == null) {
-                return false;
-            }
+            return isBlacklistedByJti(jti);
+        } catch (Exception e) {
+            logger.error("Failed to extract jti from token, failing closed: {}", e.getMessage());
+            return true;
+        }
+    }
+
+    public boolean isBlacklistedByJti(String jti) {
+        if (jti == null) {
+            return false;
+        }
+        try {
             Boolean exists = stringRedisTemplate.hasKey(BLACKLIST_PREFIX + jti);
             return exists != null && exists;
         } catch (Exception e) {

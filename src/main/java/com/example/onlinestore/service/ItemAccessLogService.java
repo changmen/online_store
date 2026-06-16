@@ -1,5 +1,7 @@
 package com.example.onlinestore.service;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,15 @@ public interface ItemAccessLogService {
      * @param referer   来源页面
      */
     void recordAccess(Long itemId, String itemName, String memberId, String userName, String ip, String userAgent, String referer, String sessionId);
+
+    /**
+     * 记录商品详情页访问，内部处理请求上下文提取和会员信息获取
+     *
+     * @param itemId   商品ID
+     * @param itemName 商品名称
+     * @param request  HTTP请求
+     */
+    void recordItemDetailAccess(Long itemId, String itemName, HttpServletRequest request);
 
     /**
      * 获取商品在指定时间范围内的访问次数

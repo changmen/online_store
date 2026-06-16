@@ -69,21 +69,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String username = parseResult.username();
+        String jti = parseResult.claims().getId();
+        if (tokenBlacklistService.isBlacklistedByJti(jti)) {
+            logger.warn("JWT token is blacklisted: jti={}", jti);
+            writeUnauthorized(response, "会员未登录或登录已过期");
+            return;
+        }
 
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             chain.doFilter(request, response);
             return;
         }
 
+        String username = parseResult.username();
+
         try {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-
-            if (tokenBlacklistService.isBlacklisted(jwt)) {
-                logger.warn("JWT token is blacklisted: jti={}", jwtTokenUtil.extractJti(jwt));
-                writeUnauthorized(response, "会员未登录或登录已过期");
-                return;
-            }
 
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     userDetails, null, userDetails.getAuthorities());

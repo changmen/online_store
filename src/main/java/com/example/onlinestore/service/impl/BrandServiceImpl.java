@@ -129,7 +129,7 @@ public class BrandServiceImpl implements BrandService, InitializingBean, Disposa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Brand tianJiaPingPai(@NotNull @Valid Brand brand) {
+    public Brand addBrand(@NotNull @Valid Brand brand) {
         // 品牌名称应该唯一
         if (StringUtils.contains(brand.getName(), "假货")){
             throw new BizException(ErrorCode.BRAND_NAME_CONTAIN_SPECIAL_CHARACTER, brand.getName());
@@ -167,7 +167,7 @@ public class BrandServiceImpl implements BrandService, InitializingBean, Disposa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delteBrand(@NotNull Long id) {
+    public void deleteBrand(@NotNull Long id) {
         // 校验品牌是否存在
         getBrandById(id);
 

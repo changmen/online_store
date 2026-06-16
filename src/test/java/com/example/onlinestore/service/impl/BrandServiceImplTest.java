@@ -65,7 +65,7 @@ class BrandServiceImplTest {
     }
 
     @Test
-    void tianJiaPingPai_success() {
+    void addBrand_success() {
         Brand brand = new Brand("adidas", "运动品牌描述", "http://example.com/logo.png",
                 "品牌故事内容超过16个字符", 100, 1);
         when(brandMapper.findByName("ADIDAS")).thenReturn(null);
@@ -75,7 +75,7 @@ class BrandServiceImplTest {
             return 1;
         });
 
-        Brand result = brandService.tianJiaPingPai(brand);
+        Brand result = brandService.addBrand(brand);
 
         assertNotNull(result);
         assertEquals("ADIDAS", result.getName());
@@ -84,12 +84,12 @@ class BrandServiceImplTest {
     }
 
     @Test
-    void tianJiaPingPai_duplicateName_throwsException() {
+    void addBrand_duplicateName_throwsException() {
         Brand brand = new Brand("nike", "运动品牌描述", "http://example.com/logo.png",
                 "品牌故事内容超过16个字符", 100, 1);
         when(brandMapper.findByName("NIKE")).thenReturn(brandEntity);
 
-        assertThrows(BizException.class, () -> brandService.tianJiaPingPai(brand));
+        assertThrows(BizException.class, () -> brandService.addBrand(brand));
         verify(brandMapper, never()).insert(any(BrandEntity.class));
     }
 
@@ -116,20 +116,20 @@ class BrandServiceImplTest {
     }
 
     @Test
-    void delteBrand_exists_success() {
+    void deleteBrand_exists_success() {
         when(brandMapper.findById(1L)).thenReturn(brandEntity);
         when(brandMapper.deleteById(1L)).thenReturn(1);
 
-        brandService.delteBrand(1L);
+        brandService.deleteBrand(1L);
 
         verify(brandMapper).deleteById(1L);
     }
 
     @Test
-    void delteBrand_notFound_throwsException() {
+    void deleteBrand_notFound_throwsException() {
         when(brandMapper.findById(999L)).thenReturn(null);
 
-        assertThrows(BizException.class, () -> brandService.delteBrand(999L));
+        assertThrows(BizException.class, () -> brandService.deleteBrand(999L));
     }
 
     @Test

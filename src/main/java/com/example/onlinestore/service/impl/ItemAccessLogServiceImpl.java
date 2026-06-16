@@ -1,14 +1,21 @@
 package com.example.onlinestore.service.impl;
 
+import com.example.onlinestore.bean.Member;
 import com.example.onlinestore.entity.ItemAccessLogEntity;
 import com.example.onlinestore.mapper.ItemAccessLogMapper;
+import com.example.onlinestore.security.CustomUserDetails;
 import com.example.onlinestore.service.ItemAccessLogService;
+import com.example.onlinestore.utils.WebUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,9 +34,10 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
     private final List<ItemAccessLogEntity> accessLogBuffer = Collections.synchronizedList(new ArrayList<>(1024));
 
     private static final long HOT_ITEMS_CACHE_TTL_MS = 2 * 60 * 1000L;
-    private volatile List<Map<String, Object>> cachedHotItems;
-    private volatile long hotItemsCacheExpireAt;
-    private volatile String hotItemsCacheKey;
+    private final Object hotItemsLock = new Object();
+    private List<Map<String, Object>> cachedHotItems;
+    private long hotItemsCacheExpireAt;
+    private String hotItemsCacheKey;
 
     private static final long ACCESS_COUNT_CACHE_TTL_MS = 60 * 1000L;
     private final Map<String, CacheEntry<Integer>> accessCountCache = new ConcurrentHashMap<>();
@@ -61,7 +69,27 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    public void recordItemDetailAccess(Long itemId, String itemName, HttpServletRequest request) {
+        String ip = WebUtils.getClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+        String referer = request.getHeader("Referer");
+        HttpSession session = request.getSession(false);
+        String sessionId = session != null ? session.getId() : "";
+
+        String memberId = "";
+        String memberName = "";
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken)
+                && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+            Member member = userDetails.getMember();
+            memberId = String.valueOf(member.getId());
+            memberName = member.getBaseInfo().getName();
+        }
+
+        recordAccess(itemId, itemName, memberId, memberName, ip, userAgent, referer, sessionId);
+    }
+
+    @Override
     public int getAccessCount(Long itemId, LocalDateTime startTime, LocalDateTime endTime) {
         String cacheKey = itemId + "|" + startTime + "|" + endTime;
         CacheEntry<Integer> entry = accessCountCache.get(cacheKey);
@@ -75,17 +103,20 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Map<String, Object>> getHotItems(LocalDateTime startTime, LocalDateTime endTime, int limit) {
         String cacheKey = startTime + "|" + endTime + "|" + limit;
-        if (cacheKey.equals(hotItemsCacheKey) && System.currentTimeMillis() < hotItemsCacheExpireAt) {
-            return cachedHotItems;
+        synchronized (hotItemsLock) {
+            if (cacheKey.equals(hotItemsCacheKey) && System.currentTimeMillis() < hotItemsCacheExpireAt) {
+                return cachedHotItems;
+            }
         }
 
         List<Map<String, Object>> result = itemAccessLogMapper.findHotItems(startTime, endTime, limit);
-        cachedHotItems = result;
-        hotItemsCacheKey = cacheKey;
-        hotItemsCacheExpireAt = System.currentTimeMillis() + HOT_ITEMS_CACHE_TTL_MS;
+        synchronized (hotItemsLock) {
+            cachedHotItems = result;
+            hotItemsCacheKey = cacheKey;
+            hotItemsCacheExpireAt = System.currentTimeMillis() + HOT_ITEMS_CACHE_TTL_MS;
+        }
         return result;
     }
 
