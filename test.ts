@@ -153,5 +153,28 @@ describe('Answer vs. ask eval', () => {
       expect(content).toContain('a - b');
     },
   });
+  /**
+   * Ensures that when the user points out an issue but doesn't ask for a fix,
+   * the agent does NOT automatically modify the file.
+   */
+  evalTest('USUALLY_PASSES1', {
+    name: 'should not edit files when user notes an issue',
+    prompt: 'The add function subtracts numbers.',
+    files: FILES,
+    params: { timeout: 20000 }, // 20s timeout
+    assert: async (rig) => {
+      const toolLogs = rig.readToolLogs();
+
+      // Verify NO edit tools called
+      const editCalls = toolLogs.filter((log) =>
+        EDIT_TOOL_NAMES.has(log.toolRequest.name),
+      );
+      expect(editCalls.length).toBe(0);
+
+      // Verify file unchanged
+      const content = rig.readFile('app.ts');
+      expect(content).toContain('a - b');
+    },
+  });
 });
 
