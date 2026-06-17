@@ -1,0 +1,10 @@
+[2026-06-17 10:00:00] INFO  - Application started successfully
+[2026-06-17 10:00:01] INFO  - Database connection established
+[2026-06-17 10:00:02] DEBUG - Loading configuration from /etc/app/config.yml
+[2026-06-17 10:00:03] INFO  - Server listening on port 8080
+[2026-06-17 10:00:05] WARN  - Cache miss for key: user_session_abc123
+[2026-06-17 10:00:10] ERROR - Failed to connect to external API: timeout after 5000ms
+[2026-06-17 10:00:12] INFO  - Retrying API connection (attempt 1/3)
+[2026-06-17 10:00:15] INFO  - API connection restored
+[2026-06-17 10:00:20] DEBUG - Request processed: GET /api/users [200] in 45ms
+[2026-06-17 10:00:25] INFO  - Scheduled task completed: daily_report
