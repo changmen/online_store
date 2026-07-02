@@ -1,5 +1,5 @@
 import os
-from git import Repo, Commit, Diff
+from git import Repo, Diff
 from typing import List, Dict
 import re
 import json

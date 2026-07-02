@@ -8,8 +8,12 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 @Configuration
 public class RedisConfig {
 
+    public static final long DEFAULT_EXPIRE_SECONDS = 3600L;
+
     @Bean
     public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
-        return new StringRedisTemplate(connectionFactory);
+        StringRedisTemplate template = new StringRedisTemplate(connectionFactory);
+        template.setEnableTransactionSupport(true);
+        return template;
     }
 } 
