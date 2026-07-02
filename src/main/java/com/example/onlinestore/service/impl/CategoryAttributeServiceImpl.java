@@ -78,7 +78,7 @@ public class CategoryAttributeServiceImpl implements CategoryAttributeService {
 
     @Override
     @Transactional
-    public boolean piLiangDeleteCategoryAttributes(List<Long> ids) {
+    public boolean batchDeleteCategoryAttributes(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return false;
         }
