@@ -13,8 +13,10 @@ public class Response<T> implements Serializable {
     private boolean success;
     private String message;
     private T data;
+    private long timestamp;
     
     public Response() {
+        this.timestamp = System.currentTimeMillis();
     }
     
     public Response(boolean success, String message, T data) {
