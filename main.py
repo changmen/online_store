@@ -1,8 +1,7 @@
 import os
-from git import Repo, Diff
+from datetime import datetime
+from git import Repo
 from typing import List, Dict
-import re
-import json
 import jsonlines
 
 EMPTY_TREE_SHA = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
@@ -18,6 +17,7 @@ def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> List[Dict]:
     repo = Repo(repo_path)
     diffs_data = []
 
+    print(f"开始处理仓库 {repo_path}，最多 {max_commits} 个提交")
     commits = list(repo.iter_commits(max_count=max_commits))
     # commits.reverse()
     for commit in commits:
@@ -27,7 +27,7 @@ def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> List[Dict]:
                 continue
             parent_commit = commit.parents[0]
 
-            print(f"提交：{commit.hexsha[:7]} - {commit.message.strip()}, parent:{parent_commit}")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] 提交：{commit.hexsha[:7]} - {commit.message.strip()}, parent:{parent_commit}")
             # 获取差异对象列表
             diffs = parent_commit.diff(commit,
                                        create_patch=True,  # 包含完整差异内容
@@ -72,13 +72,21 @@ def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> List[Dict]:
                     },
                     "diff": diff_content
                 }
-                file_blob = commit.tree / diff.b_path
-                file_data["new_file_content"] = file_blob.data_stream.read().decode('utf-8', errors='replace')
-                if not diff.new_file:
-                    old_file_blob = parent_commit.tree / diff.a_path
-                    file_data["old_file_content"] = old_file_blob.data_stream.read().decode('utf-8', errors='replace')
+                if diff.b_path:
+                    try:
+                        file_blob = commit.tree / diff.b_path
+                        file_data["new_file_content"] = file_blob.data_stream.read().decode('utf-8', errors='replace')
+                    except KeyError:
+                        file_data["new_file_content"] = ""
+                else:
+                    file_data["new_file_content"] = ""
+                if not diff.new_file and diff.a_path:
+                    try:
+                        old_file_blob = parent_commit.tree / diff.a_path
+                        file_data["old_file_content"] = old_file_blob.data_stream.read().decode('utf-8', errors='replace')
+                    except KeyError:
+                        file_data["old_file_content"] = ""
                 commit_data["files"].append(file_data)
-            # binary_file
 
             diffs_data.append(commit_data)
 
@@ -89,62 +97,16 @@ def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> List[Dict]:
     return diffs_data
 
 
-def parse_diff_patches(diff_content: str) -> List[Dict]:
-    """
-    解析原始差异内容为结构化数据
-    :param diff_content: 原始差异字符串
-    :return: 结构化差异块列表
-    """
-    print(f"parse_diff_patches:{diff_content}")
-    patches = []
-    current_hunk = {}
-    hunk_pattern = re.compile(r"^@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@(.*)", re.MULTILINE)
-
-    for line in diff_content.splitlines():
-        # 匹配差异块头部
-        hunk_match = hunk_pattern.match(line)
-        if hunk_match:
-            if current_hunk:
-                patches.append(current_hunk)
-            current_hunk = {
-                "old_start": int(hunk_match.group(1)),
-                "old_lines": int(hunk_match.group(2)) if hunk_match.group(2) else 1,
-                "new_start": int(hunk_match.group(3)),
-                "new_lines": int(hunk_match.group(4)) if hunk_match.group(4) else 1,
-                "context": hunk_match.group(5).strip(),
-                "changes": []
-            }
-        elif current_hunk:
-            # 解析差异行
-            line_type = "context"
-            content = line
-
-            if line.startswith("+"):
-                line_type = "addition"
-            elif line.startswith("-"):
-                line_type = "deletion"
-            elif line.startswith("\\"):
-                line_type = "meta"  # 处理 \ No newline at end of file
-
-            current_hunk["changes"].append({
-                "type": line_type,
-                "content": content[1:] if line_type != "meta" else content,
-                "original": line
-            })
-
-    if current_hunk:
-        patches.append(current_hunk)
-
-    return patches
-
-
 def write_diff_to_file(diff_data: List[Dict], output_file="output/test.jsonl"):
+    """过滤并提交数据写入 JSONL 文件"""
     review_datasets = []
+    filtered = 0
     for commit in diff_data:
         if not commit["files"]:
             continue
         message = commit["message"]
         if not message.startswith("E."):
+            filtered += 1
             continue
         item = {
             "message": message,
@@ -167,10 +129,18 @@ def write_diff_to_file(diff_data: List[Dict], output_file="output/test.jsonl"):
     with jsonlines.open(output_file, "w") as f:
         f.write_all(review_datasets)
 
+    print(f"写入完成：{len(review_datasets)} 条记录，过滤 {filtered} 个提交")
 
-# 使用示例
+
 if __name__ == "__main__":
-    repo_path = local_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    import argparse
 
-    diffs = get_commit_diffs(repo_path, max_commits=100)
-    write_diff_to_file(diffs)
+    parser = argparse.ArgumentParser(description="Extract git commit diffs into jsonlines")
+    parser.add_argument("--max-commits", type=int, default=100)
+    parser.add_argument("--output", default="output/test.jsonl")
+    args = parser.parse_args()
+
+    repo_path = os.path.abspath(os.path.dirname(__file__))
+
+    diffs = get_commit_diffs(repo_path, max_commits=args.max_commits)
+    write_diff_to_file(diffs, output_file=args.output)

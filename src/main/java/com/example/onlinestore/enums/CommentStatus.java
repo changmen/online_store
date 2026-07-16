@@ -1,7 +1,0 @@
-package com.example.onlinestore.enums;
-
-public enum CommentStatus {
-    PENDING, APPROVED, REJECTED, HIDDEN, ARCHIVED,
-    FLAGGED_FOR_REVIEW, PENDING_TRANSLATION,
-    PENDING_SENTIMENT_ANALYSIS, SCHEDULED_FOR_DELETION
-}

@@ -1,0 +1,10 @@
+[project]
+name = "git-diff-extractor"
+version = "0.1.0"
+description = "Extract git commit diffs and generate JSONL datasets for code review training"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gitpython>=3.1.44",
+    "jsonlines>=4.0.0",
+]
