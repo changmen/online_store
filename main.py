@@ -1,7 +1,44 @@
+import argparse
+import logging
 import os
-from datetime import datetime
-from git import Repo
+
 import jsonlines
+from git import Repo
+
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s", datefmt="%H:%M:%S")
+logger = logging.getLogger(__name__)
+
+
+def read_blob_content(tree, path: str) -> str:
+    """读取指定 tree 中文件的内容，文件不存在时返回空字符串"""
+    try:
+        blob = tree / path
+        return blob.data_stream.read().decode("utf-8", errors="replace")
+    except KeyError:
+        return ""
+
+
+def extract_file_data(diff, commit, parent_commit) -> dict:
+    """从单个 diff 对象提取结构化的文件变更数据"""
+    change_type = diff.change_type
+    if diff.new_file:
+        change_type = "A"  # Added
+    elif diff.deleted_file:
+        change_type = "D"  # Deleted
+    elif diff.renamed_file:
+        change_type = "R"  # Renamed
+
+    file_data = {
+        "path": diff.b_path if diff.b_path else diff.a_path,
+        "old_path": diff.a_path,
+        "change_type": change_type,
+        "mode": {"old": diff.a_mode, "new": diff.b_mode},
+        "diff": diff.diff.decode("utf-8", errors="replace") if diff.diff else "",
+        "new_file_content": read_blob_content(commit.tree, diff.b_path) if diff.b_path else "",
+    }
+    if not diff.new_file and diff.a_path:
+        file_data["old_file_content"] = read_blob_content(parent_commit.tree, diff.a_path)
+    return file_data
 
 
 def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> list[dict]:
@@ -14,91 +51,43 @@ def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> list[dict]:
     repo = Repo(repo_path)
     diffs_data = []
 
-    print(f"开始处理仓库 {repo_path}，最多 {max_commits} 个提交")
+    logger.info(f"开始处理仓库 {repo_path}，最多 {max_commits} 个提交")
     commits = list(repo.iter_commits(max_count=max_commits))
-    # commits.reverse()
     for commit in commits:
         try:
-            # 获取当前提交的父提交（处理初始提交）
+            # 跳过没有父提交的初始提交
             if not commit.parents:
                 continue
             parent_commit = commit.parents[0]
 
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] 提交：{commit.hexsha[:7]} - {commit.message.strip()}, parent:{parent_commit}")
-            # 获取差异对象列表
-            diffs = parent_commit.diff(commit,
-                                       create_patch=True,  # 包含完整差异内容
-                                       unified=3)  # 上下文行数
+            logger.info(f"提交：{commit.hexsha[:7]} - {commit.message.strip()}")
+            diffs = parent_commit.diff(commit, create_patch=True, unified=3)
 
             commit_data = {
                 "hash": commit.hexsha,
                 "author": f"{commit.author.name} <{commit.author.email}>",
                 "date": commit.authored_datetime.isoformat(),
                 "message": commit.message.strip(),
-                "stats": {
-                    "total": {
-                        "insertions": commit.stats.total["insertions"],
-                        "deletions": commit.stats.total["deletions"],
-                        "files": commit.stats.total["files"]
-                    }
-                },
-                "files": []
+                "stats": {"total": commit.stats.total},
+                "files": [],
             }
 
             for diff in diffs:
                 # 跳过二进制文件，避免乱码污染数据集
                 if diff.diff and b"\x00" in diff.diff[:8000]:
                     continue
-
-                # 解析差异类型
-                change_type = diff.change_type
-                if diff.new_file:
-                    change_type = "A"  # Added
-                elif diff.deleted_file:
-                    change_type = "D"  # Deleted
-                elif diff.renamed_file:
-                    change_type = "R"  # Renamed
-
-                # 解析差异内容
-                diff_content = diff.diff.decode('utf-8', errors='replace') if diff.diff else ""
-
-                file_data = {
-                    "path": diff.b_path if diff.b_path else diff.a_path,
-                    "old_path": diff.a_path,
-                    "change_type": change_type,
-                    "mode": {
-                        "old": diff.a_mode,
-                        "new": diff.b_mode
-                    },
-                    "diff": diff_content
-                }
-                if diff.b_path:
-                    try:
-                        file_blob = commit.tree / diff.b_path
-                        file_data["new_file_content"] = file_blob.data_stream.read().decode('utf-8', errors='replace')
-                    except KeyError:
-                        file_data["new_file_content"] = ""
-                else:
-                    file_data["new_file_content"] = ""
-                if not diff.new_file and diff.a_path:
-                    try:
-                        old_file_blob = parent_commit.tree / diff.a_path
-                        file_data["old_file_content"] = old_file_blob.data_stream.read().decode('utf-8', errors='replace')
-                    except KeyError:
-                        file_data["old_file_content"] = ""
-                commit_data["files"].append(file_data)
+                commit_data["files"].append(extract_file_data(diff, commit, parent_commit))
 
             diffs_data.append(commit_data)
 
         except Exception as e:
-            print(f"Error processing commit {commit.hexsha[:7]}: {str(e)}")
-            continue
+            logger.error(f"处理提交 {commit.hexsha[:7]} 失败: {e}")
 
     return diffs_data
 
 
-def write_diff_to_file(diff_data: list[dict], output_file="output/test.jsonl"):
-    """过滤并提交数据写入 JSONL 文件"""
+def write_diff_to_file(diff_data: list[dict], output_file: str, prefix: str = "E."):
+    """按提交信息前缀过滤，并写入 JSONL 文件"""
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     review_datasets = []
     filtered = 0
@@ -106,42 +95,38 @@ def write_diff_to_file(diff_data: list[dict], output_file="output/test.jsonl"):
         if not commit["files"]:
             continue
         message = commit["message"]
-        if not message.startswith("E."):
+        if not message.startswith(prefix):
             filtered += 1
             continue
+
         item = {
             "message": message,
-            "patches": [],
-            "category_label": str.split(message, " ", 1)[0]
+            "category_label": message.split(" ", 1)[0],
+            "patches": [
+                {
+                    "path": file["path"],
+                    "old_file_content": file.get("old_file_content", ""),
+                    "new_file_content": file["new_file_content"],
+                    "patch": file["diff"],
+                }
+                for file in commit["files"]
+            ],
         }
-
-        for file in commit["files"]:
-            patch = {
-                "path": file["path"],
-                "old_file_content": file.get("old_file_content", ""),
-                "new_file_content": file["new_file_content"],
-                "patch": file["diff"]
-            }
-
-            item["patches"].append(patch)
-
         review_datasets.append(item)
 
     with jsonlines.open(output_file, "w") as f:
         f.write_all(review_datasets)
 
-    print(f"写入完成：{len(review_datasets)} 条记录，过滤 {filtered} 个提交")
+    logger.info(f"写入完成：{len(review_datasets)} 条记录，过滤 {filtered} 个提交")
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser(description="Extract git commit diffs into jsonlines")
-    parser.add_argument("--max-commits", type=int, default=100)
-    parser.add_argument("--output", default="output/test.jsonl")
+    parser.add_argument("--repo", default=os.path.abspath(os.path.dirname(__file__)), help="Git 仓库路径")
+    parser.add_argument("--max-commits", type=int, default=100, help="最大处理提交数")
+    parser.add_argument("--output", default="output/test.jsonl", help="输出文件路径")
+    parser.add_argument("--prefix", default="E.", help="提交信息过滤前缀")
     args = parser.parse_args()
 
-    repo_path = os.path.abspath(os.path.dirname(__file__))
-
-    diffs = get_commit_diffs(repo_path, max_commits=args.max_commits)
-    write_diff_to_file(diffs, output_file=args.output)
+    diffs = get_commit_diffs(args.repo, max_commits=args.max_commits)
+    write_diff_to_file(diffs, output_file=args.output, prefix=args.prefix)
