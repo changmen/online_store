@@ -27,8 +27,10 @@ uv run python main.py --max-commits 100 --output output/test.jsonl
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
+| `--repo` | 项目根目录 | Git 仓库路径 |
 | `--max-commits` | 100 | 最大处理的提交数 |
 | `--output` | `output/test.jsonl` | 输出文件路径 |
+| `--prefix` | `E.` | 提交信息过滤前缀 |
 
 ## 输出格式
 
@@ -40,7 +42,7 @@ uv run python main.py --max-commits 100 --output output/test.jsonl
 
 ## 过滤规则
 
-仅保留提交信息以 `E.` 开头的提交记录。
+仅保留提交信息以指定前缀开头的记录（默认 `E.`，可通过 `--prefix` 修改）。
 
 ## License
 
