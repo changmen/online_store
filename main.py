@@ -1,13 +1,10 @@
 import os
 from datetime import datetime
 from git import Repo
-from typing import List, Dict
 import jsonlines
 
-EMPTY_TREE_SHA = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
-
-def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> List[Dict]:
+def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> list[dict]:
     """
     获取 Git 仓库提交历史中的差异详情
     :param repo_path: Git仓库路径 (默认当前目录)
@@ -49,6 +46,10 @@ def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> List[Dict]:
             }
 
             for diff in diffs:
+                # 跳过二进制文件，避免乱码污染数据集
+                if diff.diff and b"\x00" in diff.diff[:8000]:
+                    continue
+
                 # 解析差异类型
                 change_type = diff.change_type
                 if diff.new_file:
@@ -60,7 +61,6 @@ def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> List[Dict]:
 
                 # 解析差异内容
                 diff_content = diff.diff.decode('utf-8', errors='replace') if diff.diff else ""
-                # patches = parse_diff_patches(diff_content)
 
                 file_data = {
                     "path": diff.b_path if diff.b_path else diff.a_path,
@@ -97,8 +97,9 @@ def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> List[Dict]:
     return diffs_data
 
 
-def write_diff_to_file(diff_data: List[Dict], output_file="output/test.jsonl"):
+def write_diff_to_file(diff_data: list[dict], output_file="output/test.jsonl"):
     """过滤并提交数据写入 JSONL 文件"""
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     review_datasets = []
     filtered = 0
     for commit in diff_data:
