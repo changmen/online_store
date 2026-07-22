@@ -2,18 +2,16 @@ package com.example.onlinestore.service.impl;
 
 import com.example.onlinestore.bean.Category;
 import com.example.onlinestore.mapper.CategoryMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,11 +21,14 @@ class CategoryServiceImplTest {
     @Mock
     private CategoryMapper categoryMapper;
 
-    @InjectMocks
+    private Cache<Long, Category> categoryCache;
+
     private CategoryServiceImpl categoryService;
 
     @BeforeEach
     void setUp() {
+        categoryCache = Caffeine.newBuilder().build();
+
         Category root = new Category();
         root.setId(1L);
         root.setName("服装");
@@ -40,12 +41,11 @@ class CategoryServiceImplTest {
         child.setParentId(1L);
         child.setChildren(Set.of());
 
-        Map<Long, Category> categoryMap = new ConcurrentHashMap<>();
-        categoryMap.put(1L, root);
-        categoryMap.put(2L, child);
+        categoryCache.put(1L, root);
+        categoryCache.put(2L, child);
 
-        ReflectionTestUtils.setField(categoryService, "categoryMap", categoryMap);
-        ReflectionTestUtils.setField(categoryService, "rootCategories", Set.of(1L));
+        categoryService = new CategoryServiceImpl(categoryCache, categoryMapper);
+        org.springframework.test.util.ReflectionTestUtils.setField(categoryService, "rootCategories", Set.of(1L));
     }
 
     @Test

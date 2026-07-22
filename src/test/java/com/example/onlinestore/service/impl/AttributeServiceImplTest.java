@@ -2,6 +2,8 @@ package com.example.onlinestore.service.impl;
 
 import com.example.onlinestore.bean.Attribute;
 import com.example.onlinestore.bean.AttributeValue;
+import com.example.onlinestore.cache.AttributeCacheManager;
+import com.example.onlinestore.dto.converter.AttributeConverter;
 import com.example.onlinestore.dto.ItemAttributeRequest;
 import com.example.onlinestore.entity.AttributeEntity;
 import com.example.onlinestore.entity.AttributeValueEntity;
@@ -14,7 +16,6 @@ import com.example.onlinestore.mapper.ItemAttributeRelationMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -41,7 +42,6 @@ class AttributeServiceImplTest {
     @Mock
     private ItemAttributeRelationMapper itemAttributeRelationMapper;
 
-    @InjectMocks
     private AttributeServiceImpl attributeService;
 
     private AttributeEntity attributeEntity1;
@@ -52,6 +52,14 @@ class AttributeServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        attributeService = new AttributeServiceImpl(
+                attributeMapper,
+                attributeValueMapper,
+                itemAttributeRelationMapper,
+                new AttributeCacheManager(),
+                new AttributeConverter()
+        );
+
         attributeEntity1 = new AttributeEntity();
         attributeEntity1.setId(1L);
         attributeEntity1.setName("颜色");

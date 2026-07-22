@@ -7,10 +7,12 @@ import com.example.onlinestore.entity.BrandEntity;
 import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.BrandMapper;
+import com.example.onlinestore.service.ContentValidationService;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -28,13 +30,20 @@ class BrandServiceImplTest {
     @Mock
     private BrandMapper brandMapper;
 
-    @InjectMocks
+    @Mock
+    private ContentValidationService contentValidationService;
+
+    private Cache<Long, Brand> brandCache;
+
     private BrandServiceImpl brandService;
 
     private BrandEntity brandEntity;
 
     @BeforeEach
     void setUp() {
+        brandCache = Caffeine.newBuilder().build();
+        brandService = new BrandServiceImpl(brandCache, brandMapper, contentValidationService);
+
         brandEntity = new BrandEntity();
         brandEntity.setId(1L);
         brandEntity.setName("NIKE");

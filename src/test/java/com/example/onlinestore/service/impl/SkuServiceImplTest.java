@@ -2,10 +2,10 @@ package com.example.onlinestore.service.impl;
 
 import com.example.onlinestore.bean.Attribute;
 import com.example.onlinestore.bean.AttributeValue;
-import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.bean.Sku;
 import com.example.onlinestore.dto.CreateSkuRequest;
 import com.example.onlinestore.dto.ItemAttributeRequest;
+import com.example.onlinestore.dto.converter.SkuConverter;
 import com.example.onlinestore.entity.ItemAttributeRelationEntity;
 import com.example.onlinestore.entity.ItemEntity;
 import com.example.onlinestore.entity.SkuEntity;
@@ -20,7 +20,6 @@ import com.example.onlinestore.service.ItemDetailCacheService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,8 +29,6 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
-import org.mockito.ArgumentCaptor;
 
 @ExtendWith(MockitoExtension.class)
 class SkuServiceImplTest {
@@ -51,7 +48,9 @@ class SkuServiceImplTest {
     @Mock
     private ItemDetailCacheService itemDetailCacheService;
 
-    @InjectMocks
+    @Mock
+    private SkuConverter skuConverter;
+
     private SkuServiceImpl skuService;
 
     private Attribute skuAttr1;
@@ -61,6 +60,9 @@ class SkuServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        skuService = new SkuServiceImpl(skuMapper, itemMapper, attributeService,
+                itemAttributeRelationMapper, itemDetailCacheService, skuConverter);
+
         skuAttr1 = buildAttribute(1L, "颜色", AttributeInputType.SINGLE_SELECT, AttributeType.SKU);
         skuAttr2 = buildAttribute(2L, "尺寸", AttributeInputType.SINGLE_SELECT, AttributeType.SKU);
 
@@ -112,10 +114,8 @@ class SkuServiceImplTest {
         return req;
     }
 
-    // ========== createSku 批量查询验证 ==========
-
     @Test
-    void createSku_shouldUseBatchQueryForAttributes() {
+    void createSku_shouldDelegateValidationToAttributeService() {
         CreateSkuRequest request = buildCreateSkuRequest(Arrays.asList(
                 buildAttrRequest(1L, 10L),
                 buildAttrRequest(2L, 20L)
@@ -123,10 +123,6 @@ class SkuServiceImplTest {
 
         when(itemMapper.findById(1L)).thenReturn(new ItemEntity());
         when(skuMapper.findBySkuCode("SKU-001")).thenReturn(null);
-        when(attributeService.getAttributesByIds(Arrays.asList(1L, 2L)))
-                .thenReturn(Arrays.asList(skuAttr1, skuAttr2));
-        when(attributeService.getAttributeValuesByIds(Arrays.asList(10L, 20L)))
-                .thenReturn(Map.of(10L, value1, 20L, value2));
 
         SkuEntity skuEntity = new SkuEntity();
         skuEntity.setId(100L);
@@ -145,15 +141,11 @@ class SkuServiceImplTest {
             return 1;
         });
 
+        when(skuConverter.toSku(any(SkuEntity.class), isNull())).thenReturn(new Sku());
+
         skuService.createSku(request);
 
-        // 验证使用了批量查询
-        verify(attributeService).getAttributesByIds(Arrays.asList(1L, 2L));
-        verify(attributeService).getAttributeValuesByIds(Arrays.asList(10L, 20L));
-        // 验证没有使用逐个查询
-        verify(attributeService, never()).getAttributeById(anyLong());
-        verify(attributeService, never()).getAttributeValueById(anyLong());
-        // 验证属性记录通过 ensureItemAttributes 保存
+        verify(attributeService).validateSkuAttributes(request.getAttributes());
         verify(attributeService).ensureItemAttributes(eq(1L), eq(100L), anyList());
     }
 
@@ -166,14 +158,13 @@ class SkuServiceImplTest {
 
         when(itemMapper.findById(1L)).thenReturn(new ItemEntity());
         when(skuMapper.findBySkuCode("SKU-001")).thenReturn(null);
-        when(attributeService.getAttributesByIds(Arrays.asList(1L, 999L)))
-                .thenReturn(Collections.singletonList(skuAttr1));
-        when(attributeService.getAttributeValuesByIds(Arrays.asList(10L, 20L)))
-                .thenReturn(Map.of(10L, value1, 20L, value2));
+
+        doThrow(new BizException(com.example.onlinestore.errors.ErrorCode.ATTRIBUTE_NOT_FOUND, 999L))
+                .when(attributeService).validateSkuAttributes(anyList());
 
         assertThrows(BizException.class, () -> skuService.createSku(request));
 
-        verify(attributeService, never()).getAttributeById(anyLong());
+        verify(attributeService, never()).ensureItemAttributes(anyLong(), anyLong(), anyList());
     }
 
     @Test
@@ -185,17 +176,14 @@ class SkuServiceImplTest {
 
         when(itemMapper.findById(1L)).thenReturn(new ItemEntity());
         when(skuMapper.findBySkuCode("SKU-001")).thenReturn(null);
-        when(attributeService.getAttributesByIds(Arrays.asList(1L, 2L)))
-                .thenReturn(Arrays.asList(skuAttr1, skuAttr2));
-        when(attributeService.getAttributeValuesByIds(Arrays.asList(10L, 999L)))
-                .thenReturn(Map.of(10L, value1));
+
+        doThrow(new BizException(com.example.onlinestore.errors.ErrorCode.ATTRIBUTE_VALUE_NOT_FOUND, 999L))
+                .when(attributeService).validateSkuAttributes(anyList());
 
         assertThrows(BizException.class, () -> skuService.createSku(request));
 
-        verify(attributeService, never()).getAttributeValueById(anyLong());
+        verify(attributeService, never()).ensureItemAttributes(anyLong(), anyLong(), anyList());
     }
-
-    // ========== getSkusByItemId 批量查询验证 ==========
 
     @Test
     void getSkusByItemId_shouldUseBatchQueryForAttributes() {
@@ -218,14 +206,15 @@ class SkuServiceImplTest {
         when(attributeService.getAttributeValuesByIds(anyList()))
                 .thenReturn(Map.of(10L, value1, 20L, value2, 11L, value1));
 
+        when(skuConverter.toSku(any(SkuEntity.class), anyList(), anyMap(), anyMap(), anyMap()))
+                .thenReturn(new Sku());
+
         List<Sku> result = skuService.getSkusByItemId(1L);
 
         assertEquals(2, result.size());
         verify(attributeService, times(1)).getAttributesByIds(anyList());
         verify(attributeService, times(1)).getAttributeValuesByAttributeIds(anyList());
         verify(attributeService, times(1)).getAttributeValuesByIds(anyList());
-        verify(attributeService, never()).getAttributeByIdWithValues(anyLong());
-        verify(attributeService, never()).getAttributeValueById(anyLong());
         verify(itemAttributeRelationMapper, never()).findByItemIdAndSkuId(anyLong(), anyLong());
     }
 
@@ -239,10 +228,8 @@ class SkuServiceImplTest {
         verifyNoInteractions(attributeService);
     }
 
-    // ========== getSkuById 验证 ==========
-
     @Test
-    void getSkuById_shouldUseBatchQueryForAttributes() {
+    void getSkuById_shouldDelegateConversionToConverter() {
         SkuEntity skuEntity = buildSkuEntity(1L, 1L, "SKU-001", "红色-XL");
         when(skuMapper.findById(1L)).thenReturn(skuEntity);
 
@@ -250,23 +237,17 @@ class SkuServiceImplTest {
         when(itemAttributeRelationMapper.findByItemIdAndSkuId(1L, 1L))
                 .thenReturn(Collections.singletonList(rel));
 
-        when(attributeService.getAttributesByIds(Collections.singletonList(1L)))
-                .thenReturn(Collections.singletonList(skuAttr1));
-        when(attributeService.getAttributeValuesByIds(Collections.singletonList(10L)))
-                .thenReturn(Map.of(10L, value1));
+        Sku expectedSku = new Sku();
+        expectedSku.setId(1L);
+        expectedSku.setSkuCode("SKU-001");
+        when(skuConverter.toSku(skuEntity, Collections.singletonList(rel))).thenReturn(expectedSku);
 
         Sku result = skuService.getSkuById(1L);
 
         assertNotNull(result);
         assertEquals("SKU-001", result.getSkuCode());
-        assertEquals(1, result.getAttributes().size());
-        // 验证使用了批量查询而非逐个查询
-        verify(attributeService).getAttributesByIds(anyList());
-        verify(attributeService, never()).getAttributeByIdWithValues(anyLong());
-        verify(attributeService, never()).getAttributeValueById(anyLong());
+        verify(skuConverter).toSku(skuEntity, Collections.singletonList(rel));
     }
-
-    // ========== 辅助方法 ==========
 
     private SkuEntity buildSkuEntity(Long id, Long itemId, String skuCode, String name) {
         SkuEntity entity = new SkuEntity();
@@ -301,10 +282,6 @@ class SkuServiceImplTest {
 
         when(itemMapper.findById(1L)).thenReturn(new ItemEntity());
         when(skuMapper.findBySkuCode("SKU-001")).thenReturn(null);
-        when(attributeService.getAttributesByIds(Arrays.asList(1L, 2L)))
-                .thenReturn(Arrays.asList(skuAttr1, skuAttr2));
-        when(attributeService.getAttributeValuesByIds(Arrays.asList(10L, 20L)))
-                .thenReturn(Map.of(10L, value1, 20L, value2));
 
         when(skuMapper.insert(any(SkuEntity.class))).thenAnswer(invocation -> {
             SkuEntity e = invocation.getArgument(0);
@@ -312,9 +289,10 @@ class SkuServiceImplTest {
             return 1;
         });
 
+        when(skuConverter.toSku(any(SkuEntity.class), isNull())).thenReturn(new Sku());
+
         skuService.createSku(request);
 
-        // 验证 ensureItemAttributes 被调用，且 skuId 正确设置为新生成的 100L
         verify(attributeService).ensureItemAttributes(eq(1L), eq(100L), anyList());
     }
 }

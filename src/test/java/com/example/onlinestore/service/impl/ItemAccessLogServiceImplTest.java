@@ -2,15 +2,17 @@ package com.example.onlinestore.service.impl;
 
 import com.example.onlinestore.entity.ItemAccessLogEntity;
 import com.example.onlinestore.mapper.ItemAccessLogMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -24,8 +26,17 @@ class ItemAccessLogServiceImplTest {
     @Mock
     private ItemAccessLogMapper itemAccessLogMapper;
 
-    @InjectMocks
+    private Cache<String, Integer> accessCountQueryCache;
+    private Cache<String, List<Map<String, Object>>> hotItemsCache;
+
     private ItemAccessLogServiceImpl itemAccessLogService;
+
+    @BeforeEach
+    void setUp() {
+        accessCountQueryCache = Caffeine.newBuilder().build();
+        hotItemsCache = Caffeine.newBuilder().build();
+        itemAccessLogService = new ItemAccessLogServiceImpl(accessCountQueryCache, hotItemsCache, itemAccessLogMapper);
+    }
 
     @Test
     void recordAccess_withNullItemId_throwsException() {
