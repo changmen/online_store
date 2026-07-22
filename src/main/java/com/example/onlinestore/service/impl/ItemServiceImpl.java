@@ -1,10 +1,8 @@
 package com.example.onlinestore.service.impl;
 
-import com.example.onlinestore.bean.Attribute;
 import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.dto.*;
 import com.example.onlinestore.entity.ItemEntity;
-import com.example.onlinestore.enums.AttributeInputType;
 import com.example.onlinestore.enums.ItemStatus;
 import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
@@ -27,14 +25,12 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 
 @Service
 public class ItemServiceImpl implements ItemService {
     private static final Logger logger = LoggerFactory.getLogger(ItemServiceImpl.class);
 
-    private final String forbiddenWords;
     private final boolean uploadDescriptionToOSS;
     private final int defaultItemSortScore;
     private static final String DEFAULT_ITEM_LIST_QUERY_ORDERBY = "id DESC";
@@ -45,17 +41,17 @@ public class ItemServiceImpl implements ItemService {
     private final BrandService brandService;
     private final CategoryService categoryService;
     private final ItemDetailCacheService itemDetailCacheService;
+    private final ContentValidationService contentValidationService;
 
-    public ItemServiceImpl(@Value("${forbidden-words:刀}") String forbiddenWords,
-                           @Value("${item.upload-description-to-oss:false}") boolean uploadDescriptionToOSS,
+    public ItemServiceImpl(@Value("${item.upload-description-to-oss:false}") boolean uploadDescriptionToOSS,
                            @Value("${item.default-sort-score:1}") int defaultItemSortScore,
                            AttributeService attributeService,
                            OssService ossService,
                            ItemMapper itemMapper,
                            BrandService brandService,
                            CategoryService categoryService,
-                           ItemDetailCacheService itemDetailCacheService) {
-        this.forbiddenWords = forbiddenWords;
+                           ItemDetailCacheService itemDetailCacheService,
+                           ContentValidationService contentValidationService) {
         this.uploadDescriptionToOSS = uploadDescriptionToOSS;
         this.defaultItemSortScore = defaultItemSortScore;
         this.attributeService = attributeService;
@@ -64,6 +60,7 @@ public class ItemServiceImpl implements ItemService {
         this.brandService = brandService;
         this.categoryService = categoryService;
         this.itemDetailCacheService = itemDetailCacheService;
+        this.contentValidationService = contentValidationService;
     }
 
     @Override
@@ -199,38 +196,12 @@ public class ItemServiceImpl implements ItemService {
 
 
     private void validateForbiddenWords(String name, String description) {
-        Set<String> words = getForbiddenWords();
-        if (words.stream().anyMatch(StringUtils.toRootLowerCase(StringUtils.trim(name))::contains)) {
-            throw new BizException(ErrorCode.ITEM_NAME_CONTAINS_FORBIDDEN_WORDS, name);
-        }
-        if (StringUtils.isNotBlank(description)
-                && words.stream().anyMatch(StringUtils.toRootLowerCase(StringUtils.trim(description))::contains)) {
-            throw new BizException(ErrorCode.ITEM_DESCRIPTION_CONTAINS_FORBIDDEN_WORDS, description);
-        }
+        contentValidationService.validateForbiddenWords(name, ErrorCode.ITEM_NAME_CONTAINS_FORBIDDEN_WORDS);
+        contentValidationService.validateForbiddenWords(description, ErrorCode.ITEM_DESCRIPTION_CONTAINS_FORBIDDEN_WORDS);
     }
 
     private void validateAttributes(List<ItemAttributeRequest> attributes) {
-        List<Long> attributeIds = attributes.stream()
-                .map(ItemAttributeRequest::getAttributeId).toList();
-        Map<Long, Attribute> attributeMap = attributeService.getAttributesByIds(attributeIds).stream()
-                .collect(Collectors.toMap(Attribute::getId, Function.identity()));
-
-        for (ItemAttributeRequest attributeRequest : attributes) {
-            Attribute attribute = attributeMap.get(attributeRequest.getAttributeId());
-            if (attribute == null) {
-                throw new BizException(ErrorCode.ATTRIBUTE_NOT_FOUND, attributeRequest.getAttributeId());
-            }
-            if (attribute.getInputType() == AttributeInputType.SINGLE_SELECT
-                    || attribute.getInputType() == AttributeInputType.MULTI_SELECT) {
-                if (attributeRequest.getAttributeValueId() == null) {
-                    throw new BizException(ErrorCode.ITEM_ATTRIBUTE_VALUE_IS_EMPTY, attributeRequest.getAttributeId());
-                }
-            } else {
-                if (StringUtils.isBlank(attributeRequest.getValue())) {
-                    throw new BizException(ErrorCode.ITEM_ATTRIBUTE_VALUE_IS_EMPTY, attributeRequest.getAttributeId());
-                }
-            }
-        }
+        attributeService.validateItemAttributes(attributes);
     }
 
     private String serializeSubImageUrls(List<String> subImageUrls) {
@@ -240,16 +211,5 @@ public class ItemServiceImpl implements ItemService {
             logger.error("Failed to serialize subImageUrls: {}", subImageUrls, e);
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private Set<String> getForbiddenWords() {
-        if (StringUtils.isBlank(this.forbiddenWords)) {
-            return Collections.emptySet();
-        }
-        return Arrays.stream(this.forbiddenWords.split(","))
-                .map(String::trim)
-                .map(String::toLowerCase)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toSet());
     }
 }
