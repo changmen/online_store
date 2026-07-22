@@ -1,6 +1,5 @@
 package com.example.onlinestore.service.impl;
 
-import com.example.onlinestore.bean.Attribute;
 import com.example.onlinestore.bean.Brand;
 import com.example.onlinestore.bean.Category;
 import com.example.onlinestore.bean.Item;
@@ -8,22 +7,20 @@ import com.example.onlinestore.dto.CreateItemRequest;
 import com.example.onlinestore.dto.ItemAttributeRequest;
 import com.example.onlinestore.dto.UpdateItemRequest;
 import com.example.onlinestore.entity.ItemEntity;
-import com.example.onlinestore.enums.AttributeInputType;
-import com.example.onlinestore.enums.AttributeType;
+import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.ItemMapper;
 import com.example.onlinestore.service.AttributeService;
 import com.example.onlinestore.service.BrandService;
 import com.example.onlinestore.service.CategoryService;
+import com.example.onlinestore.service.ContentValidationService;
 import com.example.onlinestore.service.ItemDetailCacheService;
 import com.example.onlinestore.service.OssService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,25 +53,15 @@ class ItemServiceImplTest {
     @Mock
     private ItemDetailCacheService itemDetailCacheService;
 
+    @Mock
+    private ContentValidationService contentValidationService;
+
     private ItemServiceImpl itemService;
 
     @BeforeEach
     void setUp() {
-        itemService = new ItemServiceImpl("刀", false, 1,
-                attributeService, ossService, itemMapper, brandService, categoryService, itemDetailCacheService);
-    }
-
-    private Attribute buildAttribute(Long id, String name, AttributeInputType inputType) {
-        Attribute attr = new Attribute();
-        attr.setId(id);
-        attr.setName(name);
-        attr.setAttributeType(AttributeType.OTHER);
-        attr.setInputType(inputType);
-        attr.setRequired(1);
-        attr.setSearchable(0);
-        attr.setSortScore(1);
-        attr.setVisible(1);
-        return attr;
+        itemService = new ItemServiceImpl(false, 1,
+                attributeService, ossService, itemMapper, brandService, categoryService, itemDetailCacheService, contentValidationService);
     }
 
     private ItemAttributeRequest buildAttributeRequest(Long attributeId, Long valueId, String value) {
@@ -99,56 +86,43 @@ class ItemServiceImplTest {
     }
 
     @Test
-    void createItem_shouldUseBatchQueryForAttributes() {
-        Attribute attr1 = buildAttribute(1L, "颜色", AttributeInputType.SINGLE_SELECT);
-        Attribute attr2 = buildAttribute(2L, "尺寸", AttributeInputType.SINGLE_SELECT);
-
+    void createItem_shouldDelegateAttributeValidation() {
         CreateItemRequest request = buildCreateRequest(Arrays.asList(
                 buildAttributeRequest(1L, 10L, null),
                 buildAttributeRequest(2L, 20L, null)
         ));
 
-        when(attributeService.getAttributesByIds(Arrays.asList(1L, 2L)))
-                .thenReturn(Arrays.asList(attr1, attr2));
         when(categoryService.getCategoryById(1L)).thenReturn(new Category());
         when(brandService.getBrandById(1L)).thenReturn(new Brand());
-
         when(itemMapper.insert(any(ItemEntity.class))).thenReturn(1);
 
         itemService.createItem(request);
 
-        // 验证使用了批量查询，而非逐个查询
-        verify(attributeService).getAttributesByIds(Arrays.asList(1L, 2L));
-        verify(attributeService, never()).getAttributeById(anyLong());
+        verify(attributeService).validateItemAttributes(request.getAttributes());
+        verify(attributeService).ensureItemAttributes(nullable(Long.class), eq(0L), anyList());
     }
 
     @Test
-    void createItem_withNonExistentAttribute_throwsException() {
+    void createItem_withInvalidAttribute_throwsException() {
         CreateItemRequest request = buildCreateRequest(Arrays.asList(
                 buildAttributeRequest(1L, 10L, null),
                 buildAttributeRequest(999L, 20L, null)
         ));
 
-        Attribute attr1 = buildAttribute(1L, "颜色", AttributeInputType.SINGLE_SELECT);
-        when(attributeService.getAttributesByIds(Arrays.asList(1L, 999L)))
-                .thenReturn(Collections.singletonList(attr1));
+        doThrow(new BizException(ErrorCode.ATTRIBUTE_NOT_FOUND, 999L))
+                .when(attributeService).validateItemAttributes(anyList());
 
         assertThrows(BizException.class, () -> itemService.createItem(request));
 
-        verify(attributeService).getAttributesByIds(anyList());
-        verify(attributeService, never()).getAttributeById(anyLong());
+        verify(itemMapper, never()).insert(any());
     }
 
     @Test
-    void createItem_withInputTypeAttribute_validatesTextInput() {
-        Attribute attr = buildAttribute(1L, "备注", AttributeInputType.INPUT);
-
+    void createItem_withValidAttributes_succeeds() {
         CreateItemRequest request = buildCreateRequest(Arrays.asList(
                 buildAttributeRequest(1L, null, "一些备注文字")
         ));
 
-        when(attributeService.getAttributesByIds(Collections.singletonList(1L)))
-                .thenReturn(Collections.singletonList(attr));
         when(categoryService.getCategoryById(1L)).thenReturn(new Category());
         when(brandService.getBrandById(1L)).thenReturn(new Brand());
         when(itemMapper.insert(any(ItemEntity.class))).thenReturn(1);
@@ -156,46 +130,36 @@ class ItemServiceImplTest {
         Item result = itemService.createItem(request);
 
         assertNotNull(result);
-        verify(attributeService).getAttributesByIds(Collections.singletonList(1L));
+        verify(attributeService).validateItemAttributes(request.getAttributes());
     }
 
     @Test
-    void createItem_withInputTypeAttribute_missingValue_throwsException() {
-        Attribute attr = buildAttribute(1L, "备注", AttributeInputType.INPUT);
-
+    void createItem_withMissingValue_throwsException() {
         CreateItemRequest request = buildCreateRequest(Arrays.asList(
                 buildAttributeRequest(1L, null, null)
         ));
 
-        when(attributeService.getAttributesByIds(Collections.singletonList(1L)))
-                .thenReturn(Collections.singletonList(attr));
+        doThrow(new BizException(ErrorCode.ITEM_ATTRIBUTE_VALUE_IS_EMPTY, 1L))
+                .when(attributeService).validateItemAttributes(anyList());
 
         assertThrows(BizException.class, () -> itemService.createItem(request));
     }
 
     @Test
-    void createItem_withMultipleAttributes_singleBatchQuery() {
-        Attribute attr1 = buildAttribute(1L, "颜色", AttributeInputType.SINGLE_SELECT);
-        Attribute attr2 = buildAttribute(2L, "尺寸", AttributeInputType.SINGLE_SELECT);
-        Attribute attr3 = buildAttribute(3L, "材质", AttributeInputType.SINGLE_SELECT);
-
+    void createItem_withMultipleAttributes_delegatesValidationOnce() {
         CreateItemRequest request = buildCreateRequest(Arrays.asList(
                 buildAttributeRequest(1L, 10L, null),
                 buildAttributeRequest(2L, 20L, null),
                 buildAttributeRequest(3L, 30L, null)
         ));
 
-        when(attributeService.getAttributesByIds(Arrays.asList(1L, 2L, 3L)))
-                .thenReturn(Arrays.asList(attr1, attr2, attr3));
         when(categoryService.getCategoryById(1L)).thenReturn(new Category());
         when(brandService.getBrandById(1L)).thenReturn(new Brand());
         when(itemMapper.insert(any(ItemEntity.class))).thenReturn(1);
 
         itemService.createItem(request);
 
-        // 3个属性只调用1次批量查询，而非3次单独查询
-        verify(attributeService, times(1)).getAttributesByIds(anyList());
-        verify(attributeService, never()).getAttributeById(anyLong());
+        verify(attributeService, times(1)).validateItemAttributes(anyList());
     }
 
     @Test
@@ -205,10 +169,6 @@ class ItemServiceImplTest {
         existingItem.setName("旧名称");
         existingItem.setStatus("DRAFT");
         when(itemMapper.findByIdBasic(42L)).thenReturn(existingItem);
-
-        Attribute attr = buildAttribute(1L, "颜色", AttributeInputType.SINGLE_SELECT);
-        when(attributeService.getAttributesByIds(Collections.singletonList(1L)))
-                .thenReturn(Collections.singletonList(attr));
         when(itemMapper.update(any(ItemEntity.class))).thenReturn(1);
 
         UpdateItemRequest request = new UpdateItemRequest();
@@ -224,5 +184,6 @@ class ItemServiceImplTest {
         verify(itemMapper).update(captor.capture());
         assertEquals(42L, captor.getValue().getId());
         assertEquals("新名称", captor.getValue().getName());
+        verify(attributeService).validateItemAttributes(request.getAttributes());
     }
 }
