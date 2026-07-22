@@ -6,6 +6,7 @@ import com.example.onlinestore.mapper.ItemAccessLogMapper;
 import com.example.onlinestore.security.CustomUserDetails;
 import com.example.onlinestore.service.ItemAccessLogService;
 import com.example.onlinestore.utils.WebUtils;
+import com.github.benmanes.caffeine.cache.Cache;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -30,31 +30,10 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemAccessLogServiceImpl.class);
 
-    private final Map<Long, Integer> accessCountMap = new ConcurrentHashMap<>();
     private final List<ItemAccessLogEntity> accessLogBuffer = Collections.synchronizedList(new ArrayList<>(1024));
 
-    private static final long HOT_ITEMS_CACHE_TTL_MS = 2 * 60 * 1000L;
-    private final Object hotItemsLock = new Object();
-    private List<Map<String, Object>> cachedHotItems;
-    private long hotItemsCacheExpireAt;
-    private String hotItemsCacheKey;
-
-    private static final long ACCESS_COUNT_CACHE_TTL_MS = 60 * 1000L;
-    private final Map<String, CacheEntry<Integer>> accessCountCache = new ConcurrentHashMap<>();
-
-    private static class CacheEntry<T> {
-        final T value;
-        final long expireAt;
-
-        CacheEntry(T value, long ttlMs) {
-            this.value = value;
-            this.expireAt = System.currentTimeMillis() + ttlMs;
-        }
-
-        boolean isExpired() {
-            return System.currentTimeMillis() > expireAt;
-        }
-    }
+    private final Cache<String, Integer> accessCountQueryCache;
+    private final Cache<String, List<Map<String, Object>>> hotItemsCache;
 
     private final ItemAccessLogMapper itemAccessLogMapper;
 
@@ -65,7 +44,6 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
         }
         ItemAccessLogEntity logEntity = createAccessLogEntity(itemId, itemName, memberId, memberName, ip, userAgent, referer, sessionId);
         accessLogBuffer.add(logEntity);
-        accessCountMap.merge(itemId, 1, Integer::sum);
     }
 
     @Override
@@ -92,31 +70,26 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
     @Override
     public int getAccessCount(Long itemId, LocalDateTime startTime, LocalDateTime endTime) {
         String cacheKey = itemId + "|" + startTime + "|" + endTime;
-        CacheEntry<Integer> entry = accessCountCache.get(cacheKey);
-        if (entry != null && !entry.isExpired()) {
-            return entry.value;
+        Integer cached = accessCountQueryCache.getIfPresent(cacheKey);
+        if (cached != null) {
+            return cached;
         }
 
         int count = itemAccessLogMapper.countByItemIdAndTimeRange(itemId, startTime, endTime);
-        accessCountCache.put(cacheKey, new CacheEntry<>(count, ACCESS_COUNT_CACHE_TTL_MS));
+        accessCountQueryCache.put(cacheKey, count);
         return count;
     }
 
     @Override
     public List<Map<String, Object>> getHotItems(LocalDateTime startTime, LocalDateTime endTime, int limit) {
         String cacheKey = startTime + "|" + endTime + "|" + limit;
-        synchronized (hotItemsLock) {
-            if (cacheKey.equals(hotItemsCacheKey) && System.currentTimeMillis() < hotItemsCacheExpireAt) {
-                return cachedHotItems;
-            }
+        List<Map<String, Object>> cached = hotItemsCache.getIfPresent(cacheKey);
+        if (cached != null) {
+            return cached;
         }
 
         List<Map<String, Object>> result = itemAccessLogMapper.findHotItems(startTime, endTime, limit);
-        synchronized (hotItemsLock) {
-            cachedHotItems = result;
-            hotItemsCacheKey = cacheKey;
-            hotItemsCacheExpireAt = System.currentTimeMillis() + HOT_ITEMS_CACHE_TTL_MS;
-        }
+        hotItemsCache.put(cacheKey, result);
         return result;
     }
 
@@ -152,4 +125,4 @@ public class ItemAccessLogServiceImpl implements ItemAccessLogService {
         logEntity.setSessionId(sessionId);
         return logEntity;
     }
-} 
+}

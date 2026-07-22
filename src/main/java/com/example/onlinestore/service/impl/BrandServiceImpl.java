@@ -8,6 +8,8 @@ import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.mapper.BrandMapper;
 import com.example.onlinestore.service.BrandService;
+import com.example.onlinestore.service.ContentValidationService;
+import com.github.benmanes.caffeine.cache.Cache;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import jakarta.validation.Valid;
@@ -16,8 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -26,42 +27,28 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static com.example.onlinestore.utils.CommonUtils.updateFieldIfChanged;
 
 @Service
 @Validated
 @RequiredArgsConstructor
-public class BrandServiceImpl implements BrandService, InitializingBean, DisposableBean {
+public class BrandServiceImpl implements BrandService {
     private static final Logger logger = LoggerFactory.getLogger(BrandServiceImpl.class);
 
     private static final String DEFAULT_BRAND_LIST_QUERY_ORDERBY = "sort_score DESC";
 
     private static final Object BRAND_NAME_MODIFICATION_LOCK = new Object();
 
-    private final Map<Long, Brand> brandCache = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final Cache<Long, Brand> brandCache;
 
     private final BrandMapper brandMapper;
-
-    @Override
-    public void afterPropertiesSet() {
-        scheduler.scheduleAtFixedRate(this::loadAllBrands, 0, 5, TimeUnit.MINUTES);
-    }
-
-    @Override
-    public void destroy() {
-        scheduler.shutdown();
-    }
+    private final ContentValidationService contentValidationService;
 
     @Override
     @Transactional(readOnly = true)
     public Brand getBrandById(@NotNull Long id) {
-        Brand cached = brandCache.get(id);
+        Brand cached = brandCache.getIfPresent(id);
         if (cached != null) {
             return cached;
         }
@@ -109,7 +96,7 @@ public class BrandServiceImpl implements BrandService, InitializingBean, Disposa
                 logger.error("update brand failed. because effect rows is 0. brandName:{}", brand.getName());
                 throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
-            brandCache.remove(id);
+            brandCache.invalidate(id);
         }
     }
 
@@ -130,10 +117,7 @@ public class BrandServiceImpl implements BrandService, InitializingBean, Disposa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Brand addBrand(@NotNull @Valid Brand brand) {
-        // 品牌名称应该唯一
-        if (StringUtils.contains(brand.getName(), "假货")){
-            throw new BizException(ErrorCode.BRAND_NAME_CONTAIN_SPECIAL_CHARACTER, brand.getName());
-        }
+        contentValidationService.validateForbiddenWords(brand.getName(), ErrorCode.BRAND_NAME_CONTAIN_SPECIAL_CHARACTER);
         synchronized (BRAND_NAME_MODIFICATION_LOCK) {
             String formatName = brand.getName().toUpperCase();
             brand.setName(formatName);
@@ -177,25 +161,26 @@ public class BrandServiceImpl implements BrandService, InitializingBean, Disposa
                 logger.error("delete brand failed. because effect rows is 0. brandId:{}", id);
                 throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
-            brandCache.remove(id);
+            brandCache.invalidate(id);
         }
 
     }
 
-    private void loadAllBrands() {
+    @Scheduled(fixedRate = 300000)
+    public void loadAllBrands() {
         logger.info("Start to load brand cache.");
         try {
             List<BrandEntity> entities = brandMapper.findAllBrands(null);
-            Map<Long, Brand> newCache = new ConcurrentHashMap<>();
+            Map<Long, Brand> newCache = new java.util.HashMap<>();
             for (BrandEntity entity : entities) {
                 newCache.put(entity.getId(), convertToBrand(entity));
             }
-            brandCache.clear();
+            brandCache.invalidateAll();
             brandCache.putAll(newCache);
         } catch (Throwable t) {
             logger.error("Load brand cache failed", t);
         }
-        logger.info("Complete to load brand cache, size: {}", brandCache.size());
+        logger.info("Complete to load brand cache, size: {}", brandCache.estimatedSize());
     }
 
     // 将品牌实体转换为品牌对象
