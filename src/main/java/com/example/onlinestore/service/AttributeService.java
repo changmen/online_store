@@ -95,4 +95,20 @@ public interface AttributeService {
 
     Map<Long, AttributeValue> getAttributeValuesByIds(List<Long> ids);
 
+    /**
+     * 校验SKU属性请求（确保属性类型为SKU，输入类型为单选/多选，属性值存在）
+     *
+     * @param attributes SKU属性请求列表
+     * @throws BizException 如果校验失败
+     */
+    void validateSkuAttributes(@NotNull @Valid List<ItemAttributeRequest> attributes);
+
+    /**
+     * 校验商品属性请求（确保属性存在，根据输入类型校验属性值）
+     *
+     * @param attributes 商品属性请求列表
+     * @throws BizException 如果校验失败
+     */
+    void validateItemAttributes(@NotNull @Valid List<ItemAttributeRequest> attributes);
+
 }
