@@ -42,15 +42,17 @@ def extract_file_data(diff, commit, parent_commit) -> dict:
     return file_data
 
 
-def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> list[dict]:
+def get_commit_diffs(repo_path: str = ".", max_commits: int = 10, author_filter: str | None = None) -> list[dict]:
     """
     获取 Git 仓库提交历史中的差异详情
     :param repo_path: Git仓库路径 (默认当前目录)
     :param max_commits: 最大获取提交数
+    :param author_filter: 按作者名/邮箱子串过滤（不区分大小写），None 表示不过滤
     :return: 结构化差异数据列表
     """
     repo = Repo(repo_path)
     diffs_data = []
+    author_skipped = 0
 
     logger.info(f"开始处理仓库 {repo_path}，最多 {max_commits} 个提交")
     commits = list(repo.iter_commits(max_count=max_commits))
@@ -61,12 +63,17 @@ def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> list[dict]:
                 continue
             parent_commit = commit.parents[0]
 
+            author = f"{commit.author.name} <{commit.author.email}>"
+            if author_filter and author_filter.lower() not in author.lower():
+                author_skipped += 1
+                continue
+
             logger.info(f"提交：{commit.hexsha[:7]} - {commit.message.strip()}")
             diffs = parent_commit.diff(commit, create_patch=True, unified=3)
 
             commit_data = {
                 "hash": commit.hexsha,
-                "author": f"{commit.author.name} <{commit.author.email}>",
+                "author": author,
                 "date": commit.authored_datetime.isoformat(),
                 "message": commit.message.strip(),
                 "stats": {"total": commit.stats.total},
@@ -83,6 +90,9 @@ def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> list[dict]:
 
         except Exception as e:
             logger.error(f"处理提交 {commit.hexsha[:7]} 失败: {e}")
+
+    if author_filter:
+        logger.info(f"作者过滤 '{author_filter}' 跳过 {author_skipped} 个提交")
 
     return diffs_data
 
@@ -163,9 +173,10 @@ if __name__ == "__main__":
     parser.add_argument("--output", default="output/test.jsonl", help="输出文件路径")
     parser.add_argument("--prefix", default="E.", help="提交信息过滤前缀，多个用逗号分隔")
     parser.add_argument("--summary", default=None, help="概要统计输出的 JSON 文件路径")
+    parser.add_argument("--author", default=None, help="按作者名/邮箱子串过滤提交")
     args = parser.parse_args()
 
     prefixes = [p.strip() for p in args.prefix.split(",") if p.strip()]
-    diffs = get_commit_diffs(args.repo, max_commits=args.max_commits)
+    diffs = get_commit_diffs(args.repo, max_commits=args.max_commits, author_filter=args.author)
     write_diff_to_file(diffs, output_file=args.output, prefix=prefixes)
     print_summary(diffs, summary_file=args.summary)
