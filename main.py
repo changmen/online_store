@@ -87,8 +87,9 @@ def get_commit_diffs(repo_path: str = ".", max_commits: int = 10) -> list[dict]:
     return diffs_data
 
 
-def write_diff_to_file(diff_data: list[dict], output_file: str, prefix: str = "E."):
-    """按提交信息前缀过滤，并写入 JSONL 文件"""
+def write_diff_to_file(diff_data: list[dict], output_file: str, prefix: str | list[str] = "E."):
+    """按提交信息前缀过滤，并写入 JSONL 文件。prefix 支持单个字符串或多个前缀列表"""
+    prefixes = tuple([prefix] if isinstance(prefix, str) else prefix)
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     review_datasets = []
     filtered = 0
@@ -96,7 +97,7 @@ def write_diff_to_file(diff_data: list[dict], output_file: str, prefix: str = "E
         if not commit["files"]:
             continue
         message = commit["message"]
-        if not message.startswith(prefix):
+        if not message.startswith(prefixes):
             filtered += 1
             continue
 
@@ -160,10 +161,11 @@ if __name__ == "__main__":
     parser.add_argument("--repo", default=os.path.abspath(os.path.dirname(__file__)), help="Git 仓库路径")
     parser.add_argument("--max-commits", type=int, default=100, help="最大处理提交数")
     parser.add_argument("--output", default="output/test.jsonl", help="输出文件路径")
-    parser.add_argument("--prefix", default="E.", help="提交信息过滤前缀")
+    parser.add_argument("--prefix", default="E.", help="提交信息过滤前缀，多个用逗号分隔")
     parser.add_argument("--summary", default=None, help="概要统计输出的 JSON 文件路径")
     args = parser.parse_args()
 
+    prefixes = [p.strip() for p in args.prefix.split(",") if p.strip()]
     diffs = get_commit_diffs(args.repo, max_commits=args.max_commits)
-    write_diff_to_file(diffs, output_file=args.output, prefix=args.prefix)
+    write_diff_to_file(diffs, output_file=args.output, prefix=prefixes)
     print_summary(diffs, summary_file=args.summary)
