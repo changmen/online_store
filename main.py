@@ -120,6 +120,32 @@ def write_diff_to_file(diff_data: list[dict], output_file: str, prefix: str = "E
     logger.info(f"写入完成：{len(review_datasets)} 条记录，过滤 {filtered} 个提交")
 
 
+def print_summary(diff_data: list[dict]) -> dict:
+    """统计并打印差异数据的概要信息，返回统计结果字典"""
+    total_commits = len(diff_data)
+    total_files = 0
+    change_type_counts: dict[str, int] = {}
+
+    for commit in diff_data:
+        files = commit.get("files", [])
+        total_files += len(files)
+        for file in files:
+            change_type = file.get("change_type", "?")
+            change_type_counts[change_type] = change_type_counts.get(change_type, 0) + 1
+
+    logger.info("=" * 40)
+    logger.info(f"概要：共 {total_commits} 个提交，{total_files} 个文件变更")
+    for change_type, count in sorted(change_type_counts.items()):
+        logger.info(f"  变更类型 {change_type}: {count} 个")
+    logger.info("=" * 40)
+
+    return {
+        "total_commits": total_commits,
+        "total_files": total_files,
+        "change_type_counts": change_type_counts,
+    }
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract git commit diffs into jsonlines")
     parser.add_argument("--repo", default=os.path.abspath(os.path.dirname(__file__)), help="Git 仓库路径")
@@ -130,3 +156,4 @@ if __name__ == "__main__":
 
     diffs = get_commit_diffs(args.repo, max_commits=args.max_commits)
     write_diff_to_file(diffs, output_file=args.output, prefix=args.prefix)
+    print_summary(diffs)
