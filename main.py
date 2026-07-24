@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import os
 
@@ -120,7 +121,7 @@ def write_diff_to_file(diff_data: list[dict], output_file: str, prefix: str = "E
     logger.info(f"写入完成：{len(review_datasets)} 条记录，过滤 {filtered} 个提交")
 
 
-def print_summary(diff_data: list[dict]) -> dict:
+def print_summary(diff_data: list[dict], summary_file: str | None = None) -> dict:
     """统计并打印差异数据的概要信息，返回统计结果字典"""
     total_commits = len(diff_data)
     total_files = 0
@@ -139,11 +140,19 @@ def print_summary(diff_data: list[dict]) -> dict:
         logger.info(f"  变更类型 {change_type}: {count} 个")
     logger.info("=" * 40)
 
-    return {
+    summary = {
         "total_commits": total_commits,
         "total_files": total_files,
         "change_type_counts": change_type_counts,
     }
+
+    if summary_file:
+        os.makedirs(os.path.dirname(summary_file), exist_ok=True)
+        with open(summary_file, "w", encoding="utf-8") as f:
+            json.dump(summary, f, ensure_ascii=False, indent=2)
+        logger.info(f"概要已写入：{summary_file}")
+
+    return summary
 
 
 if __name__ == "__main__":
@@ -152,8 +161,9 @@ if __name__ == "__main__":
     parser.add_argument("--max-commits", type=int, default=100, help="最大处理提交数")
     parser.add_argument("--output", default="output/test.jsonl", help="输出文件路径")
     parser.add_argument("--prefix", default="E.", help="提交信息过滤前缀")
+    parser.add_argument("--summary", default=None, help="概要统计输出的 JSON 文件路径")
     args = parser.parse_args()
 
     diffs = get_commit_diffs(args.repo, max_commits=args.max_commits)
     write_diff_to_file(diffs, output_file=args.output, prefix=args.prefix)
-    print_summary(diffs)
+    print_summary(diffs, summary_file=args.summary)
