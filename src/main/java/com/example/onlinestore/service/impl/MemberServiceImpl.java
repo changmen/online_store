@@ -20,7 +20,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,10 +42,11 @@ public class MemberServiceImpl implements MemberService {
     private final MemberMapper memberMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
-    private final org.springframework.security.authentication.AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
     private final Cache<String, MemberEntity> memberByNameCache;
     private final Cache<Long, MemberEntity> memberByIdCache;
     private final TokenBlacklistService tokenBlacklistService;
+    private final Cache<String, Boolean> memberNotFoundCache;
 
     @Override
     @Transactional(readOnly = true)
@@ -58,10 +62,10 @@ public class MemberServiceImpl implements MemberService {
         } catch (BadCredentialsException e) {
             logger.warn("login failed. because username or password is invalid. username:{}", request.getUsername());
             throw new BizException(ErrorCode.MEMBER_PASSWORD_INCORRECT);
-        } catch (org.springframework.security.authentication.DisabledException e) {
+        } catch (DisabledException e) {
             logger.warn("login failed. account is disabled. username:{}", request.getUsername());
             throw new BizException(ErrorCode.MEMBER_DISABLED);
-        } catch (org.springframework.security.authentication.LockedException e) {
+        } catch (LockedException e) {
             logger.warn("login failed. account is locked. username:{}", request.getUsername());
             throw new BizException(ErrorCode.MEMBER_LOCKED);
         }
@@ -94,6 +98,7 @@ public class MemberServiceImpl implements MemberService {
 
         memberByNameCache.put(memberEntity.getName(), memberEntity);
         memberByIdCache.put(memberEntity.getId(), memberEntity);
+        memberNotFoundCache.invalidate(memberEntity.getName());
         return memberEntity.toMember();
     }
 
@@ -120,9 +125,14 @@ public class MemberServiceImpl implements MemberService {
     }
 
     MemberEntity findMemberByNameCached(String name) {
+        if (Boolean.TRUE.equals(memberNotFoundCache.getIfPresent(name))) {
+            return null;
+        }
         MemberEntity entity = memberByNameCache.get(name, memberMapper::findByName);
         if (entity != null) {
             memberByIdCache.put(entity.getId(), entity);
+        } else {
+            memberNotFoundCache.put(name, Boolean.TRUE);
         }
         return entity;
     }

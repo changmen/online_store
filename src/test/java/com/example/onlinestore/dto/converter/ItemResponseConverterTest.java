@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ItemResponseConverterTest {
 
-    private final ItemResponseConverter converter = new ItemResponseConverter();
+    private final ItemResponseConverter converter = new ItemResponseConverterImpl();
 
     @Test
     void convert_nullItem_returnsNull() {

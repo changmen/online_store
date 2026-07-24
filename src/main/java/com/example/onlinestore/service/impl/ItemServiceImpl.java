@@ -100,7 +100,7 @@ public class ItemServiceImpl implements ItemService {
 
         attributeService.ensureItemAttributes(itemEntity.getId(), 0L, request.getAttributes());
 
-        return convertToEntity(itemEntity, item -> request.getDescription());
+        return toItem(itemEntity, item -> request.getDescription());
     }
 
     @Override
@@ -144,7 +144,7 @@ public class ItemServiceImpl implements ItemService {
             logger.error("item not found, id: {}", id);
             throw new BizException(ErrorCode.ITEM_NOT_FOUND);
         }
-        return convertToEntity(itemEntity, this::getItemDescription);
+        return toItem(itemEntity, this::getItemDescription);
     }
 
     @Override
@@ -156,10 +156,10 @@ public class ItemServiceImpl implements ItemService {
         PageHelper.startPage(queryRequest.getPageNum(), queryRequest.getPageSize(), orderBy);
         List<ItemEntity> itemEntities = itemMapper.queryItemsByOptions(queryRequest);
         PageInfo<ItemEntity> pageInfo = new PageInfo<>(itemEntities);
-        return Page.of(itemEntities.stream().map(itemEntity -> convertToEntity(itemEntity, e -> null)).toList(), pageInfo.getTotal(), queryRequest.getPageNum(), queryRequest.getPageSize());
+        return Page.of(itemEntities.stream().map(itemEntity -> toItem(itemEntity, e -> null)).toList(), pageInfo.getTotal(), queryRequest.getPageNum(), queryRequest.getPageSize());
     }
 
-    private Item convertToEntity(ItemEntity itemEntity, Function<ItemEntity, String> descriptionMap) {
+    private Item toItem(ItemEntity itemEntity, Function<ItemEntity, String> descriptionMap) {
         Item item = new Item();
         item.setId(itemEntity.getId());
         item.setBrandId(itemEntity.getBrandId());

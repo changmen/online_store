@@ -87,27 +87,27 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public Response<String> handleException(MissingServletRequestParameterException e) {
         logger.warn("Missing request parameter: {}", e.getParameterName());
-        return Response.fail(MessageFormat.format("缺少必填参数: {0}", e.getParameterName()));
+        return Response.fail(localize("error.request.param.missing", e.getParameterName()));
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public Response<String> handleException(HttpMessageNotReadableException e) {
         logger.warn("Message not readable: {}", e.getMessage());
-        return Response.fail("请求体格式错误，请检查JSON格式");
+        return Response.fail(localize("error.request.body.unreadable"));
     }
 
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public Response<String> handleException(HttpRequestMethodNotSupportedException e) {
         logger.warn("Method not allowed: {}", e.getMethod());
-        return Response.fail(MessageFormat.format("不支持的请求方法: {0}", e.getMethod()));
+        return Response.fail(localize("error.request.method.not.supported", e.getMethod()));
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(NoResourceFoundException.class)
     public Response<String> handleException(NoResourceFoundException e) {
-        return Response.fail("请求的资源不存在");
+        return Response.fail(localize("error.resource.not.found"));
     }
 
     @ExceptionHandler(BizException.class)
@@ -142,44 +142,28 @@ public class GlobalExceptionHandler {
     }
 
     private HttpStatus resolveHttpStatus(ErrorCode errorCode) {
-        if (isAuthError(errorCode)) {
-            return HttpStatus.UNAUTHORIZED;
-        }
-        if (isNotFoundError(errorCode)) {
-            return HttpStatus.NOT_FOUND;
-        }
-        return HttpStatus.CONFLICT;
-    }
-
-    private boolean isAuthError(ErrorCode errorCode) {
-        return errorCode == ErrorCode.MEMBER_PASSWORD_INCORRECT
-                || errorCode == ErrorCode.MEMBER_NOT_LOGIN
-                || errorCode == ErrorCode.MEMBER_DISABLED
-                || errorCode == ErrorCode.MEMBER_LOCKED
-                || errorCode == ErrorCode.INVALID_REFRESH_TOKEN;
-    }
-
-    private boolean isNotFoundError(ErrorCode errorCode) {
-        return errorCode == ErrorCode.MEMBER_NOT_FOUND
-                || errorCode == ErrorCode.ITEM_NOT_FOUND
-                || errorCode == ErrorCode.CATEGORY_NOT_FOUND
-                || errorCode == ErrorCode.BRAND_NOT_FOUND
-                || errorCode == ErrorCode.ATTRIBUTE_NOT_FOUND
-                || errorCode == ErrorCode.ATTRIBUTE_VALUE_NOT_FOUND
-                || errorCode == ErrorCode.SKU_NOT_FOUND
-                || errorCode == ErrorCode.CART_ITEM_NOT_FOUND;
+        return errorCode.getHttpStatus();
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ConstraintViolationException.class)
     public Response<String> handleException(ConstraintViolationException e) {
         logger.warn("ConstraintViolationException: {}", e.getMessage());
-        StringBuilder message = new StringBuilder("参数验证失败: ");
+        StringBuilder message = new StringBuilder(localize("error.request.validation.failed")).append(": ");
         e.getConstraintViolations().forEach(violation ->
                 message.append(violation.getPropertyPath())
                         .append(": ")
                         .append(violation.getMessage())
                         .append("; "));
         return Response.fail(message.toString());
+    }
+
+    private String localize(String code, Object... args) {
+        try {
+            return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
+        } catch (NoSuchMessageException e) {
+            logger.warn("NoSuchMessageException. {}", code);
+            return code;
+        }
     }
 }

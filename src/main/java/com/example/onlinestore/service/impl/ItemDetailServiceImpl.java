@@ -3,6 +3,7 @@ package com.example.onlinestore.service.impl;
 import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.bean.ItemDetail;
 import com.example.onlinestore.bean.Sku;
+import com.example.onlinestore.cache.CacheConstants;
 import com.example.onlinestore.errors.ErrorCode;
 import com.example.onlinestore.exceptions.BizException;
 import com.example.onlinestore.service.ItemDetailService;
@@ -20,20 +21,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @RequiredArgsConstructor
 public class ItemDetailServiceImpl implements ItemDetailService {
     private static final Logger logger = LoggerFactory.getLogger(ItemDetailServiceImpl.class);
-    private static final String CACHE_KEY_PREFIX = "ITEM_DETAIL:";
-    private static final long CACHE_EXPIRE_TIME = 30;
-    private static final long NULL_CACHE_EXPIRE_TIME = 5;
-    private static final String NULL_CACHE_VALUE = "NULL";
+    private static final int MAX_LOAD_LOCKS = 10_000;
 
-    private final Map<Long, Object> loadLocks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, ReentrantLock> loadLocks = new ConcurrentHashMap<>();
 
     private final ItemService itemService;
     private final SkuService skuService;
@@ -51,24 +49,30 @@ public class ItemDetailServiceImpl implements ItemDetailService {
             return result;
         }
 
-        Object lock = loadLocks.computeIfAbsent(itemId, k -> new Object());
-        synchronized (lock) {
+        ReentrantLock lock = loadLocks.computeIfAbsent(itemId, k -> new ReentrantLock());
+        lock.lock();
+        try {
             result = loadFromCache(itemId);
             if (result != null) {
                 return result;
             }
             return loadFromDbAndCache(itemId);
+        } finally {
+            lock.unlock();
+            if (loadLocks.size() > MAX_LOAD_LOCKS && !lock.hasQueuedThreads()) {
+                loadLocks.remove(itemId, lock);
+            }
         }
     }
 
     private ItemDetail loadFromCache(Long itemId) {
-        String cacheKey = CACHE_KEY_PREFIX + itemId;
+        String cacheKey = CacheConstants.itemDetailKey(itemId);
         String cachedValue = redisTemplate.opsForValue().get(cacheKey);
 
         if (cachedValue == null) {
             return null;
         }
-        if (NULL_CACHE_VALUE.equals(cachedValue)) {
+        if (CacheConstants.ITEM_DETAIL_NULL_VALUE.equals(cachedValue)) {
             throw new BizException(ErrorCode.ITEM_NOT_FOUND);
         }
         try {
@@ -81,13 +85,13 @@ public class ItemDetailServiceImpl implements ItemDetailService {
     }
 
     private ItemDetail loadFromDbAndCache(Long itemId) {
-        String cacheKey = CACHE_KEY_PREFIX + itemId;
+        String cacheKey = CacheConstants.itemDetailKey(itemId);
 
         Item item;
         try {
             item = itemService.getItemById(itemId);
         } catch (BizException e) {
-            redisTemplate.opsForValue().set(cacheKey, NULL_CACHE_VALUE, NULL_CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(cacheKey, CacheConstants.ITEM_DETAIL_NULL_VALUE, CacheConstants.ITEM_DETAIL_NULL_TTL_MINUTES, TimeUnit.MINUTES);
             throw e;
         }
 
@@ -99,7 +103,7 @@ public class ItemDetailServiceImpl implements ItemDetailService {
 
         try {
             String jsonValue = JacksonJsonUtils.toString(result);
-            redisTemplate.opsForValue().set(cacheKey, jsonValue, CACHE_EXPIRE_TIME, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(cacheKey, jsonValue, CacheConstants.ITEM_DETAIL_TTL_MINUTES, TimeUnit.MINUTES);
         } catch (JsonProcessingException e) {
             logger.error("Failed to serialize item detail for caching, itemId: {}", itemId, e);
             throw new BizException(ErrorCode.INTERNAL_SERVER_ERROR);

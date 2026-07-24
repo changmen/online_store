@@ -49,6 +49,7 @@ class MemberServiceImplTest {
     private MemberServiceImpl memberService;
     private Cache<String, MemberEntity> memberByNameCache;
     private Cache<Long, MemberEntity> memberByIdCache;
+    private Cache<String, Boolean> memberNotFoundCache;
 
     private MemberEntity activeMember;
 
@@ -56,9 +57,11 @@ class MemberServiceImplTest {
     void setUp() {
         memberByNameCache = Caffeine.newBuilder().build();
         memberByIdCache = Caffeine.newBuilder().build();
+        memberNotFoundCache = Caffeine.newBuilder().build();
         memberService = new MemberServiceImpl(
                 memberMapper, passwordEncoder, jwtTokenUtil,
-                authenticationManager, memberByNameCache, memberByIdCache, tokenBlacklistService
+                authenticationManager, memberByNameCache, memberByIdCache,
+                tokenBlacklistService, memberNotFoundCache
         );
 
         activeMember = buildMemberEntity("testUser", "USER", "ACTIVE");

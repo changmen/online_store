@@ -4,6 +4,7 @@ import com.example.onlinestore.bean.Attribute;
 import com.example.onlinestore.bean.AttributeValue;
 import com.example.onlinestore.cache.AttributeCacheManager;
 import com.example.onlinestore.dto.converter.AttributeConverter;
+import com.example.onlinestore.dto.converter.AttributeConverterImpl;
 import com.example.onlinestore.dto.ItemAttributeRequest;
 import com.example.onlinestore.entity.AttributeEntity;
 import com.example.onlinestore.entity.AttributeValueEntity;
@@ -57,7 +58,7 @@ class AttributeServiceImplTest {
                 attributeValueMapper,
                 itemAttributeRelationMapper,
                 new AttributeCacheManager(),
-                new AttributeConverter()
+                new AttributeConverterImpl()
         );
 
         attributeEntity1 = new AttributeEntity();

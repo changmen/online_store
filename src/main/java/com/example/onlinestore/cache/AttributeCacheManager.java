@@ -4,6 +4,7 @@ import com.example.onlinestore.bean.Attribute;
 import com.example.onlinestore.bean.AttributeValue;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalListener;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -21,18 +22,30 @@ public class AttributeCacheManager {
 
     public AttributeCacheManager() {
         this.attributeByIdCache = Caffeine.newBuilder()
-                .maximumSize(2000)
-                .expireAfterWrite(30, TimeUnit.MINUTES)
+                .maximumSize(CacheConstants.ATTRIBUTE_MAX_SIZE)
+                .expireAfterWrite(CacheConstants.ATTRIBUTE_TTL_MINUTES, TimeUnit.MINUTES)
                 .recordStats()
                 .build();
+        RemovalListener<Long, AttributeValue> valueEvictionListener = (key, value, cause) -> {
+            if (value != null) {
+                Set<Long> valueIds = attributeValueIndex.get(value.getAttributeId());
+                if (valueIds != null) {
+                    valueIds.remove(key);
+                    if (valueIds.isEmpty()) {
+                        attributeValueIndex.remove(value.getAttributeId());
+                    }
+                }
+            }
+        };
         this.attributeValueByIdCache = Caffeine.newBuilder()
-                .maximumSize(10000)
-                .expireAfterWrite(30, TimeUnit.MINUTES)
+                .maximumSize(CacheConstants.ATTRIBUTE_VALUE_MAX_SIZE)
+                .expireAfterWrite(CacheConstants.ATTRIBUTE_TTL_MINUTES, TimeUnit.MINUTES)
+                .removalListener(valueEvictionListener)
                 .recordStats()
                 .build();
         this.valuesByAttributeIdCache = Caffeine.newBuilder()
-                .maximumSize(2000)
-                .expireAfterWrite(30, TimeUnit.MINUTES)
+                .maximumSize(CacheConstants.ATTRIBUTE_VALUES_BY_ID_MAX_SIZE)
+                .expireAfterWrite(CacheConstants.ATTRIBUTE_TTL_MINUTES, TimeUnit.MINUTES)
                 .recordStats()
                 .build();
     }

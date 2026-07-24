@@ -2,32 +2,21 @@ package com.example.onlinestore.dto.converter;
 
 import com.example.onlinestore.bean.Item;
 import com.example.onlinestore.dto.ItemResponse;
-import org.springframework.stereotype.Component;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
 
 import java.util.Collections;
 
-@Component
-public class ItemResponseConverter {
+@Mapper(componentModel = "spring")
+public interface ItemResponseConverter {
 
-    public ItemResponse convert(Item item) {
-        if (item == null) {
-            return null;
-        }
+    ItemResponse convert(Item item);
 
-        ItemResponse response = new ItemResponse();
-        response.setId(item.getId());
-        response.setName(item.getName());
-        response.setDescription(item.getDescription());
-        response.setMainImageURL(item.getMainImageURL());
-        response.setSubImageURLs(item.getSubImageURLs());
-        response.setCategoryId(item.getCategoryId());
-        response.setBrandId(item.getBrandId());
-        if (item.getStatus() != null) {
-            response.setStatus(item.getStatus().name());
+    @AfterMapping
+    default void defaultAttributes(Item item, @MappingTarget ItemResponse response) {
+        if (response.getAttributes() == null) {
+            response.setAttributes(Collections.emptyList());
         }
-        response.setSortScore(item.getSortScore());
-        response.setAttributes(item.getAttributes() != null ? item.getAttributes() : Collections.emptyList());
-        return response;
     }
-
 }
