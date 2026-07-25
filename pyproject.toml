@@ -8,3 +8,19 @@ dependencies = [
     "gitpython>=3.1.44",
     "jsonlines>=4.0.0",
 ]
+
+[project.scripts]
+git-diff-extractor = "git_diff_extractor.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/git_diff_extractor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

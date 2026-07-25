@@ -20,7 +20,9 @@ uv sync
 ### 运行
 
 ```bash
-uv run python main.py --max-commits 100 --output output/test.jsonl
+uv run git-diff-extractor --max-commits 100 --output output/test.jsonl
+# 或
+uv run python -m git_diff_extractor --max-commits 100 --output output/test.jsonl
 ```
 
 ### 参数说明
@@ -30,7 +32,9 @@ uv run python main.py --max-commits 100 --output output/test.jsonl
 | `--repo` | 项目根目录 | Git 仓库路径 |
 | `--max-commits` | 100 | 最大处理的提交数 |
 | `--output` | `output/test.jsonl` | 输出文件路径 |
-| `--prefix` | `E.` | 提交信息过滤前缀 |
+| `--prefix` | `E.` | 提交信息过滤前缀，多个用逗号分隔 |
+| `--summary` | 无 | 概要统计输出的 JSON 文件路径 |
+| `--author` | 无 | 按作者名/邮箱子串过滤提交 |
 
 ## 输出格式
 
@@ -43,6 +47,23 @@ uv run python main.py --max-commits 100 --output output/test.jsonl
 ## 过滤规则
 
 仅保留提交信息以指定前缀开头的记录（默认 `E.`，可通过 `--prefix` 修改）。
+
+## 项目结构
+
+```
+src/git_diff_extractor/
+├── cli.py          # CLI 参数解析与编排
+├── extractor.py    # Git 仓库交互与 diff 提取
+├── models.py       # 数据模型（FileChange, CommitData, Summary）
+├── output.py       # 过滤、JSONL 写入、统计
+└── exceptions.py   # 异常层次
+```
+
+## 测试
+
+```bash
+uv run pytest
+```
 
 ## License
 
